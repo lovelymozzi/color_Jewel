@@ -1009,13 +1009,12 @@
                 return;
             }
 
-            moveTrayToBoard(selected.index, row, col);
             if (gem) {
-                trayState[selected.index] = gem;
-                commitMove("포켓의 보석을 보드에 올리고, 있던 보석은 포켓으로 보냈어요.");
+                selectBoardCluster(row, col, gem);
                 return;
             }
 
+            moveTrayToBoard(selected.index, row, col);
             commitMove("포켓의 보석을 빈 칸으로 옮겼어요.");
         }
 
@@ -1071,8 +1070,9 @@
                 return;
             }
 
-            swapBoardToTray(selected.cells[0].row, selected.cells[0].col, index);
-            commitMove("보드의 보석과 포켓의 보석을 서로 바꿨어요.");
+            selected = { source: "tray", index };
+            setStatus("포켓의 보석을 선택했어요. 빈 칸으로만 옮길 수 있어요.");
+            render();
         }
 
         function resetGame() {
