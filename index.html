@@ -162,12 +162,14 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) rotate(180deg);
             clip-path: var(--socket-shape);
-            background: var(--socket-inset-multiply), var(--socket-inset-fill);
-            background-blend-mode: multiply, normal;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-            opacity: 1;
+            background:
+                linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
+                url("jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: brightness(1.02) saturate(1.06);
+            opacity: 0.42;
             pointer-events: none;
         }
 
@@ -178,11 +180,14 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) rotate(180deg);
             clip-path: var(--socket-shape);
-            background: var(--socket-inset-multiply), var(--socket-inset-fill);
-            background-blend-mode: multiply, normal;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            background:
+                linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
+                url("jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: brightness(1.02) saturate(1.06);
+            opacity: 0.42;
             pointer-events: none;
         }
 
@@ -213,16 +218,20 @@
             top: 50%;
             transform: translate(-50%, -50%);
             transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-            box-shadow: 0 3px 5px rgba(78, 38, 8, 0.1);
-            filter: saturate(1.16) contrast(1.07);
+            clip-path: var(--socket-shape);
+            overflow: hidden;
+            box-shadow: none;
+            filter: saturate(1.22) brightness(0.97) contrast(1.08);
             z-index: 2;
         }
 
         .gem-image {
-            display: block;
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
+            display: block;
             pointer-events: none;
             user-select: none;
             -webkit-user-drag: none;
@@ -230,8 +239,8 @@
 
         .cell.selected .gem {
             transform: translate(-50%, -78%);
-            box-shadow: 0 10px 14px rgba(78, 38, 8, 0.2);
-            filter: saturate(1.08) contrast(1.05);
+            box-shadow: 0 8px 12px rgba(78, 38, 8, 0.16);
+            filter: saturate(1.14) brightness(0.98) contrast(1.06);
         }
 
         .board-cell.selected::after {
@@ -241,12 +250,14 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) rotate(180deg);
             clip-path: var(--socket-shape);
-            background: var(--socket-inset-multiply), var(--socket-inset-fill);
-            background-blend-mode: multiply, normal;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-            opacity: 1;
+            background:
+                linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
+                url("jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: brightness(1) saturate(1.08);
+            opacity: 0.5;
             pointer-events: none;
             z-index: 1;
         }
@@ -258,12 +269,14 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) rotate(180deg);
             clip-path: var(--socket-shape);
-            background: var(--socket-inset-multiply), var(--socket-inset-fill);
-            background-blend-mode: multiply, normal;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-            opacity: 1;
+            background:
+                linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
+                url("jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: brightness(1) saturate(1.08);
+            opacity: 0.5;
             pointer-events: none;
             z-index: 1;
         }
@@ -307,7 +320,7 @@
 
         .tray-slot {
             min-height: var(--tray-cell-size);
-            background: rgba(255, 255, 255, 0.55);
+            background: transparent;
         }
 
         @media (max-width: 980px) {
@@ -524,10 +537,10 @@
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const pixels = imageData.data;
             const base = hexToRgb(COLOR_PALETTE[colorId].color);
-            const light = tintRgb(base, 50);
+            const light = tintRgb(base, 46);
             const deep = tintRgb(base, -46);
             const shadow = tintRgb(base, -92);
-            const highlight = tintRgb(base, 84);
+            const highlight = tintRgb(base, 72);
 
             for (let index = 0; index < pixels.length; index += 4) {
                 const alpha = pixels[index + 3];
@@ -803,6 +816,10 @@
             const gemImage = document.createElement("img");
             gem.className = "gem";
             gemImage.className = "gem-image";
+            gem.style.setProperty("--gem-main", COLOR_PALETTE[colorId].color);
+            gem.style.setProperty("--gem-light", shadeColor(COLOR_PALETTE[colorId].color, 34));
+            gem.style.setProperty("--gem-deep", shadeColor(COLOR_PALETTE[colorId].color, -24));
+            gem.style.setProperty("--gem-shadow", shadeColor(COLOR_PALETTE[colorId].color, -48));
             gemImage.src = getTintedJewelSrc(colorId);
             gemImage.alt = "";
             gemImage.draggable = false;
@@ -830,11 +847,13 @@
                     }
 
                     button.classList.add("board-cell");
-                    button.style.background = `
-                        linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) top / 100% 1px no-repeat,
-                        linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) left / 1px 100% no-repeat,
-                        ${COLOR_PALETTE[target].color}
-                    `;
+                    button.style.background = gem
+                        ? COLOR_PALETTE[target].color
+                        : `
+                            linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) top / 100% 1px no-repeat,
+                            linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) left / 1px 100% no-repeat,
+                            ${COLOR_PALETTE[target].color}
+                        `;
                     button.style.setProperty("--tile-base", COLOR_PALETTE[target].color);
                     button.style.setProperty("--tile-dark", shadeColor(COLOR_PALETTE[target].color, -18));
                     button.style.setProperty("--tile-shadow", shadeColor(COLOR_PALETTE[target].color, -34));
