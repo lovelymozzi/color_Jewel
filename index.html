@@ -18,6 +18,34 @@
             --tray-gap: 8px;
             --gem-size: 84%;
             --socket-shape: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
+            --gem-screen-overlay:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.48) 0 16%,
+                    rgba(255, 255, 255, 0.14) 16% 30%,
+                    transparent 30% 100%) top center / 74% 32% no-repeat,
+                linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.22) 0 38%,
+                    transparent 38% 100%) top left / 24% 22% no-repeat,
+                linear-gradient(225deg,
+                    rgba(255, 255, 255, 0.22) 0 38%,
+                    transparent 38% 100%) top right / 24% 22% no-repeat;
+            --gem-multiply-overlay:
+                linear-gradient(180deg,
+                    transparent 0 68%,
+                    rgba(62, 40, 22, 0.08) 68% 80%,
+                    rgba(62, 40, 22, 0.2) 80% 100%) bottom center / 66% 18% no-repeat,
+                linear-gradient(315deg,
+                    transparent 0 63%,
+                    rgba(62, 40, 22, 0.2) 63% 100%) bottom left / 19% 19% no-repeat,
+                linear-gradient(45deg,
+                    transparent 0 63%,
+                    rgba(62, 40, 22, 0.2) 63% 100%) bottom right / 19% 19% no-repeat,
+                linear-gradient(270deg,
+                    transparent 0 76%,
+                    rgba(62, 40, 22, 0.11) 76% 100%) left 11% bottom 24% / 8% 24% no-repeat,
+                linear-gradient(90deg,
+                    transparent 0 76%,
+                    rgba(62, 40, 22, 0.11) 76% 100%) right 11% bottom 24% / 8% 24% no-repeat;
             --socket-inset-multiply: linear-gradient(180deg, rgba(101, 75, 49, 0.18), rgba(101, 75, 49, 0.09));
             --socket-inset-fill:
                 radial-gradient(74% 34% at 50% 2%, rgba(89, 66, 46, 0.13), transparent 78%) top center / 82% 22% no-repeat,
@@ -185,17 +213,25 @@
             top: 50%;
             transform: translate(-50%, -50%);
             transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-            clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
-            background: var(--gem-outline);
             box-shadow: 0 3px 5px rgba(78, 38, 8, 0.1);
-            filter: saturate(1.08) contrast(1.04);
+            filter: saturate(1.16) contrast(1.07);
             z-index: 2;
+        }
+
+        .gem-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
         }
 
         .cell.selected .gem {
             transform: translate(-50%, -78%);
             box-shadow: 0 10px 14px rgba(78, 38, 8, 0.2);
-            filter: saturate(1.12) contrast(1.06);
+            filter: saturate(1.08) contrast(1.05);
         }
 
         .board-cell.selected::after {
@@ -230,59 +266,6 @@
             opacity: 1;
             pointer-events: none;
             z-index: 1;
-        }
-
-        .gem-core {
-            position: absolute;
-            inset: 1.5px;
-            clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
-            background:
-                radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.75), transparent 22%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.12) 18%, transparent 19%),
-                conic-gradient(from -40deg at 50% 52%,
-                    var(--gem-shadow) 0deg 32deg,
-                    var(--gem-deep) 32deg 74deg,
-                    var(--gem-main) 74deg 118deg,
-                    var(--gem-light) 118deg 164deg,
-                    rgba(255, 255, 255, 0.34) 164deg 188deg,
-                    var(--gem-light) 188deg 214deg,
-                    var(--gem-main) 214deg 252deg,
-                    var(--gem-deep) 252deg 320deg,
-                    var(--gem-shadow) 320deg 360deg);
-            box-shadow:
-                inset -9px -9px 12px rgba(0, 0, 0, 0.15),
-                inset 8px 8px 10px rgba(255, 255, 255, 0.18),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-        }
-
-        .gem-core::before {
-            content: "";
-            position: absolute;
-            inset: 8%;
-            clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 84% 38%, 68% 32%, 50% 54%, 32% 32%, 16% 38%, 0% 18%, 16% 54%, 50% 100%, 84% 54%, 100% 18%);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.52), transparent 58%),
-                conic-gradient(from -28deg at 50% 48%,
-                    rgba(255, 255, 255, 0.18) 0deg 40deg,
-                    rgba(0, 0, 0, 0.12) 40deg 86deg,
-                    rgba(255, 255, 255, 0.26) 86deg 134deg,
-                    rgba(255, 255, 255, 0.54) 134deg 182deg,
-                    rgba(255, 255, 255, 0.12) 182deg 232deg,
-                    rgba(0, 0, 0, 0.14) 232deg 314deg,
-                    rgba(255, 255, 255, 0.24) 314deg 360deg);
-            opacity: 0.98;
-        }
-
-        .gem-core::after {
-            content: "";
-            position: absolute;
-            inset: 15% 12% 15% 12%;
-            clip-path: polygon(50% 0%, 100% 26%, 82% 100%, 18% 100%, 0% 26%);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.1) 46%, rgba(0, 0, 0, 0.05) 100%),
-                linear-gradient(118deg, transparent 0 56%, rgba(255, 255, 255, 0.22) 56% 64%, transparent 64%),
-                linear-gradient(242deg, transparent 0 58%, rgba(0, 0, 0, 0.05) 58% 66%, transparent 66%);
-            opacity: 0.82;
         }
 
         .pocket-dock {
@@ -482,6 +465,93 @@
             const b = clamp(number & 255);
             return `rgb(${r}, ${g}, ${b})`;
         }
+
+        const JEWEL_TEMPLATE_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAIyElEQVR4nO2dy27USBSGK47pEAgBFvA42bFggQY2Q3hDMosZRkFikV0eJooIErd0EttdDvotn5Zp2h1f6nLKdX7J6oSZJGX/X1Wduh1v3d7eKlG8ShVDnZ6evn727NnR/v7+7N69eyp0FUWhfvz4kV9cXPx9cHDwv2KkRDHTycnJ6yzLjubz+QwPbgoqikLhfrIs++fk5OQvxUgJN/OVUkdKqdnNzY3K81xprVXI0lpX94H7wX0ppVhBkHA0H9/joV1fX1e1J2QVRVHdB+6nFisIEo7mU81BrVksFqosSxWiyrKsyo/7WGnJ2ECQcDSfhJqDCw8xRC0Wi+U9rBELCBKu5lPzeXV1FTQAV1dXm7ox7xAkXM0nofnMsiy4YFBrXZW7Dv42iSDA84gDgK7mQ3iIqEWNICoI5XlelRvl7yA8hyMfECSczYcwU0lxQCjBYFmWy1FMj5lWLxAknM1frU2hxAKLOvIf0Go5hyDhbj6EIIqGhCEBUAybw3AKQcLdfBINp7hPDBX1xE/L0I8dBEkI5ofUDSzqoZ+BoNUJBEkI5kMIpqhf5RoMlnXwh3IaWma3DkESgvmhDAnzfkM/FhAkoZjPfX2gbJ/3Zw1BEor5JDxgSw/ZCJwdZv5YQZCEZH6zmeU2GijqdQvL3ZNxCJKQzOe6PqDref+RQz8vECShmc9xs0hRj/0dlscYBElo5lONowfuOxgsy3IJgOMWyQgESWjmN7sBDhNDi3rix2LwZxWCJETzIRpycQDgxm85RkGQhGg+l2BQd9/0wRaCrb5TllzMp/4XB0d8jga2t7erGCBJvG+vhDAGffvixYsPVgDgZD5Mn8/n6uvXrzh14wWC7e1ttb+/r54+faoePnxYfR8aBJ0B4Gr+9+/fvbcAjx8/DhaCTu2WmN8u/H2UA+VBuXyXp29McCcAYv60IdgIgJg/fQhaARDz44BgLQBifjwQ/AGAmB8XBL8BIObHB8ESADE/OgjeLCeCPn78+HpnZ0fMj2yyKMuywypJ1NnZ2dHe3t4MhdvZ2fFWwCma32wJSD4hoAUs5Cy6vLx8XwFwfn4+g/Eo2KNHj6rPBw8eVAstLgs2RfO5QIDlajxfXD9//qw+syybVQBgNYt2tWBhBebv7e1VMOzu7qr79++rra0ta4Wbuvm+IKDDNPAVpl9eXi43rtIzTtdttcIP4QdgCECgCyCkqdnUgrGY7xIC2qQCw+miw6qri39r3cT/BEpwwZxv375VrQJaBICAr2ez2ehWITbzbUJAnqGGw3BUYDqltOm53lmd8cO05w2/FF0CCox1cICA74dshojVfNMQYFMMWm14hO4bz7TPhtnO7Tl+GWjCBcLQKjS7B4CAVqGLYjffBAS0Nb7ZzMObvnsTB3Xo+COUAg3UITag7oGGkm2tgpg/HAKqhHh+1MzTvsih2+NHRXTU/FDAQd1Ds1VoBo1i/jAIqLJRTadmHv8+9hi6kZAehaChJAqHm1kdSmJOQczvBwENzZtDONO7oI2ni6egkQpOQ0nEB2gxxPxuEOAT/TwN4fC1jXc7WHtfAApLQSNqPs0hiPndIHB14MTJCyNwE7gxm7OJU5LWurpcnDZicZpB5E8CQOQSACKXABC5BIDIJQBELgEgcgkAkUsAiFwCQOQSACKXABC5BIDIJQBELgEgcgkAkUsAiFwCQOQSACKXABC5BIDIJQBELgEgcgkAkUsAiFwCQOQSACKXABC5nACAY+F04FF0t+hZuXgpptXTwTjdSsfDkSACeQKQMpVJqlTWx8ORFwAJIijljun0fCTjvxXU0ts06QIEOBoO8yGBYLP5nz9/rj6RY4ESd9IFEEy+oi618QZt0ItPZLVoNmPILEYSCNrNx3OiF1HTa+mRYQWpdij3kqmczqMAAKHNrJSUMGpdRkoI/y4QdDefhEpE2cAo2wrBQJlXhibfGAQACkRZKXGhUCh0l4wWAkE/89syuFJiSErsTdlb+3YPnQHAH0dh6a3dMH1o8iKBoL/5bbkaKYMrWgKCAV/jeXZpFdIutZ3SlcF0CurG5q+JHQI9wvxNybgQGwACwEDp+Ta1CmmHFwss076tBnVjFSsE2pD5mzK4Ul5ngqEtaEzXDeEo+TAliTaRkbJNsUGgLZm/Lmik4BxdAsUJlL2VWoWUCkXDjWYz72ImKiYItAPzV9XM4NrsHuiNMBUAFxcX+fX19Yzyz7oyPiYItAfz1+V1RsWm7mF3dzevAPjy5cvhYrF47/utYVOFQHs2f90QPs/zfD6fv6teGwe9evUK75HzDgGEpunJkyfq+fPnwUOgGZnfUK6Uend8fPzvcnxwfHz8n1LqsP6PikNLQHPioa4iaubm45vfBogCQRTmH5L50B8zBALB5M2Hv0utnSISCOIwH2qdIxQIpm8+tHHpSCCYtvnQnWuHAsF0zYc6LR4LBNM0H1pOBHUR18kivMXUx2SR1rralBGq+b0B4AgBdsF0fWOpDeX1Dp0QzR8EACcIaP3bt9I0tbZt26b50KD9xVxiAt/9P6NyDDIfGrzB3DcEWNWytUmlr1AOH0voY82HRp0w8AkBh6afQXlGmQ+NPmLiAwLPNY5LizTafMjIGSPXEDDoc32Xy4j5kLFDZi4hiByA3JT5xo+Hu4AAD5lL8Nd2eCYU863kB7ANAdfa76B8xs23liDCFgQcgz9HwaAV861mCLEBAbehn6NyWjPfeooY0xBwr/0WymnVfCc5gkxBwDn4sxQMWjffWZIoExCE0vwbKq8T852miRsDAad5fwcBqzPznecJHAoB96GfwXI7Nd9Losi+EIQw9DPUcjk331um0D4Q2MxNYFuURIur+V5TxXaFINTa36P83sz3niv4LghCDP56dmFezWeRLHoTBKEN/drUch/ezWcBQBsEqDWhN/8b7gX3+da3+WwAWAdBqEO/NjXuh8z/oBiIDQCrEEyl9pPq+2Fl/uBzAbb18uXLNxxyFimzytM0ffvp0yc25qNUvwCXWZ0IcH5nzgAAAABJRU5ErkJggg==";
+        const jewelTemplateImage = new Image();
+        const jewelImageCache = new Map();
+        let jewelTemplateReady = false;
+
+        function hexToRgb(hex) {
+            const value = hex.replace("#", "");
+            const number = Number.parseInt(value, 16);
+            return {
+                r: (number >> 16) & 255,
+                g: (number >> 8) & 255,
+                b: number & 255
+            };
+        }
+
+        function tintRgb(rgb, amount) {
+            const clamp = (channel) => Math.max(0, Math.min(255, channel));
+            return {
+                r: clamp(rgb.r + amount),
+                g: clamp(rgb.g + amount),
+                b: clamp(rgb.b + amount)
+            };
+        }
+
+        function mixRgb(start, end, factor) {
+            return {
+                r: Math.round(start.r + (end.r - start.r) * factor),
+                g: Math.round(start.g + (end.g - start.g) * factor),
+                b: Math.round(start.b + (end.b - start.b) * factor)
+            };
+        }
+
+        function sampleGemTone(tone, base, light, deep, shadow, highlight) {
+            if (tone < 0.18) {
+                return mixRgb(shadow, deep, tone / 0.18);
+            }
+            if (tone < 0.56) {
+                return mixRgb(deep, base, (tone - 0.18) / 0.38);
+            }
+            if (tone < 0.82) {
+                return mixRgb(base, light, (tone - 0.56) / 0.26);
+            }
+            return mixRgb(light, highlight, (tone - 0.82) / 0.18);
+        }
+
+        function getTintedJewelSrc(colorId) {
+            if (jewelImageCache.has(colorId)) return jewelImageCache.get(colorId);
+            if (!jewelTemplateReady) return JEWEL_TEMPLATE_SRC;
+
+            const canvas = document.createElement("canvas");
+            canvas.width = jewelTemplateImage.width;
+            canvas.height = jewelTemplateImage.height;
+            const context = canvas.getContext("2d", { willReadFrequently: true });
+            context.drawImage(jewelTemplateImage, 0, 0);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            const base = hexToRgb(COLOR_PALETTE[colorId].color);
+            const light = tintRgb(base, 50);
+            const deep = tintRgb(base, -46);
+            const shadow = tintRgb(base, -92);
+            const highlight = tintRgb(base, 84);
+
+            for (let index = 0; index < pixels.length; index += 4) {
+                const alpha = pixels[index + 3];
+                if (alpha === 0) continue;
+
+                const tone = pixels[index] / 255;
+                const tinted = sampleGemTone(tone, base, light, deep, shadow, highlight);
+                pixels[index] = tinted.r;
+                pixels[index + 1] = tinted.g;
+                pixels[index + 2] = tinted.b;
+            }
+
+            context.putImageData(imageData, 0, 0);
+            const src = canvas.toDataURL("image/png");
+            jewelImageCache.set(colorId, src);
+            return src;
+        }
+
+        jewelTemplateImage.addEventListener("load", () => {
+            jewelTemplateReady = true;
+            jewelImageCache.clear();
+            render();
+        });
+        jewelTemplateImage.src = JEWEL_TEMPLATE_SRC;
 
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
@@ -730,16 +800,13 @@
 
         function createGem(colorId) {
             const gem = document.createElement("span");
-            const gemCore = document.createElement("span");
+            const gemImage = document.createElement("img");
             gem.className = "gem";
-            gemCore.className = "gem-core";
-            gem.style.setProperty("--gem-main", COLOR_PALETTE[colorId].color);
-            gem.style.setProperty("--gem-light", shadeColor(COLOR_PALETTE[colorId].color, 26));
-            gem.style.setProperty("--gem-deep", shadeColor(COLOR_PALETTE[colorId].color, -24));
-            gem.style.setProperty("--gem-shadow", shadeColor(COLOR_PALETTE[colorId].color, -48));
-            gem.style.setProperty("--gem-outline", shadeColor(COLOR_PALETTE[colorId].color, -34));
-            gem.style.setProperty("--gem-corner", shadeColor(COLOR_PALETTE[colorId].color, -56));
-            gem.appendChild(gemCore);
+            gemImage.className = "gem-image";
+            gemImage.src = getTintedJewelSrc(colorId);
+            gemImage.alt = "";
+            gemImage.draggable = false;
+            gem.appendChild(gemImage);
             gem.setAttribute("aria-hidden", "true");
             return gem;
         }
