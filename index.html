@@ -157,12 +157,12 @@
             box-shadow: none;
         }
 
-        .cell.drop-ready::after {
-            content: "";
-            position: absolute;
-            inset: 3px;
-            border-radius: 8px;
-            border: 2px dashed rgba(44, 129, 93, 0.7);
+        .cell.correct.selected {
+            box-shadow: inset 0 0 0 3px #2d261f;
+        }
+
+        .cell.locked {
+            cursor: default;
         }
 
         .gem {
@@ -344,6 +344,7 @@
 
         const POCKET_SIZE = 24;
         const TOP_POCKET_COUNT = 12;
+        const CLUSTER_STEP_MS = 85;
         const boardElement = document.getElementById("board");
         const topTrayElement = document.getElementById("topTray");
         const bottomTrayElement = document.getElementById("bottomTray");
@@ -357,6 +358,7 @@
         let selected = null;
         let moves = 0;
         let solved = false;
+        let isAnimating = false;
 
         function shuffle(list) {
             const copy = [...list];
@@ -385,6 +387,14 @@
             return message;
         }
 
+        function sleep(ms) {
+            return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        function isLockedCorrectGem(row, col) {
+            return TARGET_MAP[row][col] && boardState[row][col] !== 0 && boardState[row][col] === TARGET_MAP[row][col];
+        }
+
         function isSelected(source, rowOrIndex, col) {
             if (!selected || selected.source !== source) return false;
             if (source === "board") {
@@ -405,7 +415,7 @@
 
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
-            if (!colorId) return [];
+            if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
 
             const stack = [{ row: startRow, col: startCol }];
             const visited = new Set([`${startRow}-${startCol}`]);
@@ -432,6 +442,7 @@
                         nextCol < 0 ||
                         nextCol >= COLS ||
                         visited.has(key) ||
+                        isLockedCorrectGem(nextRow, nextCol) ||
                         boardState[nextRow][nextCol] !== colorId
                     ) {
                         return;
@@ -464,7 +475,7 @@
             }));
         }
 
-        function canPlaceBoardCluster(cells, anchor, targetRow, targetCol) {
+        function canPlaceBoardCluster(cells, anchor, targetRow, targetCol, colorId) {
             const sourceKeys = new Set(cells.map((cell) => toCellKey(cell.row, cell.col)));
             const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
             const destinationKeys = new Set();
@@ -478,6 +489,7 @@
                     cell.col < 0 ||
                     cell.col >= COLS ||
                     !TARGET_MAP[cell.row][cell.col] ||
+                    TARGET_MAP[cell.row][cell.col] !== colorId ||
                     destinationKeys.has(key)
                 ) {
                     return false;
@@ -491,6 +503,60 @@
             }
 
             return true;
+        }
+
+        function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId) {
+            let bestPlacement = null;
+
+            for (let row = 0; row < ROWS; row += 1) {
+                for (let col = 0; col < COLS; col += 1) {
+                    if (!TARGET_MAP[row][col]) continue;
+                    if (row === anchor.row && col === anchor.col) continue;
+                    if (!canPlaceBoardCluster(cells, anchor, row, col, colorId)) continue;
+
+                    const distance = Math.abs(targetRow - row) + Math.abs(targetCol - col);
+                    const tieBreaker = Math.abs(anchor.row - row) + Math.abs(anchor.col - col);
+
+                    if (
+                        !bestPlacement ||
+                        distance < bestPlacement.distance ||
+                        (distance === bestPlacement.distance && tieBreaker < bestPlacement.tieBreaker) ||
+                        (distance === bestPlacement.distance &&
+                            tieBreaker === bestPlacement.tieBreaker &&
+                            (row < bestPlacement.row || (row === bestPlacement.row && col < bestPlacement.col)))
+                    ) {
+                        bestPlacement = { row, col, distance, tieBreaker };
+                    }
+                }
+            }
+
+            return bestPlacement;
+        }
+
+        function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId) {
+            const availableCells = [];
+
+            for (let row = 0; row < ROWS; row += 1) {
+                for (let col = 0; col < COLS; col += 1) {
+                    if (TARGET_MAP[row][col] !== colorId) continue;
+                    if (boardState[row][col] !== 0) continue;
+
+                    availableCells.push({
+                        row,
+                        col,
+                        distance: Math.abs(targetRow - row) + Math.abs(targetCol - col)
+                    });
+                }
+            }
+
+            if (availableCells.length < cells.length) {
+                return null;
+            }
+
+            return availableCells
+                .sort((a, b) => a.distance - b.distance || a.row - b.row || a.col - b.col)
+                .slice(0, cells.length)
+                .map(({ row, col }) => ({ row, col }));
         }
 
         function moveBoardCluster(cells, anchor, targetRow, targetCol) {
@@ -507,6 +573,69 @@
             });
 
             boardState = nextBoardState;
+        }
+
+        async function animateBoardClusterMove(cells, anchor, targetRow, targetCol) {
+            const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
+            const gems = cells.map((cell) => boardState[cell.row][cell.col]);
+
+            isAnimating = true;
+            selected = null;
+            cells.forEach((cell) => {
+                boardState[cell.row][cell.col] = 0;
+            });
+            render();
+
+            for (let index = 0; index < translatedCells.length; index += 1) {
+                const cell = translatedCells[index];
+                boardState[cell.row][cell.col] = gems[index];
+                render();
+                if (index < translatedCells.length - 1) {
+                    await sleep(CLUSTER_STEP_MS);
+                }
+            }
+
+            isAnimating = false;
+        }
+
+        async function animateBoardClusterToTray(cells, traySlots) {
+            isAnimating = true;
+            selected = null;
+
+            for (let index = 0; index < cells.length; index += 1) {
+                const cell = cells[index];
+                const trayIndex = traySlots[index];
+                trayState[trayIndex] = boardState[cell.row][cell.col];
+                boardState[cell.row][cell.col] = 0;
+                render();
+
+                if (index < cells.length - 1) {
+                    await sleep(CLUSTER_STEP_MS);
+                }
+            }
+
+            isAnimating = false;
+        }
+
+        async function animateBoardClusterToBoardSlots(cells, targetCells) {
+            const gems = cells.map((cell) => boardState[cell.row][cell.col]);
+
+            isAnimating = true;
+            selected = null;
+
+            for (let index = 0; index < cells.length; index += 1) {
+                const sourceCell = cells[index];
+                const targetCell = targetCells[index];
+                boardState[sourceCell.row][sourceCell.col] = 0;
+                boardState[targetCell.row][targetCell.col] = gems[index];
+                render();
+
+                if (index < cells.length - 1) {
+                    await sleep(CLUSTER_STEP_MS);
+                }
+            }
+
+            isAnimating = false;
         }
 
         function countCorrectCells() {
@@ -563,23 +692,16 @@
                     button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
 
                     if (gem === 0) button.classList.add("empty-target");
-                    if (gem && gem === target) button.classList.add("correct");
+                    if (gem && gem === target) {
+                        button.classList.add("correct", "locked");
+                        button.disabled = true;
+                    }
                     if (isSelected("board", row, col)) button.classList.add("selected");
-                    if (selected?.source === "tray" && gem === 0) {
-                        button.classList.add("drop-ready");
-                    }
-
-                    if (
-                        selected?.source === "board" &&
-                        gem === 0 &&
-                        canPlaceBoardCluster(selected.cells, selected.anchor, row, col)
-                    ) {
-                        button.classList.add("drop-ready");
-                    }
-
                     if (gem) button.appendChild(createGem(gem));
 
-                    button.addEventListener("click", () => handleBoardClick(row, col));
+                    if (!button.disabled) {
+                        button.addEventListener("click", () => handleBoardClick(row, col));
+                    }
                     boardElement.appendChild(button);
                 }
             }
@@ -598,7 +720,6 @@
 
                 if (!gem) button.classList.add("empty-target");
                 if (isSelected("tray", index)) button.classList.add("selected");
-                if (selected && !gem) button.classList.add("drop-ready");
                 if (gem) button.appendChild(createGem(gem));
 
                 button.addEventListener("click", () => handleTrayClick(index));
@@ -663,8 +784,9 @@
             render();
         }
 
-        function handleBoardClick(row, col) {
-            if (solved) return;
+        async function handleBoardClick(row, col) {
+            if (solved || isAnimating) return;
+            if (isLockedCorrectGem(row, col)) return;
 
             const gem = boardState[row][col];
 
@@ -690,14 +812,34 @@
                         return;
                     }
 
-                    if (!gem && canPlaceBoardCluster(selected.cells, selected.anchor, row, col)) {
-                        moveBoardCluster(selected.cells, selected.anchor, row, col);
+                    if (!gem && canPlaceBoardCluster(selected.cells, selected.anchor, row, col, selected.color)) {
+                        await animateBoardClusterMove(selected.cells, selected.anchor, row, col);
                         commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.");
                         return;
                     }
 
                     if (!gem) {
-                        setStatus("이 위치에는 묶음 모양이 그대로 들어가지 않아요. 같은 모양이 비는 자리를 눌러 주세요.");
+                        const nearestPlacement = findNearestBoardClusterPlacement(
+                            selected.cells,
+                            selected.anchor,
+                            row,
+                            col,
+                            selected.color
+                        );
+                        if (nearestPlacement) {
+                            await animateBoardClusterMove(selected.cells, selected.anchor, nearestPlacement.row, nearestPlacement.col);
+                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.");
+                            return;
+                        }
+
+                        const nearestSlots = findNearestColorSlotPlacement(selected.cells, row, col, selected.color);
+                        if (nearestSlots) {
+                            await animateBoardClusterToBoardSlots(selected.cells, nearestSlots);
+                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.");
+                            return;
+                        }
+
+                        setStatus("이 위치 근처에도 묶음이 들어갈 자리가 없어요.");
                         return;
                     }
 
@@ -720,8 +862,8 @@
             commitMove("포켓의 보석을 빈 칸으로 옮겼어요.");
         }
 
-        function handleTrayClick(index) {
-            if (solved) return;
+        async function handleTrayClick(index) {
+            if (solved || isAnimating) return;
 
             const gem = trayState[index];
 
@@ -761,10 +903,7 @@
                 }
 
                 const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
-                selected.cells.forEach((cell, clusterIndex) => {
-                    trayState[orderedSlots[clusterIndex]] = boardState[cell.row][cell.col];
-                    boardState[cell.row][cell.col] = 0;
-                });
+                await animateBoardClusterToTray(selected.cells, orderedSlots);
                 commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`);
                 return;
             }
