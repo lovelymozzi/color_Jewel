@@ -999,8 +999,13 @@
                     return;
                 }
 
-                swapBoardToBoard(selected.cells[0], { row, col });
-                commitMove("보드 안에서 보석 위치를 바꿨어요.");
+                if (gem) {
+                    selectBoardCluster(row, col, gem);
+                    return;
+                }
+
+                moveBoardCluster(selected.cells, selected.anchor, row, col);
+                commitMove("보드의 보석을 빈 칸으로 옮겼어요.");
                 return;
             }
 
