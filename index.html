@@ -230,6 +230,34 @@
             z-index: 5;
         }
 
+        .sparkle-burst {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 6;
+        }
+
+        .sparkle-particle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: var(--particle-size, 16%);
+            aspect-ratio: 1;
+            clip-path: var(--socket-shape);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.14)),
+                radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), transparent 58%),
+                var(--particle-tint, rgba(255, 232, 165, 0.92));
+            box-shadow:
+                0 0 10px rgba(255, 247, 194, 0.65),
+                0 0 18px rgba(255, 255, 255, 0.28);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.18) rotate(var(--particle-rotation, 0deg));
+            animation: diamond-particle-burst 0.64s cubic-bezier(0.18, 0.8, 0.24, 1) both;
+            animation-delay: calc(var(--particle-delay, 0ms) - var(--sparkle-elapsed, 0ms));
+        }
+
         .gem.sparkle {
             animation: correct-gem-pulse 0.64s ease-out both;
             animation-delay: calc(var(--sparkle-elapsed, 0ms) * -1);
@@ -347,6 +375,28 @@
 
             100% {
                 transform: translateX(180%) rotate(18deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes diamond-particle-burst {
+            0% {
+                transform: translate(-50%, -50%) scale(0.18) rotate(var(--particle-rotation, 0deg));
+                opacity: 0;
+            }
+
+            24% {
+                opacity: 1;
+            }
+
+            100% {
+                transform:
+                    translate(
+                        calc(-50% + var(--particle-dx, 0px)),
+                        calc(-50% + var(--particle-dy, 0px))
+                    )
+                    scale(1)
+                    rotate(calc(var(--particle-rotation, 0deg) + 28deg));
                 opacity: 0;
             }
         }
@@ -530,6 +580,14 @@
         let sparkleCells = new Map();
         let sparkleCleanupTimer = null;
         const MATCH_SPARKLE_MS = 640;
+        const DIAMOND_PARTICLE_PRESETS = [
+            { dx: -18, dy: -16, size: 16, rotation: -24, delay: 0 },
+            { dx: 20, dy: -14, size: 14, rotation: 18, delay: 30 },
+            { dx: -14, dy: 18, size: 12, rotation: -12, delay: 54 },
+            { dx: 16, dy: 20, size: 13, rotation: 26, delay: 76 },
+            { dx: 0, dy: -24, size: 11, rotation: 10, delay: 92 },
+            { dx: 0, dy: 24, size: 10, rotation: -18, delay: 112 }
+        ];
 
         function shuffle(list) {
             const copy = [...list];
@@ -1648,6 +1706,27 @@
             return gem;
         }
 
+        function createSparkleBurst(colorId, sparkleElapsedMs) {
+            const burst = document.createElement("span");
+            burst.className = "sparkle-burst";
+            burst.style.setProperty("--sparkle-elapsed", `${Math.max(0, Math.min(MATCH_SPARKLE_MS, sparkleElapsedMs))}ms`);
+
+            DIAMOND_PARTICLE_PRESETS.forEach((preset) => {
+                const particle = document.createElement("span");
+                particle.className = "sparkle-particle";
+                particle.style.setProperty("--particle-dx", `${preset.dx}px`);
+                particle.style.setProperty("--particle-dy", `${preset.dy}px`);
+                particle.style.setProperty("--particle-size", `${preset.size}%`);
+                particle.style.setProperty("--particle-rotation", `${preset.rotation}deg`);
+                particle.style.setProperty("--particle-delay", `${preset.delay}ms`);
+                particle.style.setProperty("--particle-tint", shadeColor(COLOR_PALETTE[colorId].color, 34));
+                burst.appendChild(particle);
+            });
+
+            burst.setAttribute("aria-hidden", "true");
+            return burst;
+        }
+
         function renderBoard() {
             boardElement.innerHTML = "";
             const now = performance.now();
@@ -1694,6 +1773,7 @@
                     }
                     if (shouldSparkle) button.classList.add("sparkle");
                     if (isSelected("board", row, col)) button.classList.add("selected");
+                    if (shouldSparkle) button.appendChild(createSparkleBurst(gem, sparkleElapsedMs));
                     if (gem) button.appendChild(createGem(gem, sparkleElapsedMs));
 
                     if (!button.disabled) {
