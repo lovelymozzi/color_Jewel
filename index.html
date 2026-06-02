@@ -112,6 +112,18 @@
             gap: 14px;
         }
 
+        .status-bar {
+            min-height: 48px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 251, 245, 0.88);
+            border: 1px solid rgba(76, 56, 35, 0.12);
+            box-shadow: 0 12px 30px rgba(83, 54, 27, 0.08);
+            color: rgba(63, 49, 39, 0.82);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+
         .board-wrap {
             display: flex;
             justify-content: center;
@@ -373,6 +385,8 @@
                     </div>
                 </div>
             </div>
+
+            <div class="status-bar" id="statusMessage" aria-live="polite"></div>
         </section>
     </main>
 
@@ -412,9 +426,11 @@
         const POCKET_SIZE = 24;
         const TOP_POCKET_COUNT = 12;
         const CLUSTER_STEP_MS = 85;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const boardElement = document.getElementById("board");
         const topTrayElement = document.getElementById("topTray");
         const bottomTrayElement = document.getElementById("bottomTray");
+        const statusMessageElement = document.getElementById("statusMessage");
 
         const ROWS = TARGET_MAP.length;
         const COLS = TARGET_MAP[0].length;
@@ -426,6 +442,8 @@
         let moves = 0;
         let solved = false;
         let isAnimating = false;
+        let audioContext = null;
+        let audioNoiseBuffer = null;
 
         function shuffle(list) {
             const copy = [...list];
@@ -451,6 +469,9 @@
         }
 
         function setStatus(message) {
+            if (statusMessageElement) {
+                statusMessageElement.textContent = message;
+            }
             return message;
         }
 
@@ -567,6 +588,179 @@
         });
         jewelTemplateImage.src = JEWEL_TEMPLATE_SRC;
 
+        function getAudioContext() {
+            if (!AudioContextClass) return null;
+            if (!audioContext) {
+                audioContext = new AudioContextClass();
+            }
+            return audioContext;
+        }
+
+        function getNoiseBuffer(context) {
+            if (audioNoiseBuffer) return audioNoiseBuffer;
+
+            const length = Math.floor(context.sampleRate * 0.12);
+            const buffer = context.createBuffer(1, length, context.sampleRate);
+            const channel = buffer.getChannelData(0);
+
+            for (let index = 0; index < length; index += 1) {
+                channel[index] = Math.random() * 2 - 1;
+            }
+
+            audioNoiseBuffer = buffer;
+            return audioNoiseBuffer;
+        }
+
+        async function ensureAudioContext() {
+            const context = getAudioContext();
+            if (!context) return null;
+
+            if (context.state === "suspended") {
+                try {
+                    await context.resume();
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            return context;
+        }
+
+        function playTone(context, options) {
+            const {
+                startTime = context.currentTime,
+                type = "sine",
+                startFrequency,
+                endFrequency = startFrequency,
+                duration = 0.1,
+                volume = 0.03,
+                attack = 0.003,
+                filterType = "lowpass",
+                filterFrequency = 1800,
+                filterQ = 0.9
+            } = options;
+            const oscillator = context.createOscillator();
+            const filter = context.createBiquadFilter();
+            const gain = context.createGain();
+            const endTime = startTime + duration;
+
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(startFrequency, startTime);
+            oscillator.frequency.exponentialRampToValueAtTime(Math.max(endFrequency, 1), endTime);
+
+            filter.type = filterType;
+            filter.frequency.setValueAtTime(filterFrequency, startTime);
+            filter.Q.setValueAtTime(filterQ, startTime);
+
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(volume, startTime + attack);
+            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+            oscillator.connect(filter);
+            filter.connect(gain);
+            gain.connect(context.destination);
+
+            oscillator.start(startTime);
+            oscillator.stop(endTime + 0.02);
+        }
+
+        function playNoiseBurst(context, options) {
+            const {
+                startTime = context.currentTime,
+                duration = 0.05,
+                volume = 0.012,
+                filterType = "bandpass",
+                filterFrequency = 1800,
+                filterQ = 1.2
+            } = options;
+            const source = context.createBufferSource();
+            const filter = context.createBiquadFilter();
+            const gain = context.createGain();
+            const endTime = startTime + duration;
+
+            source.buffer = getNoiseBuffer(context);
+
+            filter.type = filterType;
+            filter.frequency.setValueAtTime(filterFrequency, startTime);
+            filter.Q.setValueAtTime(filterQ, startTime);
+
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.004);
+            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(context.destination);
+
+            source.start(startTime);
+            source.stop(endTime + 0.01);
+        }
+
+        async function playPickupSound(clusterSize = 1) {
+            const context = await ensureAudioContext();
+            if (!context) return;
+
+            const now = context.currentTime;
+            const accent = Math.min(clusterSize, 4);
+
+            playTone(context, {
+                startTime: now,
+                type: "triangle",
+                startFrequency: 760 + accent * 24,
+                endFrequency: 1180 + accent * 30,
+                duration: 0.11,
+                volume: 0.028 + accent * 0.002,
+                filterFrequency: 2400,
+                filterQ: 0.8
+            });
+            playTone(context, {
+                startTime: now + 0.018,
+                type: "sine",
+                startFrequency: 1440 + accent * 28,
+                endFrequency: 1760 + accent * 36,
+                duration: 0.08,
+                volume: 0.011 + accent * 0.001,
+                filterFrequency: 3200,
+                filterQ: 0.6
+            });
+        }
+
+        async function playPlaceSound(clusterSize = 1) {
+            const context = await ensureAudioContext();
+            if (!context) return;
+
+            const now = context.currentTime;
+            const accent = Math.min(clusterSize, 4);
+
+            playNoiseBurst(context, {
+                startTime: now,
+                duration: 0.045,
+                volume: 0.011 + accent * 0.001,
+                filterFrequency: 1600,
+                filterQ: 1.4
+            });
+            playTone(context, {
+                startTime: now,
+                type: "triangle",
+                startFrequency: 640 + accent * 18,
+                endFrequency: 430 + accent * 10,
+                duration: 0.1,
+                volume: 0.026 + accent * 0.002,
+                filterFrequency: 1700,
+                filterQ: 1.1
+            });
+            playTone(context, {
+                startTime: now + 0.01,
+                type: "sine",
+                startFrequency: 520 + accent * 12,
+                endFrequency: 610 + accent * 16,
+                duration: 0.09,
+                volume: 0.009 + accent * 0.001,
+                filterFrequency: 2200,
+                filterQ: 0.7
+            });
+        }
+
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
             if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
@@ -657,6 +851,18 @@
             }
 
             return true;
+        }
+
+        function isMatchingTargetCell(row, col, colorId) {
+            return Boolean(TARGET_MAP[row][col]) && TARGET_MAP[row][col] === colorId;
+        }
+
+        function getColorMismatchMessage(colorId, row, col) {
+            const targetColorId = TARGET_MAP[row][col];
+            if (!targetColorId) {
+                return "이 칸에는 보석을 놓을 수 없어요.";
+            }
+            return `${COLOR_PALETTE[colorId].name} 보석은 ${COLOR_PALETTE[targetColorId].name} 칸에 둘 수 없어요. 같은 색 칸으로 옮겨 주세요.`;
         }
 
         function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId) {
@@ -937,11 +1143,21 @@
             [boardState[row][col], trayState[index]] = [trayState[index], boardState[row][col]];
         }
 
-        function commitMove(message) {
+        function getSelectedAnchorCell() {
+            if (!selected || selected.source !== "board") return null;
+            return (
+                selected.cells.find((cell) => cell.row === selected.anchor.row && cell.col === selected.anchor.col) ||
+                selected.cells[0] ||
+                null
+            );
+        }
+
+        function commitMove(message, clusterSize = 1) {
             moves += 1;
             selected = null;
             const justSolved = checkSolved();
             setStatus(justSolved ? "정답 배경과 모든 보석이 맞아떨어졌어요." : message);
+            void playPlaceSound(clusterSize);
             render();
         }
 
@@ -953,6 +1169,7 @@
                     ? `인접한 ${COLOR_PALETTE[gem].name} 보석 ${cluster.length}개를 한 번에 잡았어요. 보드의 빈 공간이나 하단 포켓으로 함께 옮길 수 있어요.`
                     : "보드의 보석을 선택했어요. 다른 칸이나 하단 포켓을 눌러 이동하세요."
             );
+            void playPickupSound(cluster.length);
             render();
         }
 
@@ -986,7 +1203,7 @@
 
                     if (!gem && canPlaceBoardCluster(selected.cells, selected.anchor, row, col, selected.color)) {
                         await animateBoardClusterMove(selected.cells, selected.anchor, row, col);
-                        commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.");
+                        commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.", selected.cells.length);
                         return;
                     }
 
@@ -1000,14 +1217,25 @@
                         );
                         if (nearestPlacement) {
                             await animateBoardClusterMove(selected.cells, selected.anchor, nearestPlacement.row, nearestPlacement.col);
-                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.");
+                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.", selected.cells.length);
                             return;
                         }
 
                         const nearestSlots = findNearestColorSlotPlacement(selected.cells, row, col, selected.color);
                         if (nearestSlots) {
                             await animateBoardClusterToBoardSlots(selected.cells, nearestSlots);
-                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.");
+                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.", selected.cells.length);
+                            return;
+                        }
+
+                        const anchorCell = getSelectedAnchorCell();
+                        if (anchorCell) {
+                            if (!isMatchingTargetCell(row, col, selected.color)) {
+                                setStatus(getColorMismatchMessage(selected.color, row, col));
+                                return;
+                            }
+                            moveBoardCluster([anchorCell], anchorCell, row, col);
+                            commitMove("묶음에서 보석 1개를 꺼내 빈 칸으로 옮겼어요.");
                             return;
                         }
 
@@ -1024,13 +1252,24 @@
                     return;
                 }
 
+                if (!isMatchingTargetCell(row, col, selected.color)) {
+                    setStatus(getColorMismatchMessage(selected.color, row, col));
+                    return;
+                }
+
                 moveBoardCluster(selected.cells, selected.anchor, row, col);
-                commitMove("보드의 보석을 빈 칸으로 옮겼어요.");
+                commitMove("보드의 보석을 빈 칸으로 옮겼어요.", selected.cells.length);
                 return;
             }
 
             if (gem) {
                 selectBoardCluster(row, col, gem);
+                return;
+            }
+
+            const trayGem = trayState[selected.index];
+            if (!isMatchingTargetCell(row, col, trayGem)) {
+                setStatus(getColorMismatchMessage(trayGem, row, col));
                 return;
             }
 
@@ -1051,6 +1290,7 @@
 
                 selected = { source: "tray", index };
                 setStatus("포켓의 보석을 선택했어요. 보드나 다른 포켓으로 옮길 수 있어요.");
+                void playPickupSound();
                 render();
                 return;
             }
@@ -1062,7 +1302,7 @@
 
             if (selected.source === "tray") {
                 swapTrayToTray(selected.index, index);
-                commitMove("포켓 안에서 보석 위치를 바꿨어요.");
+                commitMove("");
                 return;
             }
 
@@ -1074,24 +1314,32 @@
 
                 const emptyTrayIndices = getEmptyTrayIndices();
                 if (emptyTrayIndices.length < selected.cells.length) {
+                    const anchorCell = getSelectedAnchorCell();
+                    if (anchorCell) {
+                        moveBoardToTray(anchorCell.row, anchorCell.col, index);
+                        commitMove("묶음에서 보석 1개를 꺼내 포켓으로 옮겼어요.");
+                        return;
+                    }
+
                     setStatus(`빈 포켓이 ${selected.cells.length}칸 이상 있어야 이 묶음을 옮길 수 있어요.`);
                     return;
                 }
 
                 const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
                 await animateBoardClusterToTray(selected.cells, orderedSlots);
-                commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`);
+                commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`, selected.cells.length);
                 return;
             }
 
             if (!gem) {
                 moveBoardToTray(selected.cells[0].row, selected.cells[0].col, index);
-                commitMove("보드의 보석을 포켓으로 잠시 옮겼어요.");
+                commitMove("보드의 보석을 포켓으로 잠시 옮겼어요.", selected.cells.length);
                 return;
             }
 
             selected = { source: "tray", index };
             setStatus("포켓의 보석을 선택했어요. 빈 칸으로만 옮길 수 있어요.");
+            void playPickupSound();
             render();
         }
 
