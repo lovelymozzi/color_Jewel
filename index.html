@@ -1334,12 +1334,12 @@
             boardState = nextBoardState;
         }
 
-        async function animateBoardClusterMove(cells, anchor, targetRow, targetCol) {
+        async function animateBoardClusterMove(cells, anchor, targetRow, targetCol, previewSelection = null) {
             const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
             const gems = cells.map((cell) => boardState[cell.row][cell.col]);
 
             isAnimating = true;
-            selected = null;
+            selected = normalizeSelection(previewSelection, true);
             cells.forEach((cell) => {
                 boardState[cell.row][cell.col] = 0;
             });
@@ -1358,9 +1358,9 @@
             isAnimating = false;
         }
 
-        async function animateBoardClusterToTray(cells, traySlots) {
+        async function animateBoardClusterToTray(cells, traySlots, previewSelection = null) {
             isAnimating = true;
-            selected = null;
+            selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < cells.length; index += 1) {
                 const cell = cells[index];
@@ -1378,11 +1378,11 @@
             isAnimating = false;
         }
 
-        async function animateBoardClusterToBoardSlots(cells, targetCells) {
+        async function animateBoardClusterToBoardSlots(cells, targetCells, previewSelection = null) {
             const gems = cells.map((cell) => boardState[cell.row][cell.col]);
 
             isAnimating = true;
-            selected = null;
+            selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < cells.length; index += 1) {
                 const sourceCell = cells[index];
@@ -1400,11 +1400,11 @@
             isAnimating = false;
         }
 
-        async function animateTrayClusterToBoardSlots(indices, targetCells) {
+        async function animateTrayClusterToBoardSlots(indices, targetCells, previewSelection = null) {
             const gems = indices.map((index) => trayState[index]);
 
             isAnimating = true;
-            selected = null;
+            selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < indices.length; index += 1) {
                 const sourceIndex = indices[index];
@@ -1422,11 +1422,11 @@
             isAnimating = false;
         }
 
-        async function animateTrayClusterMove(indices, targetIndices) {
+        async function animateTrayClusterMove(indices, targetIndices, previewSelection = null) {
             const gems = indices.map((index) => trayState[index]);
 
             isAnimating = true;
-            selected = null;
+            selected = normalizeSelection(previewSelection, true);
             indices.forEach((index) => {
                 trayState[index] = 0;
             });
@@ -1611,9 +1611,68 @@
             );
         }
 
+        function createBoardSelection(cells, anchor, color = null, includeEmpty = false) {
+            const normalizedCells = [...new Map(cells.map((cell) => [toCellKey(cell.row, cell.col), cell])).values()]
+                .filter((cell) => (includeEmpty || boardState[cell.row][cell.col] !== 0) && !isLockedCorrectGem(cell.row, cell.col))
+                .sort((left, right) => left.row - right.row || left.col - right.col);
+
+            if (!normalizedCells.length) return null;
+
+            const nextAnchor =
+                anchor &&
+                normalizedCells.some((cell) => cell.row === anchor.row && cell.col === anchor.col)
+                    ? { row: anchor.row, col: anchor.col }
+                    : { row: normalizedCells[0].row, col: normalizedCells[0].col };
+
+            return {
+                source: "board",
+                cells: normalizedCells,
+                color: color || boardState[nextAnchor.row][nextAnchor.col],
+                anchor: nextAnchor
+            };
+        }
+
         function getSelectedTrayIndices() {
             if (!selected || selected.source !== "tray") return [];
             return selected.indices || [];
+        }
+
+        function createTraySelection(indices, anchorIndex = null, color = null, includeEmpty = false) {
+            const normalizedIndices = [...new Set(indices)]
+                .filter((index) => includeEmpty || trayState[index] !== 0)
+                .sort((left, right) => left - right);
+
+            if (!normalizedIndices.length) return null;
+
+            const nextAnchor = anchorIndex != null && normalizedIndices.includes(anchorIndex) ? anchorIndex : normalizedIndices[0];
+
+            return {
+                source: "tray",
+                indices: normalizedIndices,
+                color: color || trayState[nextAnchor],
+                anchor: nextAnchor
+            };
+        }
+
+        function mapBoardAnchor(cells, targetCells, anchor) {
+            if (!targetCells.length) return null;
+            const anchorIndex = cells.findIndex((cell) => cell.row === anchor?.row && cell.col === anchor?.col);
+            const mappedCell = targetCells[anchorIndex >= 0 ? anchorIndex : 0];
+            return mappedCell ? { row: mappedCell.row, col: mappedCell.col } : null;
+        }
+
+        function mapTrayAnchor(indices, targetIndices, anchorIndex) {
+            if (!targetIndices.length) return null;
+            const mappedIndex = indices.indexOf(anchorIndex);
+            return targetIndices[mappedIndex >= 0 ? mappedIndex : 0] ?? null;
+        }
+
+        function normalizeSelection(nextSelection, includeEmpty = false) {
+            if (!nextSelection) return null;
+            if (nextSelection.source === "board") {
+                return createBoardSelection(nextSelection.cells, nextSelection.anchor, nextSelection.color, includeEmpty);
+            }
+            return createTraySelection(nextSelection.indices, nextSelection.anchor, nextSelection.color, includeEmpty);
         }
 
         function findTrayClusterPlacement(indices, targetIndex) {
@@ -1636,9 +1695,9 @@
                 .map(({ index }) => index);
         }
 
-        function commitMove(message, clusterSize = 1, shouldPlaySound = true) {
+        function commitMove(message, clusterSize = 1, shouldPlaySound = true, nextSelection = null) {
             moves += 1;
-            selected = null;
+            selected = normalizeSelection(nextSelection);
             const justSolved = checkSolved();
             setStatus(justSolved ? "정답 배경과 모든 보석이 맞아떨어졌어요." : message);
             if (shouldPlaySound) {
@@ -1687,71 +1746,138 @@
                 return;
             }
 
+            const activeSelection = selected;
+
             if (isSelected("board", row, col)) {
                 clearSelection("선택을 해제했어요.");
                 return;
             }
 
-            if (selected.source === "board") {
-                if (selected.cells.length > 1) {
+            if (activeSelection.source === "board") {
+                if (activeSelection.cells.length > 1) {
                     if (gem) {
                         selectBoardCluster(row, col, gem);
                         return;
                     }
 
-                    if (!gem && canPlaceBoardCluster(selected.cells, selected.anchor, row, col, selected.color)) {
-                        await animateBoardClusterMove(selected.cells, selected.anchor, row, col);
-                        commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.", selected.cells.length, false);
+                    if (!gem && canPlaceBoardCluster(activeSelection.cells, activeSelection.anchor, row, col, activeSelection.color)) {
+                        const translatedCells = getTranslatedCells(activeSelection.cells, activeSelection.anchor, row, col);
+                        const nextSelection = createBoardSelection(translatedCells, { row, col }, activeSelection.color, true);
+                        await animateBoardClusterMove(activeSelection.cells, activeSelection.anchor, row, col, nextSelection);
+                        commitMove(
+                            "인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.",
+                            activeSelection.cells.length,
+                            false,
+                            nextSelection
+                        );
                         return;
                     }
 
                     if (!gem) {
                         const nearestPlacement = findNearestBoardClusterPlacement(
-                            selected.cells,
-                            selected.anchor,
+                            activeSelection.cells,
+                            activeSelection.anchor,
                             row,
                             col,
-                            selected.color
+                            activeSelection.color
                         );
                         if (nearestPlacement) {
-                            await animateBoardClusterMove(selected.cells, selected.anchor, nearestPlacement.row, nearestPlacement.col);
-                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.", selected.cells.length, false);
-                            return;
-                        }
-
-                        const nearestSlots = findNearestColorSlotPlacement(selected.cells, row, col, selected.color);
-                        if (nearestSlots) {
-                            await animateBoardClusterToBoardSlots(selected.cells, nearestSlots);
-                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.", selected.cells.length, false);
-                            return;
-                        }
-
-                        const partialSlots = findPartialColorSlotPlacement(
-                            selected.cells.length,
-                            row,
-                            col,
-                            selected.color
-                        );
-                        if (partialSlots) {
-                            const prioritizedCells = prioritizeBoardCells(selected.cells, selected.anchor);
-                            const movableCells = prioritizedCells.slice(0, partialSlots.length);
-                            await animateBoardClusterToBoardSlots(movableCells, partialSlots);
+                            const translatedCells = getTranslatedCells(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                nearestPlacement.row,
+                                nearestPlacement.col
+                            );
+                            const nextSelection = createBoardSelection(
+                                translatedCells,
+                                { row: nearestPlacement.row, col: nearestPlacement.col },
+                                activeSelection.color,
+                                true
+                            );
+                            await animateBoardClusterMove(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                nearestPlacement.row,
+                                nearestPlacement.col,
+                                nextSelection
+                            );
                             commitMove(
-                                `묶음에서 보석 ${movableCells.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
-                                movableCells.length,
-                                false
+                                "가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.",
+                                activeSelection.cells.length,
+                                false,
+                                nextSelection
                             );
                             return;
                         }
 
-                        const anchorCell = getSelectedAnchorCell();
+                        const nearestSlots = findNearestColorSlotPlacement(activeSelection.cells, row, col, activeSelection.color);
+                        if (nearestSlots) {
+                            const nextSelection = createBoardSelection(
+                                nearestSlots,
+                                mapBoardAnchor(activeSelection.cells, nearestSlots, activeSelection.anchor),
+                                activeSelection.color,
+                                true
+                            );
+                            await animateBoardClusterToBoardSlots(activeSelection.cells, nearestSlots, nextSelection);
+                            commitMove(
+                                "같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.",
+                                activeSelection.cells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
+                        const partialSlots = findPartialColorSlotPlacement(
+                            activeSelection.cells.length,
+                            row,
+                            col,
+                            activeSelection.color
+                        );
+                        if (partialSlots) {
+                            const prioritizedCells = prioritizeBoardCells(activeSelection.cells, activeSelection.anchor);
+                            const movableCells = prioritizedCells.slice(0, partialSlots.length);
+                            const movedCellKeys = new Set(movableCells.map((cell) => toCellKey(cell.row, cell.col)));
+                            const remainingCells = activeSelection.cells.filter(
+                                (cell) => !movedCellKeys.has(toCellKey(cell.row, cell.col))
+                            );
+                            const nextSelection = createBoardSelection(
+                                remainingCells,
+                                activeSelection.anchor,
+                                activeSelection.color
+                            );
+                            await animateBoardClusterToBoardSlots(movableCells, partialSlots, nextSelection);
+                            commitMove(
+                                `묶음에서 보석 ${movableCells.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
+                                movableCells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
+                        const anchorCell =
+                            activeSelection.cells.find(
+                                (cell) => cell.row === activeSelection.anchor.row && cell.col === activeSelection.anchor.col
+                            ) || activeSelection.cells[0] || null;
                         if (anchorCell) {
-                            if (!isMatchingTargetCell(row, col, selected.color)) {
-                                setStatus(getColorMismatchMessage(selected.color, row, col));
+                            if (!isMatchingTargetCell(row, col, activeSelection.color)) {
+                                setStatus(getColorMismatchMessage(activeSelection.color, row, col));
                                 return;
                             }
                             moveBoardCluster([anchorCell], anchorCell, row, col);
-                            commitMove("묶음에서 보석 1개를 꺼내 빈 칸으로 옮겼어요.");
+                            commitMove(
+                                "묶음에서 보석 1개를 꺼내 빈 칸으로 옮겼어요.",
+                                1,
+                                true,
+                                createBoardSelection(
+                                    activeSelection.cells.filter(
+                                        (cell) => cell.row !== anchorCell.row || cell.col !== anchorCell.col
+                                    ),
+                                    activeSelection.anchor,
+                                    activeSelection.color
+                                )
+                            );
                             return;
                         }
 
@@ -1768,13 +1894,20 @@
                     return;
                 }
 
-                if (!isMatchingTargetCell(row, col, selected.color)) {
-                    setStatus(getColorMismatchMessage(selected.color, row, col));
+                if (!isMatchingTargetCell(row, col, activeSelection.color)) {
+                    setStatus(getColorMismatchMessage(activeSelection.color, row, col));
                     return;
                 }
 
-                moveBoardCluster(selected.cells, selected.anchor, row, col);
-                commitMove("보드의 보석을 빈 칸으로 옮겼어요.", selected.cells.length);
+                const translatedCells = getTranslatedCells(activeSelection.cells, activeSelection.anchor, row, col);
+                moveBoardCluster(activeSelection.cells, activeSelection.anchor, row, col);
+                const nextSelection = createBoardSelection(translatedCells, { row, col }, activeSelection.color);
+                commitMove(
+                    "보드의 보석을 빈 칸으로 옮겼어요.",
+                    activeSelection.cells.length,
+                    true,
+                    nextSelection
+                );
                 return;
             }
 
@@ -1783,7 +1916,7 @@
                 return;
             }
 
-            const trayIndices = getSelectedTrayIndices();
+            const trayIndices = activeSelection.indices || [];
             const trayGem = trayState[trayIndices[0]];
             if (!isMatchingTargetCell(row, col, trayGem)) {
                 setStatus(getColorMismatchMessage(trayGem, row, col));
@@ -1793,20 +1926,39 @@
             if (trayIndices.length > 1) {
                 const nearestSlots = findNearestColorSlotPlacement(trayIndices, row, col, trayGem);
                 if (nearestSlots) {
-                    await animateTrayClusterToBoardSlots(trayIndices, nearestSlots);
-                    commitMove("포켓의 같은 색 보석 묶음을 보드에 옮겼어요.", trayIndices.length, false);
+                    const nextSelection = createBoardSelection(
+                        nearestSlots,
+                        mapBoardAnchor(
+                            trayIndices.map((index) => ({ row: 0, col: index })),
+                            nearestSlots,
+                            { row: 0, col: activeSelection.anchor }
+                        ),
+                        trayGem,
+                        true
+                    );
+                    await animateTrayClusterToBoardSlots(trayIndices, nearestSlots, nextSelection);
+                    commitMove(
+                        "포켓의 같은 색 보석 묶음을 보드에 옮겼어요.",
+                        trayIndices.length,
+                        false,
+                        nextSelection
+                    );
                     return;
                 }
 
                 const partialSlots = findPartialColorSlotPlacement(trayIndices.length, row, col, trayGem);
                 if (partialSlots) {
-                    const prioritizedTrayIndices = prioritizeTrayIndices(trayIndices, selected.anchor);
+                    const prioritizedTrayIndices = prioritizeTrayIndices(trayIndices, activeSelection.anchor);
                     const movableTrayIndices = prioritizedTrayIndices.slice(0, partialSlots.length);
-                    await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots);
+                    const movedTrayIndexSet = new Set(movableTrayIndices);
+                    const remainingTrayIndices = trayIndices.filter((index) => !movedTrayIndexSet.has(index));
+                    const nextSelection = createTraySelection(remainingTrayIndices, activeSelection.anchor, trayGem);
+                    await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots, nextSelection);
                     commitMove(
                         `포켓의 보석 ${movableTrayIndices.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
                         movableTrayIndices.length,
-                        false
+                        false,
+                        nextSelection
                     );
                     return;
                 }
@@ -1814,7 +1966,12 @@
 
             moveTrayToBoard(trayIndices[0], row, col);
             void playPlaceSound();
-            commitMove("포켓의 보석을 빈 칸으로 옮겼어요.", 1, false);
+            commitMove(
+                "포켓의 보석을 빈 칸으로 옮겼어요.",
+                1,
+                false,
+                createBoardSelection([{ row, col }], { row, col }, trayGem)
+            );
         }
 
         async function handleTrayClick(index) {
@@ -1832,13 +1989,15 @@
                 return;
             }
 
+            const activeSelection = selected;
+
             if (isSelected("tray", index)) {
                 clearSelection("선택을 해제했어요.");
                 return;
             }
 
-            if (selected.source === "tray") {
-                const trayIndices = getSelectedTrayIndices();
+            if (activeSelection.source === "tray") {
+                const trayIndices = activeSelection.indices || [];
 
                 if (gem) {
                     selectTrayCluster(index, gem);
@@ -1848,7 +2007,7 @@
                 if (trayIndices.length === 1) {
                     swapTrayToTray(trayIndices[0], index);
                     void playPlaceSound();
-                    commitMove("", 1, false);
+                    commitMove("", 1, false, createTraySelection([index], index, activeSelection.color));
                     return;
                 }
 
@@ -1857,40 +2016,84 @@
                     return;
                 }
 
-                await animateTrayClusterMove(trayIndices, targetSlots);
-                commitMove("", trayIndices.length, false);
+                const nextSelection = createTraySelection(
+                    targetSlots,
+                    mapTrayAnchor(trayIndices, targetSlots, activeSelection.anchor),
+                    activeSelection.color,
+                    true
+                );
+                await animateTrayClusterMove(trayIndices, targetSlots, nextSelection);
+                commitMove(
+                    "",
+                    trayIndices.length,
+                    false,
+                    nextSelection
+                );
                 return;
             }
 
-            if (selected.cells.length > 1) {
+            if (activeSelection.cells.length > 1) {
                 if (gem) {
-                    setStatus("묶음 보석은 빈 포켓에서만 한 번에 받을 수 있어요.");
+                    selectTrayCluster(index, gem);
                     return;
                 }
 
                 const emptyTrayIndices = getEmptyTrayIndices();
                 const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
-                const anchorCell = getSelectedAnchorCell();
+                const anchorCell =
+                    activeSelection.cells.find(
+                        (cell) => cell.row === activeSelection.anchor.row && cell.col === activeSelection.anchor.col
+                    ) || activeSelection.cells[0] || null;
                 const prioritizedCells = anchorCell
-                    ? [anchorCell, ...selected.cells.filter((cell) => cell.row !== anchorCell.row || cell.col !== anchorCell.col)]
-                    : [...selected.cells];
+                    ? [anchorCell, ...activeSelection.cells.filter((cell) => cell.row !== anchorCell.row || cell.col !== anchorCell.col)]
+                    : [...activeSelection.cells];
 
-                if (orderedSlots.length < selected.cells.length) {
+                if (orderedSlots.length < activeSelection.cells.length) {
                     const movableCells = prioritizedCells.slice(0, orderedSlots.length);
-                    await animateBoardClusterToTray(movableCells, orderedSlots);
-                    commitMove(`묶음에서 보석 ${movableCells.length}개를 포켓으로 옮겼어요.`, movableCells.length, false);
+                    const movedCellKeys = new Set(movableCells.map((cell) => toCellKey(cell.row, cell.col)));
+                    const remainingCells = activeSelection.cells.filter(
+                        (cell) => !movedCellKeys.has(toCellKey(cell.row, cell.col))
+                    );
+                    const nextSelection = createBoardSelection(
+                        remainingCells,
+                        activeSelection.anchor,
+                        activeSelection.color
+                    );
+                    await animateBoardClusterToTray(movableCells, orderedSlots, nextSelection);
+                    commitMove(
+                        `묶음에서 보석 ${movableCells.length}개를 포켓으로 옮겼어요.`,
+                        movableCells.length,
+                        false,
+                        nextSelection
+                    );
                     return;
                 }
 
-                await animateBoardClusterToTray(prioritizedCells, orderedSlots);
-                commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`, selected.cells.length, false);
+                const nextSelection = createTraySelection(
+                    orderedSlots.slice(0, activeSelection.cells.length),
+                    orderedSlots[0],
+                    activeSelection.color,
+                    true
+                );
+                await animateBoardClusterToTray(prioritizedCells, orderedSlots, nextSelection);
+                commitMove(
+                    `인접한 보석 ${activeSelection.cells.length}개를 포켓으로 한 번에 옮겼어요.`,
+                    activeSelection.cells.length,
+                    false,
+                    nextSelection
+                );
                 return;
             }
 
             if (!gem) {
-                moveBoardToTray(selected.cells[0].row, selected.cells[0].col, index);
-                void playPlaceSound(selected.cells.length);
-                commitMove("보드의 보석을 포켓으로 잠시 옮겼어요.", selected.cells.length, false);
+                moveBoardToTray(activeSelection.cells[0].row, activeSelection.cells[0].col, index);
+                void playPlaceSound(activeSelection.cells.length);
+                commitMove(
+                    "보드의 보석을 포켓으로 잠시 옮겼어요.",
+                    activeSelection.cells.length,
+                    false,
+                    createTraySelection([index], index, activeSelection.color)
+                );
                 return;
             }
 
