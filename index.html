@@ -420,8 +420,12 @@
 
         const ROWS = TARGET_MAP.length;
         const COLS = TARGET_MAP[0].length;
-        const ALL_TARGETS = TARGET_MAP.flat().filter(Boolean);
-        const TOTAL_TARGET_CELLS = ALL_TARGETS.length;
+        const TARGET_POSITIONS = TARGET_MAP.flatMap((row, rowIndex) =>
+            row
+                .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
+                .filter(Boolean)
+        );
+        const TOTAL_TARGET_CELLS = TARGET_POSITIONS.length;
         let boardState = [];
         let trayState = [];
         let selected = null;
@@ -440,18 +444,93 @@
             return copy;
         }
 
-        function createBoardState() {
-            const shuffledGems = shuffle(ALL_TARGETS);
-            let cursor = 0;
+        function cloneTargetBoard() {
+            return TARGET_MAP.map((row) => [...row]);
+        }
 
-            return TARGET_MAP.map((row) =>
-                row.map((target) => {
-                    if (!target) return 0;
-                    const gem = shuffledGems[cursor];
-                    cursor += 1;
-                    return gem;
-                })
+        function getCellDistance(from, to) {
+            return Math.abs(from.row - to.row) + Math.abs(from.col - to.col);
+        }
+
+        function swapBoardCells(board, from, to) {
+            [board[from.row][from.col], board[to.row][to.col]] = [board[to.row][to.col], board[from.row][from.col]];
+        }
+
+        function hasCorrectPlacement(board) {
+            return TARGET_POSITIONS.some((position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]);
+        }
+
+        function findInitialSwapTarget(board, source) {
+            const sourceColor = board[source.row][source.col];
+            const localCandidate = shuffle(TARGET_POSITIONS).find((candidate) => {
+                const distance = getCellDistance(source, candidate);
+                return (
+                    (candidate.row !== source.row || candidate.col !== source.col) &&
+                    board[candidate.row][candidate.col] !== sourceColor &&
+                    distance >= 2 &&
+                    distance <= 6
+                );
+            });
+
+            if (localCandidate) return localCandidate;
+
+            return shuffle(TARGET_POSITIONS).find(
+                (candidate) =>
+                    (candidate.row !== source.row || candidate.col !== source.col) &&
+                    board[candidate.row][candidate.col] !== sourceColor
             );
+        }
+
+        function resolveInitialMatches(board) {
+            for (let pass = 0; pass < 6; pass += 1) {
+                const fixedPositions = shuffle(
+                    TARGET_POSITIONS.filter(
+                        (position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]
+                    )
+                );
+
+                if (!fixedPositions.length) return;
+
+                fixedPositions.forEach((position) => {
+                    if (board[position.row][position.col] !== TARGET_MAP[position.row][position.col]) return;
+
+                    const currentColor = board[position.row][position.col];
+                    const partner = TARGET_POSITIONS
+                        .filter((candidate) => candidate.row !== position.row || candidate.col !== position.col)
+                        .sort((left, right) => getCellDistance(position, left) - getCellDistance(position, right))
+                        .find(
+                            (candidate) =>
+                                board[candidate.row][candidate.col] !== TARGET_MAP[position.row][position.col] &&
+                                currentColor !== TARGET_MAP[candidate.row][candidate.col]
+                        );
+
+                    if (partner) {
+                        swapBoardCells(board, position, partner);
+                    }
+                });
+            }
+        }
+
+        function createBoardState() {
+            for (let attempt = 0; attempt < 8; attempt += 1) {
+                const board = cloneTargetBoard();
+                const swapBudget = TOTAL_TARGET_CELLS * 6;
+
+                for (let step = 0; step < swapBudget; step += 1) {
+                    const source = TARGET_POSITIONS[Math.floor(Math.random() * TARGET_POSITIONS.length)];
+                    const target = findInitialSwapTarget(board, source);
+                    if (!target) continue;
+                    swapBoardCells(board, source, target);
+                }
+
+                resolveInitialMatches(board);
+
+                if (!hasCorrectPlacement(board)) {
+                    return board;
+                }
+            }
+
+            return createBoardState();
         }
 
         function setStatus(message) {
