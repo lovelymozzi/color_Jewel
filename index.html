@@ -660,7 +660,10 @@
         let audioNoiseBuffer = null;
         let sparkleCells = new Map();
         let sparkleCleanupTimer = null;
+        let completedColorIds = new Set();
+        let celebrationTimers = [];
         const MATCH_SPARKLE_MS = 640;
+        const COLOR_COMPLETE_STEP_MS = 92;
         const DIAMOND_PARTICLE_PRESETS = [
             { dx: -18, dy: -16, size: 16, rotation: -24, delay: 0 },
             { dx: 20, dy: -14, size: 14, rotation: 18, delay: 30 },
@@ -1244,6 +1247,46 @@
             });
         }
 
+        async function playColorCompleteSound(startDelayMs = 0) {
+            const context = await ensureAudioContext();
+            if (!context) return;
+
+            const startTime = context.currentTime + startDelayMs / 1000;
+            const notes = [880, 1174, 1568, 2093];
+
+            playNoiseBurst(context, {
+                startTime,
+                duration: 0.08,
+                volume: 0.005,
+                filterFrequency: 2600,
+                filterQ: 1.8
+            });
+
+            notes.forEach((frequency, index) => {
+                const noteTime = startTime + index * 0.072;
+                playTone(context, {
+                    startTime: noteTime,
+                    type: "triangle",
+                    startFrequency: frequency,
+                    endFrequency: frequency * 1.04,
+                    duration: 0.24,
+                    volume: 0.015 + index * 0.0015,
+                    filterFrequency: 3200,
+                    filterQ: 0.7
+                });
+                playTone(context, {
+                    startTime: noteTime + 0.012,
+                    type: "sine",
+                    startFrequency: frequency * 1.5,
+                    endFrequency: frequency * 1.62,
+                    duration: 0.18,
+                    volume: 0.008,
+                    filterFrequency: 4200,
+                    filterQ: 0.5
+                });
+            });
+        }
+
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
             if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
@@ -1362,6 +1405,11 @@
             }
         }
 
+        function clearCelebrationTimers() {
+            celebrationTimers.forEach((timerId) => window.clearTimeout(timerId));
+            celebrationTimers = [];
+        }
+
         function cleanupExpiredSparkles(now = performance.now()) {
             let changed = false;
 
@@ -1436,6 +1484,46 @@
 
             sparkleCells.set(toCellKey(row, col), performance.now() + MATCH_SPARKLE_MS);
             scheduleSparkleCleanup();
+        }
+
+        function getCompletedColorIds() {
+            const completed = new Set();
+
+            Object.entries(TARGET_COLOR_COUNTS).forEach(([colorId, targetCount]) => {
+                let matchedCount = 0;
+
+                for (let row = 0; row < ROWS; row += 1) {
+                    for (let col = 0; col < COLS; col += 1) {
+                        if (TARGET_MAP[row][col] === Number(colorId) && boardState[row][col] === Number(colorId)) {
+                            matchedCount += 1;
+                        }
+                    }
+                }
+
+                if (matchedCount === targetCount) {
+                    completed.add(Number(colorId));
+                }
+            });
+
+            return completed;
+        }
+
+        function scheduleColorCompletionCelebration(colorId, startDelayMs = 0) {
+            const completedCells = TARGET_POSITIONS
+                .filter((position) => TARGET_MAP[position.row][position.col] === colorId)
+                .sort((left, right) => left.row - right.row || left.col - right.col);
+
+            completedCells.forEach((cell, index) => {
+                const timerId = window.setTimeout(() => {
+                    markCorrectPlacementSparkle(cell.row, cell.col);
+                    render();
+                }, startDelayMs + index * COLOR_COMPLETE_STEP_MS);
+                celebrationTimers.push(timerId);
+            });
+
+            void playColorCompleteSound(startDelayMs);
+
+            return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 180;
         }
 
         function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
@@ -1786,19 +1874,7 @@
         }
 
         function countCompletedColors() {
-            return Object.entries(TARGET_COLOR_COUNTS).reduce((completedCount, [colorId, targetCount]) => {
-                let matchedCount = 0;
-
-                for (let row = 0; row < ROWS; row += 1) {
-                    for (let col = 0; col < COLS; col += 1) {
-                        if (TARGET_MAP[row][col] === Number(colorId) && boardState[row][col] === Number(colorId)) {
-                            matchedCount += 1;
-                        }
-                    }
-                }
-
-                return completedCount + (matchedCount === targetCount ? 1 : 0);
-            }, 0);
+            return getCompletedColorIds().size;
         }
 
         function checkSolved() {
@@ -2090,14 +2166,26 @@
         }
 
         function commitMove(message, clusterSize = 1, shouldPlaySound = true, nextSelection = null) {
+            const previousCompleted = new Set(completedColorIds);
             moves += 1;
             selected = normalizeSelection(nextSelection);
             const justSolved = checkSolved();
+            completedColorIds = getCompletedColorIds();
+            const newlyCompletedColorIds = [...completedColorIds]
+                .filter((colorId) => !previousCompleted.has(colorId))
+                .sort((left, right) => left - right);
             setStatus(justSolved ? "정답 배경과 모든 보석이 맞아떨어졌어요." : message);
             if (shouldPlaySound) {
                 void playPlaceSound(clusterSize);
             }
             render();
+
+            if (newlyCompletedColorIds.length) {
+                let nextDelayMs = 0;
+                newlyCompletedColorIds.forEach((colorId) => {
+                    nextDelayMs = scheduleColorCompletionCelebration(colorId, nextDelayMs);
+                });
+            }
         }
 
         function selectBoardCluster(row, col, gem) {
@@ -2518,9 +2606,11 @@
             boardState = createBoardState();
             trayState = Array(POCKET_SIZE).fill(0);
             clearSparkles();
+            clearCelebrationTimers();
             selected = null;
             moves = 0;
             solved = false;
+            completedColorIds = getCompletedColorIds();
             setStatus("배경색을 보면서 보석을 제자리로 정리해 보세요.");
             render();
         }
