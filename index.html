@@ -915,6 +915,49 @@
             return true;
         }
 
+        function getConnectedTargetRegion(startRow, startCol, colorId) {
+            if (TARGET_MAP[startRow][startCol] !== colorId) {
+                return [];
+            }
+
+            const region = [];
+            const visited = new Set([toCellKey(startRow, startCol)]);
+            const stack = [{ row: startRow, col: startCol }];
+            const directions = [
+                { row: -1, col: 0 },
+                { row: 1, col: 0 },
+                { row: 0, col: -1 },
+                { row: 0, col: 1 }
+            ];
+
+            while (stack.length) {
+                const current = stack.pop();
+                region.push(current);
+
+                directions.forEach((direction) => {
+                    const nextRow = current.row + direction.row;
+                    const nextCol = current.col + direction.col;
+                    const key = toCellKey(nextRow, nextCol);
+
+                    if (
+                        nextRow < 0 ||
+                        nextRow >= ROWS ||
+                        nextCol < 0 ||
+                        nextCol >= COLS ||
+                        visited.has(key) ||
+                        TARGET_MAP[nextRow][nextCol] !== colorId
+                    ) {
+                        return;
+                    }
+
+                    visited.add(key);
+                    stack.push({ row: nextRow, col: nextCol });
+                });
+            }
+
+            return region;
+        }
+
         function isMatchingTargetCell(row, col, colorId) {
             return Boolean(TARGET_MAP[row][col]) && TARGET_MAP[row][col] === colorId;
         }
@@ -956,20 +999,14 @@
         }
 
         function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId) {
-            const availableCells = [];
-
-            for (let row = 0; row < ROWS; row += 1) {
-                for (let col = 0; col < COLS; col += 1) {
-                    if (TARGET_MAP[row][col] !== colorId) continue;
-                    if (boardState[row][col] !== 0) continue;
-
-                    availableCells.push({
-                        row,
-                        col,
-                        distance: Math.abs(targetRow - row) + Math.abs(targetCol - col)
-                    });
-                }
-            }
+            const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
+            const availableCells = regionCells
+                .filter((cell) => boardState[cell.row][cell.col] === 0)
+                .map((cell) => ({
+                    row: cell.row,
+                    col: cell.col,
+                    distance: Math.abs(targetRow - cell.row) + Math.abs(targetCol - cell.col)
+                }));
 
             if (availableCells.length < cells.length) {
                 return null;
