@@ -932,6 +932,7 @@
                 const cell = translatedCells[index];
                 boardState[cell.row][cell.col] = gems[index];
                 render();
+                void playPlaceSound();
                 if (index < translatedCells.length - 1) {
                     await sleep(CLUSTER_STEP_MS);
                 }
@@ -950,6 +951,7 @@
                 trayState[trayIndex] = boardState[cell.row][cell.col];
                 boardState[cell.row][cell.col] = 0;
                 render();
+                void playPlaceSound();
 
                 if (index < cells.length - 1) {
                     await sleep(CLUSTER_STEP_MS);
@@ -971,6 +973,7 @@
                 boardState[sourceCell.row][sourceCell.col] = 0;
                 boardState[targetCell.row][targetCell.col] = gems[index];
                 render();
+                void playPlaceSound();
 
                 if (index < cells.length - 1) {
                     await sleep(CLUSTER_STEP_MS);
@@ -1134,12 +1137,14 @@
             );
         }
 
-        function commitMove(message, clusterSize = 1) {
+        function commitMove(message, clusterSize = 1, shouldPlaySound = true) {
             moves += 1;
             selected = null;
             const justSolved = checkSolved();
             setStatus(justSolved ? "정답 배경과 모든 보석이 맞아떨어졌어요." : message);
-            void playPlaceSound(clusterSize);
+            if (shouldPlaySound) {
+                void playPlaceSound(clusterSize);
+            }
             render();
         }
 
@@ -1185,7 +1190,7 @@
 
                     if (!gem && canPlaceBoardCluster(selected.cells, selected.anchor, row, col, selected.color)) {
                         await animateBoardClusterMove(selected.cells, selected.anchor, row, col);
-                        commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.", selected.cells.length);
+                        commitMove("인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.", selected.cells.length, false);
                         return;
                     }
 
@@ -1199,14 +1204,14 @@
                         );
                         if (nearestPlacement) {
                             await animateBoardClusterMove(selected.cells, selected.anchor, nearestPlacement.row, nearestPlacement.col);
-                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.", selected.cells.length);
+                            commitMove("가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.", selected.cells.length, false);
                             return;
                         }
 
                         const nearestSlots = findNearestColorSlotPlacement(selected.cells, row, col, selected.color);
                         if (nearestSlots) {
                             await animateBoardClusterToBoardSlots(selected.cells, nearestSlots);
-                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.", selected.cells.length);
+                            commitMove("같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.", selected.cells.length, false);
                             return;
                         }
 
@@ -1256,7 +1261,8 @@
             }
 
             moveTrayToBoard(selected.index, row, col);
-            commitMove("포켓의 보석을 빈 칸으로 옮겼어요.");
+            void playPlaceSound();
+            commitMove("포켓의 보석을 빈 칸으로 옮겼어요.", 1, false);
         }
 
         async function handleTrayClick(index) {
@@ -1284,7 +1290,8 @@
 
             if (selected.source === "tray") {
                 swapTrayToTray(selected.index, index);
-                commitMove("");
+                void playPlaceSound();
+                commitMove("", 1, false);
                 return;
             }
 
@@ -1299,7 +1306,8 @@
                     const anchorCell = getSelectedAnchorCell();
                     if (anchorCell) {
                         moveBoardToTray(anchorCell.row, anchorCell.col, index);
-                        commitMove("묶음에서 보석 1개를 꺼내 포켓으로 옮겼어요.");
+                        void playPlaceSound();
+                        commitMove("묶음에서 보석 1개를 꺼내 포켓으로 옮겼어요.", 1, false);
                         return;
                     }
 
@@ -1309,13 +1317,14 @@
 
                 const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
                 await animateBoardClusterToTray(selected.cells, orderedSlots);
-                commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`, selected.cells.length);
+                commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`, selected.cells.length, false);
                 return;
             }
 
             if (!gem) {
                 moveBoardToTray(selected.cells[0].row, selected.cells[0].col, index);
-                commitMove("보드의 보석을 포켓으로 잠시 옮겼어요.", selected.cells.length);
+                void playPlaceSound(selected.cells.length);
+                commitMove("보드의 보석을 포켓으로 잠시 옮겼어요.", selected.cells.length, false);
                 return;
             }
 
