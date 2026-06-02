@@ -412,6 +412,7 @@
         const POCKET_SIZE = 24;
         const TOP_POCKET_COUNT = 12;
         const CLUSTER_STEP_MS = 85;
+        const SOUND_VOLUME_MULTIPLIER = 2.3;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const boardElement = document.getElementById("board");
         const topTrayElement = document.getElementById("topTray");
@@ -635,7 +636,7 @@
             filter.Q.setValueAtTime(filterQ, startTime);
 
             gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume, startTime + attack);
+            gain.gain.exponentialRampToValueAtTime(volume * SOUND_VOLUME_MULTIPLIER, startTime + attack);
             gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
             oscillator.connect(filter);
@@ -667,7 +668,7 @@
             filter.Q.setValueAtTime(filterQ, startTime);
 
             gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.004);
+            gain.gain.exponentialRampToValueAtTime(volume * SOUND_VOLUME_MULTIPLIER, startTime + 0.004);
             gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
             source.connect(filter);
