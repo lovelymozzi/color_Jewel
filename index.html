@@ -173,6 +173,36 @@
             pointer-events: none;
         }
 
+        .tray-slot.hidden-slot {
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06)) top / 100% 1px no-repeat,
+                linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06)) left / 1px 100% no-repeat,
+                rgba(184, 166, 144, 0.05);
+            cursor: default;
+        }
+
+        .tray-slot.next-open-slot {
+            border: 1px dashed rgba(188, 170, 149, 0.42);
+        }
+
+        .tray-slot.hidden-slot::before {
+            content: "";
+            position: absolute;
+            width: var(--gem-size);
+            aspect-ratio: 1;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(180deg);
+            clip-path: var(--socket-shape);
+            background:
+                linear-gradient(180deg, rgba(188, 170, 149, 0.09), rgba(188, 170, 149, 0.14)),
+                url("jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: grayscale(1) brightness(1.02) saturate(0.06);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
         .tray-slot.empty-target::before {
             content: "";
             position: absolute;
@@ -320,6 +350,10 @@
             opacity: 0.5;
             pointer-events: none;
             z-index: 1;
+        }
+
+        .tray-slot.hidden-slot.selected::after {
+            display: none;
         }
 
         .tray-slot.selected::after {
@@ -516,7 +550,54 @@
             });
         }
 
-        const TARGET_MAP = scaleMap(BASE_IMAGE_MAP, 2);
+        const MAP_DEFINITIONS = [
+            {
+                id: "heart",
+                baseImageMap: BASE_IMAGE_MAP,
+                scale: 2,
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    correctsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            }
+        ];
+
+        function buildMapConfig(definition) {
+            const targetMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const rows = targetMap.length;
+            const cols = targetMap[0].length;
+            const targetPositions = targetMap.flatMap((row, rowIndex) =>
+                row
+                    .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
+                    .filter(Boolean)
+            );
+            const center = { row: (rows - 1) / 2, col: (cols - 1) / 2 };
+            const sortCenterOut = (left, right) => {
+                const leftDistance = Math.abs(left.row - center.row) + Math.abs(left.col - center.col);
+                const rightDistance = Math.abs(right.row - center.row) + Math.abs(right.col - center.col);
+                return leftDistance - rightDistance || left.row - right.row || left.col - right.col;
+            };
+
+            return {
+                ...definition,
+                targetMap,
+                rows,
+                cols,
+                targetPositions,
+                totalTargetCells: targetPositions.length,
+                initialLayoutOrder: [...targetPositions].sort(sortCenterOut),
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    correctsPerUnlock: 1,
+                    pocketsPerUnlock: 1,
+                    ...(definition.pocketUnlock || {})
+                }
+            };
+        }
+
+        const ACTIVE_MAP = buildMapConfig(MAP_DEFINITIONS[0]);
+        const TARGET_MAP = ACTIVE_MAP.targetMap;
 
         const COLOR_PALETTE = {
             1: { name: "피치", color: "#ff9c8b" },
@@ -539,18 +620,11 @@
         const topTrayElement = document.getElementById("topTray");
         const bottomTrayElement = document.getElementById("bottomTray");
 
-        const ROWS = TARGET_MAP.length;
-        const COLS = TARGET_MAP[0].length;
-        const TARGET_POSITIONS = TARGET_MAP.flatMap((row, rowIndex) =>
-            row
-                .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
-                .filter(Boolean)
-        );
-        const INITIAL_LAYOUT_ORDER = [...TARGET_POSITIONS].sort((left, right) => {
-            const center = { row: (ROWS - 1) / 2, col: (COLS - 1) / 2 };
-            const distanceDifference = getCellDistance(left, center) - getCellDistance(right, center);
-            return distanceDifference || left.row - right.row || left.col - right.col;
-        });
+        const ROWS = ACTIVE_MAP.rows;
+        const COLS = ACTIVE_MAP.cols;
+        const TARGET_POSITIONS = ACTIVE_MAP.targetPositions;
+        const INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
+        const POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
         const INITIAL_LAYOUT_INDEX = new Map(
             INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
         );
@@ -568,7 +642,7 @@
             });
             return neighbors;
         });
-        const TOTAL_TARGET_CELLS = TARGET_POSITIONS.length;
+        const TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
         let boardState = [];
         let trayState = [];
         let selected = null;
@@ -1207,8 +1281,9 @@
         }
 
         function getEmptyTrayIndices() {
+            const openedPocketIndices = getOpenedPocketIndexSet();
             return trayState
-                .map((gem, index) => (gem === 0 ? index : -1))
+                .map((gem, index) => (gem === 0 && isPocketOpened(index, openedPocketIndices) ? index : -1))
                 .filter((index) => index !== -1);
         }
 
@@ -1354,6 +1429,26 @@
 
             sparkleCells.set(toCellKey(row, col), performance.now() + MATCH_SPARKLE_MS);
             scheduleSparkleCleanup();
+        }
+
+        function getOpenedPocketCount(correctCount = countCorrectCells()) {
+            const initialOpenCount = POCKET_UNLOCK_RULE.initialOpenCount ?? 12;
+            const correctsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.correctsPerUnlock ?? 1);
+            const pocketsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.pocketsPerUnlock ?? 1);
+            const additionalPockets = Math.floor(correctCount / correctsPerUnlock) * pocketsPerUnlock;
+
+            return Math.min(POCKET_SIZE, initialOpenCount + additionalPockets);
+        }
+
+        function getOpenedPocketIndexSet(correctCount = countCorrectCells()) {
+            return new Set(
+                Array.from({ length: getOpenedPocketCount(correctCount) }, (_, index) => index)
+            );
+        }
+
+        function isPocketOpened(index, openedPocketIndices = null) {
+            const pocketIndices = openedPocketIndices || getOpenedPocketIndexSet();
+            return pocketIndices.has(index);
         }
 
         function getTranslatedCells(cells, anchor, targetRow, targetCol) {
@@ -1786,16 +1881,29 @@
 
         function renderTrayRange(container, startIndex, endIndex, labelPrefix) {
             container.innerHTML = "";
+            const openedPocketIndices = getOpenedPocketIndexSet();
+            const nextOpenIndex = getOpenedPocketCount();
 
             for (let index = startIndex; index < endIndex; index += 1) {
                 const gem = trayState[index];
+                const isOpenedPocket = isPocketOpened(index, openedPocketIndices);
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "cell tray-slot";
                 button.dataset.index = String(index);
-                button.setAttribute("aria-label", `${labelPrefix} 포켓 ${index - startIndex + 1}`);
+                button.setAttribute(
+                    "aria-label",
+                    `${labelPrefix} 포켓 ${index - startIndex + 1} ${isOpenedPocket ? "열림" : "잠김"}`
+                );
 
-                if (!gem) button.classList.add("empty-target");
+                if (!isOpenedPocket) {
+                    button.classList.add("hidden-slot");
+                    if (index === nextOpenIndex && nextOpenIndex < POCKET_SIZE) {
+                        button.classList.add("next-open-slot");
+                    }
+                } else if (!gem) {
+                    button.classList.add("empty-target");
+                }
                 if (isSelected("tray", index)) button.classList.add("selected");
                 if (gem) button.appendChild(createGem(gem));
 
@@ -1929,6 +2037,10 @@
         }
 
         function findTrayClusterPlacement(indices, targetIndex) {
+            if (!isPocketOpened(targetIndex)) {
+                return null;
+            }
+
             const selectedIndexSet = new Set(indices);
             const targetPosition = getTrayPosition(targetIndex);
             const availableSlots = getEmptyTrayIndices()
@@ -2231,9 +2343,15 @@
             if (solved || isAnimating) return;
 
             const gem = trayState[index];
+            const openedPocketIndices = getOpenedPocketIndexSet();
+            const isOpenedPocket = isPocketOpened(index, openedPocketIndices);
 
             if (!selected) {
                 if (!gem) {
+                    if (!isOpenedPocket) {
+                        setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                        return;
+                    }
                     setStatus("이 포켓은 비어 있어요.");
                     return;
                 }
@@ -2254,6 +2372,11 @@
 
                 if (gem) {
                     selectTrayCluster(index, gem);
+                    return;
+                }
+
+                if (!isOpenedPocket) {
+                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
                     return;
                 }
 
@@ -2288,6 +2411,11 @@
             if (activeSelection.cells.length > 1) {
                 if (gem) {
                     selectTrayCluster(index, gem);
+                    return;
+                }
+
+                if (!isOpenedPocket) {
+                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
                     return;
                 }
 
@@ -2339,6 +2467,10 @@
             }
 
             if (!gem) {
+                if (!isOpenedPocket) {
+                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                    return;
+                }
                 moveBoardToTray(activeSelection.cells[0].row, activeSelection.cells[0].col, index);
                 void playPlaceSound(activeSelection.cells.length);
                 commitMove(
