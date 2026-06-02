@@ -1284,6 +1284,40 @@
                 .map(({ row, col }) => ({ row, col }));
         }
 
+        function findPartialColorSlotPlacement(count, targetRow, targetCol, colorId) {
+            const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
+            const availableCells = regionCells
+                .filter((cell) => boardState[cell.row][cell.col] === 0)
+                .map((cell) => ({
+                    row: cell.row,
+                    col: cell.col,
+                    distance: Math.abs(targetRow - cell.row) + Math.abs(targetCol - cell.col)
+                }))
+                .sort((a, b) => a.distance - b.distance || a.row - b.row || a.col - b.col)
+                .slice(0, count)
+                .map(({ row, col }) => ({ row, col }));
+
+            return availableCells.length ? availableCells : null;
+        }
+
+        function prioritizeBoardCells(cells, anchor) {
+            if (!anchor) return [...cells];
+
+            return [
+                ...cells.filter((cell) => cell.row === anchor.row && cell.col === anchor.col),
+                ...cells.filter((cell) => cell.row !== anchor.row || cell.col !== anchor.col)
+            ];
+        }
+
+        function prioritizeTrayIndices(indices, anchorIndex) {
+            if (anchorIndex == null) return [...indices];
+
+            return [
+                ...indices.filter((index) => index === anchorIndex),
+                ...indices.filter((index) => index !== anchorIndex)
+            ];
+        }
+
         function moveBoardCluster(cells, anchor, targetRow, targetCol) {
             const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
             const nextBoardState = boardState.map((row) => [...row]);
@@ -1692,6 +1726,24 @@
                             return;
                         }
 
+                        const partialSlots = findPartialColorSlotPlacement(
+                            selected.cells.length,
+                            row,
+                            col,
+                            selected.color
+                        );
+                        if (partialSlots) {
+                            const prioritizedCells = prioritizeBoardCells(selected.cells, selected.anchor);
+                            const movableCells = prioritizedCells.slice(0, partialSlots.length);
+                            await animateBoardClusterToBoardSlots(movableCells, partialSlots);
+                            commitMove(
+                                `묶음에서 보석 ${movableCells.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
+                                movableCells.length,
+                                false
+                            );
+                            return;
+                        }
+
                         const anchorCell = getSelectedAnchorCell();
                         if (anchorCell) {
                             if (!isMatchingTargetCell(row, col, selected.color)) {
@@ -1743,6 +1795,19 @@
                 if (nearestSlots) {
                     await animateTrayClusterToBoardSlots(trayIndices, nearestSlots);
                     commitMove("포켓의 같은 색 보석 묶음을 보드에 옮겼어요.", trayIndices.length, false);
+                    return;
+                }
+
+                const partialSlots = findPartialColorSlotPlacement(trayIndices.length, row, col, trayGem);
+                if (partialSlots) {
+                    const prioritizedTrayIndices = prioritizeTrayIndices(trayIndices, selected.anchor);
+                    const movableTrayIndices = prioritizedTrayIndices.slice(0, partialSlots.length);
+                    await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots);
+                    commitMove(
+                        `포켓의 보석 ${movableTrayIndices.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
+                        movableTrayIndices.length,
+                        false
+                    );
                     return;
                 }
             }
