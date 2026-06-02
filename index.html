@@ -1561,18 +1561,24 @@
                     if (row === anchor.row && col === anchor.col) continue;
                     if (!canPlaceBoardCluster(cells, anchor, row, col, colorId)) continue;
 
+                    const translatedCells = getTranslatedCells(cells, anchor, row, col);
+                    const includesTargetCell = translatedCells.some(
+                        (cell) => cell.row === targetRow && cell.col === targetCol
+                    );
                     const distance = Math.abs(targetRow - row) + Math.abs(targetCol - col);
                     const tieBreaker = Math.abs(anchor.row - row) + Math.abs(anchor.col - col);
-
-                    if (
+                    const shouldReplace =
                         !bestPlacement ||
-                        distance < bestPlacement.distance ||
-                        (distance === bestPlacement.distance && tieBreaker < bestPlacement.tieBreaker) ||
-                        (distance === bestPlacement.distance &&
-                            tieBreaker === bestPlacement.tieBreaker &&
-                            (row < bestPlacement.row || (row === bestPlacement.row && col < bestPlacement.col)))
-                    ) {
-                        bestPlacement = { row, col, distance, tieBreaker };
+                        (includesTargetCell && !bestPlacement.includesTargetCell) ||
+                        (includesTargetCell === bestPlacement.includesTargetCell &&
+                            (distance < bestPlacement.distance ||
+                                (distance === bestPlacement.distance && tieBreaker < bestPlacement.tieBreaker) ||
+                                (distance === bestPlacement.distance &&
+                                    tieBreaker === bestPlacement.tieBreaker &&
+                                    (row < bestPlacement.row || (row === bestPlacement.row && col < bestPlacement.col)))));
+
+                    if (shouldReplace) {
+                        bestPlacement = { row, col, distance, tieBreaker, includesTargetCell };
                     }
                 }
             }
