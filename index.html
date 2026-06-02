@@ -557,7 +557,7 @@
                 scale: 2,
                 pocketUnlock: {
                     initialOpenCount: 12,
-                    correctsPerUnlock: 1,
+                    completedColorsPerUnlock: 1,
                     pocketsPerUnlock: 1
                 }
             }
@@ -572,6 +572,11 @@
                     .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
                     .filter(Boolean)
             );
+            const targetColorCounts = targetPositions.reduce((counts, position) => {
+                const colorId = targetMap[position.row][position.col];
+                counts[colorId] = (counts[colorId] || 0) + 1;
+                return counts;
+            }, {});
             const center = { row: (rows - 1) / 2, col: (cols - 1) / 2 };
             const sortCenterOut = (left, right) => {
                 const leftDistance = Math.abs(left.row - center.row) + Math.abs(left.col - center.col);
@@ -585,11 +590,12 @@
                 rows,
                 cols,
                 targetPositions,
+                targetColorCounts,
                 totalTargetCells: targetPositions.length,
                 initialLayoutOrder: [...targetPositions].sort(sortCenterOut),
                 pocketUnlock: {
                     initialOpenCount: 12,
-                    correctsPerUnlock: 1,
+                    completedColorsPerUnlock: 1,
                     pocketsPerUnlock: 1,
                     ...(definition.pocketUnlock || {})
                 }
@@ -623,6 +629,7 @@
         const ROWS = ACTIVE_MAP.rows;
         const COLS = ACTIVE_MAP.cols;
         const TARGET_POSITIONS = ACTIVE_MAP.targetPositions;
+        const TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
         const INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
         const POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
         const INITIAL_LAYOUT_INDEX = new Map(
@@ -1431,18 +1438,18 @@
             scheduleSparkleCleanup();
         }
 
-        function getOpenedPocketCount(correctCount = countCorrectCells()) {
+        function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
             const initialOpenCount = POCKET_UNLOCK_RULE.initialOpenCount ?? 12;
-            const correctsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.correctsPerUnlock ?? 1);
+            const completedColorsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.completedColorsPerUnlock ?? 1);
             const pocketsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.pocketsPerUnlock ?? 1);
-            const additionalPockets = Math.floor(correctCount / correctsPerUnlock) * pocketsPerUnlock;
+            const additionalPockets = Math.floor(completedColorCount / completedColorsPerUnlock) * pocketsPerUnlock;
 
             return Math.min(POCKET_SIZE, initialOpenCount + additionalPockets);
         }
 
-        function getOpenedPocketIndexSet(correctCount = countCorrectCells()) {
+        function getOpenedPocketIndexSet(completedColorCount = countCompletedColors()) {
             return new Set(
-                Array.from({ length: getOpenedPocketCount(correctCount) }, (_, index) => index)
+                Array.from({ length: getOpenedPocketCount(completedColorCount) }, (_, index) => index)
             );
         }
 
@@ -1770,6 +1777,22 @@
                 }
             }
             return count;
+        }
+
+        function countCompletedColors() {
+            return Object.entries(TARGET_COLOR_COUNTS).reduce((completedCount, [colorId, targetCount]) => {
+                let matchedCount = 0;
+
+                for (let row = 0; row < ROWS; row += 1) {
+                    for (let col = 0; col < COLS; col += 1) {
+                        if (TARGET_MAP[row][col] === Number(colorId) && boardState[row][col] === Number(colorId)) {
+                            matchedCount += 1;
+                        }
+                    }
+                }
+
+                return completedCount + (matchedCount === targetCount ? 1 : 0);
+            }, 0);
         }
 
         function checkSolved() {
@@ -2349,7 +2372,7 @@
             if (!selected) {
                 if (!gem) {
                     if (!isOpenedPocket) {
-                        setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                        setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
                         return;
                     }
                     setStatus("이 포켓은 비어 있어요.");
@@ -2376,7 +2399,7 @@
                 }
 
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
                     return;
                 }
 
@@ -2415,7 +2438,7 @@
                 }
 
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
                     return;
                 }
 
@@ -2468,7 +2491,7 @@
 
             if (!gem) {
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 맞춘 보석이 늘어나면 한 칸씩 열려요.");
+                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
                     return;
                 }
                 moveBoardToTray(activeSelection.cells[0].row, activeSelection.cells[0].col, index);
