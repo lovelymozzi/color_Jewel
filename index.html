@@ -412,6 +412,7 @@
         const POCKET_SIZE = 24;
         const TOP_POCKET_COUNT = 12;
         const TRAY_ROW_COUNT = POCKET_SIZE / TOP_POCKET_COUNT;
+        const INITIAL_MAX_CLUSTER_SIZE = 12;
         const CLUSTER_STEP_MS = 85;
         const SOUND_VOLUME_MULTIPLIER = 2.3;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -426,6 +427,28 @@
                 .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
                 .filter(Boolean)
         );
+        const INITIAL_LAYOUT_ORDER = [...TARGET_POSITIONS].sort((left, right) => {
+            const center = { row: (ROWS - 1) / 2, col: (COLS - 1) / 2 };
+            const distanceDifference = getCellDistance(left, center) - getCellDistance(right, center);
+            return distanceDifference || left.row - right.row || left.col - right.col;
+        });
+        const INITIAL_LAYOUT_INDEX = new Map(
+            INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
+        );
+        const TARGET_NEIGHBOR_PAIRS = TARGET_POSITIONS.flatMap((position) => {
+            const neighbors = [];
+            [
+                { row: position.row + 1, col: position.col },
+                { row: position.row, col: position.col + 1 }
+            ].forEach((neighbor) => {
+                if (!TARGET_MAP[neighbor.row]?.[neighbor.col]) return;
+                neighbors.push([
+                    INITIAL_LAYOUT_INDEX.get(`${position.row}-${position.col}`),
+                    INITIAL_LAYOUT_INDEX.get(`${neighbor.row}-${neighbor.col}`)
+                ]);
+            });
+            return neighbors;
+        });
         const TOTAL_TARGET_CELLS = TARGET_POSITIONS.length;
         let boardState = [];
         let trayState = [];
@@ -445,88 +468,274 @@
             return copy;
         }
 
-        function cloneTargetBoard() {
-            return TARGET_MAP.map((row) => [...row]);
-        }
-
         function getCellDistance(from, to) {
             return Math.abs(from.row - to.row) + Math.abs(from.col - to.col);
         }
 
-        function swapBoardCells(board, from, to) {
-            [board[from.row][from.col], board[to.row][to.col]] = [board[to.row][to.col], board[from.row][from.col]];
+        function getInitialLayoutOffsets() {
+            const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
+            const scoredOffsets = [];
+
+            for (let offset = 1; offset < sourceColors.length; offset += 1) {
+                const shiftedColors = sourceColors.map((_, index) => sourceColors[(index + offset) % sourceColors.length]);
+
+                const isValidOffset = shiftedColors.every((color, index) => {
+                    const position = INITIAL_LAYOUT_ORDER[index];
+                    return color !== TARGET_MAP[position.row][position.col];
+                });
+
+                if (!isValidOffset) continue;
+
+                const adjacencyScore =
+                    TARGET_NEIGHBOR_PAIRS.reduce(
+                        (sameNeighbors, [leftIndex, rightIndex]) =>
+                            sameNeighbors + (shiftedColors[leftIndex] === shiftedColors[rightIndex] ? 1 : 0),
+                        0
+                    ) / TARGET_NEIGHBOR_PAIRS.length;
+
+                scoredOffsets.push({ offset, adjacencyScore });
+            }
+
+            if (!scoredOffsets.length) {
+                return [Math.floor(sourceColors.length / 2)];
+            }
+
+            return scoredOffsets
+                .sort(
+                    (left, right) =>
+                        left.adjacencyScore - right.adjacencyScore ||
+                        Math.abs(left.offset - sourceColors.length / 2) - Math.abs(right.offset - sourceColors.length / 2)
+                )
+                .slice(0, 8)
+                .map(({ offset }) => offset);
         }
 
-        function hasCorrectPlacement(board) {
-            return TARGET_POSITIONS.some((position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]);
+        const INITIAL_LAYOUT_OFFSETS = getInitialLayoutOffsets();
+
+        function softenInitialClusters(board) {
+            let swaps = 0;
+            let attempts = 0;
+
+            while (swaps < 12 && attempts < TOTAL_TARGET_CELLS * 3) {
+                attempts += 1;
+                const source = TARGET_POSITIONS[Math.floor(Math.random() * TARGET_POSITIONS.length)];
+                const target = TARGET_POSITIONS[Math.floor(Math.random() * TARGET_POSITIONS.length)];
+
+                if (source.row === target.row && source.col === target.col) continue;
+
+                const sourceColor = board[source.row][source.col];
+                const targetColor = board[target.row][target.col];
+
+                if (
+                    sourceColor === targetColor ||
+                    sourceColor === TARGET_MAP[target.row][target.col] ||
+                    targetColor === TARGET_MAP[source.row][source.col]
+                ) {
+                    continue;
+                }
+
+                [board[source.row][source.col], board[target.row][target.col]] = [
+                    targetColor,
+                    sourceColor
+                ];
+                swaps += 1;
+            }
         }
 
-        function findInitialSwapTarget(board, source) {
-            const sourceColor = board[source.row][source.col];
-            const localCandidate = shuffle(TARGET_POSITIONS).find((candidate) => {
-                const distance = getCellDistance(source, candidate);
-                return (
-                    (candidate.row !== source.row || candidate.col !== source.col) &&
-                    board[candidate.row][candidate.col] !== sourceColor &&
-                    distance >= 2 &&
-                    distance <= 6
-                );
+        function getBoardColorClusters(board) {
+            const visited = new Set();
+            const clusters = [];
+            const directions = [
+                { row: -1, col: 0 },
+                { row: 1, col: 0 },
+                { row: 0, col: -1 },
+                { row: 0, col: 1 }
+            ];
+
+            TARGET_POSITIONS.forEach((position) => {
+                const startKey = toCellKey(position.row, position.col);
+                if (visited.has(startKey)) return;
+
+                const colorId = board[position.row][position.col];
+                const stack = [position];
+                const cells = [];
+                visited.add(startKey);
+
+                while (stack.length) {
+                    const current = stack.pop();
+                    cells.push(current);
+
+                    directions.forEach((direction) => {
+                        const nextRow = current.row + direction.row;
+                        const nextCol = current.col + direction.col;
+                        const nextKey = toCellKey(nextRow, nextCol);
+
+                        if (
+                            nextRow < 0 ||
+                            nextRow >= ROWS ||
+                            nextCol < 0 ||
+                            nextCol >= COLS ||
+                            !TARGET_MAP[nextRow][nextCol] ||
+                            visited.has(nextKey) ||
+                            board[nextRow][nextCol] !== colorId
+                        ) {
+                            return;
+                        }
+
+                        visited.add(nextKey);
+                        stack.push({ row: nextRow, col: nextCol });
+                    });
+                }
+
+                clusters.push({ colorId, cells, size: cells.length });
             });
 
-            if (localCandidate) return localCandidate;
-
-            return shuffle(TARGET_POSITIONS).find(
-                (candidate) =>
-                    (candidate.row !== source.row || candidate.col !== source.col) &&
-                    board[candidate.row][candidate.col] !== sourceColor
-            );
+            return clusters;
         }
 
-        function resolveInitialMatches(board) {
-            for (let pass = 0; pass < 6; pass += 1) {
-                const fixedPositions = shuffle(
-                    TARGET_POSITIONS.filter(
-                        (position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]
-                    )
+        function getBoardAdjacencyScore(board) {
+            let sameNeighbors = 0;
+
+            TARGET_NEIGHBOR_PAIRS.forEach(([leftIndex, rightIndex]) => {
+                const left = INITIAL_LAYOUT_ORDER[leftIndex];
+                const right = INITIAL_LAYOUT_ORDER[rightIndex];
+                if (board[left.row][left.col] === board[right.row][right.col]) {
+                    sameNeighbors += 1;
+                }
+            });
+
+            return sameNeighbors / TARGET_NEIGHBOR_PAIRS.length;
+        }
+
+        function getBoardClusterStats(board) {
+            const clusters = getBoardColorClusters(board);
+            const oversizedClusters = clusters.filter(({ size }) => size > INITIAL_MAX_CLUSTER_SIZE);
+
+            return {
+                clusters,
+                oversizedClusters,
+                maxClusterSize: clusters.reduce((maxSize, cluster) => Math.max(maxSize, cluster.size), 0),
+                oversizeCellCount: oversizedClusters.reduce(
+                    (count, cluster) => count + (cluster.size - INITIAL_MAX_CLUSTER_SIZE),
+                    0
+                ),
+                adjacencyScore: getBoardAdjacencyScore(board)
+            };
+        }
+
+        function breakLargeInitialClusters(board) {
+            for (let pass = 0; pass < TOTAL_TARGET_CELLS; pass += 1) {
+                const currentStats = getBoardClusterStats(board);
+                if (!currentStats.oversizedClusters.length) return;
+
+                const oversizedCluster = [...currentStats.oversizedClusters].sort((left, right) => right.size - left.size)[0];
+                const clusterCenter = oversizedCluster.cells.reduce(
+                    (center, cell) => ({
+                        row: center.row + cell.row / oversizedCluster.cells.length,
+                        col: center.col + cell.col / oversizedCluster.cells.length
+                    }),
+                    { row: 0, col: 0 }
                 );
-
-                if (!fixedPositions.length) return;
-
-                fixedPositions.forEach((position) => {
-                    if (board[position.row][position.col] !== TARGET_MAP[position.row][position.col]) return;
-
-                    const currentColor = board[position.row][position.col];
-                    const partner = TARGET_POSITIONS
-                        .filter((candidate) => candidate.row !== position.row || candidate.col !== position.col)
-                        .sort((left, right) => getCellDistance(position, left) - getCellDistance(position, right))
-                        .find(
-                            (candidate) =>
-                                board[candidate.row][candidate.col] !== TARGET_MAP[position.row][position.col] &&
-                                currentColor !== TARGET_MAP[candidate.row][candidate.col]
-                        );
-
-                    if (partner) {
-                        swapBoardCells(board, position, partner);
-                    }
+                const clusterCellKeys = new Set(
+                    oversizedCluster.cells.map((cell) => toCellKey(cell.row, cell.col))
+                );
+                const sourceCells = [...oversizedCluster.cells].sort(
+                    (left, right) => getCellDistance(right, clusterCenter) - getCellDistance(left, clusterCenter)
+                );
+                const candidateCells = shuffle(TARGET_POSITIONS).filter((position) => {
+                    const key = toCellKey(position.row, position.col);
+                    return (
+                        !clusterCellKeys.has(key) &&
+                        board[position.row][position.col] !== oversizedCluster.colorId
+                    );
                 });
+
+                let bestSwap = null;
+
+                sourceCells.slice(0, 16).forEach((source) => {
+                    candidateCells.slice(0, 64).forEach((candidate) => {
+                        const sourceColor = board[source.row][source.col];
+                        const candidateColor = board[candidate.row][candidate.col];
+
+                        if (
+                            sourceColor === TARGET_MAP[candidate.row][candidate.col] ||
+                            candidateColor === TARGET_MAP[source.row][source.col]
+                        ) {
+                            return;
+                        }
+
+                        [board[source.row][source.col], board[candidate.row][candidate.col]] = [
+                            candidateColor,
+                            sourceColor
+                        ];
+
+                        const nextStats = getBoardClusterStats(board);
+
+                        [board[source.row][source.col], board[candidate.row][candidate.col]] = [
+                            sourceColor,
+                            candidateColor
+                        ];
+
+                        const improvesClusterLimit =
+                            nextStats.maxClusterSize < currentStats.maxClusterSize ||
+                            nextStats.oversizeCellCount < currentStats.oversizeCellCount;
+
+                        if (!improvesClusterLimit) {
+                            return;
+                        }
+
+                        const candidateScore = [
+                            nextStats.maxClusterSize,
+                            nextStats.oversizeCellCount,
+                            -nextStats.adjacencyScore,
+                            getCellDistance(source, candidate)
+                        ];
+
+                        if (
+                            !bestSwap ||
+                            candidateScore[0] < bestSwap.score[0] ||
+                            (candidateScore[0] === bestSwap.score[0] && candidateScore[1] < bestSwap.score[1]) ||
+                            (candidateScore[0] === bestSwap.score[0] &&
+                                candidateScore[1] === bestSwap.score[1] &&
+                                candidateScore[2] < bestSwap.score[2]) ||
+                            (candidateScore[0] === bestSwap.score[0] &&
+                                candidateScore[1] === bestSwap.score[1] &&
+                                candidateScore[2] === bestSwap.score[2] &&
+                                candidateScore[3] < bestSwap.score[3])
+                        ) {
+                            bestSwap = { source, candidate, score: candidateScore };
+                        }
+                    });
+                });
+
+                if (!bestSwap) {
+                    return;
+                }
+
+                [board[bestSwap.source.row][bestSwap.source.col], board[bestSwap.candidate.row][bestSwap.candidate.col]] = [
+                    board[bestSwap.candidate.row][bestSwap.candidate.col],
+                    board[bestSwap.source.row][bestSwap.source.col]
+                ];
             }
         }
 
         function createBoardState() {
-            for (let attempt = 0; attempt < 8; attempt += 1) {
-                const board = cloneTargetBoard();
-                const swapBudget = TOTAL_TARGET_CELLS * 6;
+            const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
 
-                for (let step = 0; step < swapBudget; step += 1) {
-                    const source = TARGET_POSITIONS[Math.floor(Math.random() * TARGET_POSITIONS.length)];
-                    const target = findInitialSwapTarget(board, source);
-                    if (!target) continue;
-                    swapBoardCells(board, source, target);
-                }
+            for (let attempt = 0; attempt < 10; attempt += 1) {
+                const offset =
+                    INITIAL_LAYOUT_OFFSETS[Math.floor(Math.random() * INITIAL_LAYOUT_OFFSETS.length)] ||
+                    INITIAL_LAYOUT_OFFSETS[0];
+                const board = TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
 
-                resolveInitialMatches(board);
+                INITIAL_LAYOUT_ORDER.forEach((position, index) => {
+                    board[position.row][position.col] = sourceColors[(index + offset) % sourceColors.length];
+                });
 
-                if (!hasCorrectPlacement(board)) {
+                softenInitialClusters(board);
+                breakLargeInitialClusters(board);
+
+                if (getBoardClusterStats(board).maxClusterSize <= INITIAL_MAX_CLUSTER_SIZE) {
                     return board;
                 }
             }
@@ -1595,21 +1804,20 @@
                 }
 
                 const emptyTrayIndices = getEmptyTrayIndices();
-                if (emptyTrayIndices.length < selected.cells.length) {
-                    const anchorCell = getSelectedAnchorCell();
-                    if (anchorCell) {
-                        moveBoardToTray(anchorCell.row, anchorCell.col, index);
-                        void playPlaceSound();
-                        commitMove("묶음에서 보석 1개를 꺼내 포켓으로 옮겼어요.", 1, false);
-                        return;
-                    }
+                const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
+                const anchorCell = getSelectedAnchorCell();
+                const prioritizedCells = anchorCell
+                    ? [anchorCell, ...selected.cells.filter((cell) => cell.row !== anchorCell.row || cell.col !== anchorCell.col)]
+                    : [...selected.cells];
 
-                    setStatus(`빈 포켓이 ${selected.cells.length}칸 이상 있어야 이 묶음을 옮길 수 있어요.`);
+                if (orderedSlots.length < selected.cells.length) {
+                    const movableCells = prioritizedCells.slice(0, orderedSlots.length);
+                    await animateBoardClusterToTray(movableCells, orderedSlots);
+                    commitMove(`묶음에서 보석 ${movableCells.length}개를 포켓으로 옮겼어요.`, movableCells.length, false);
                     return;
                 }
 
-                const orderedSlots = [index, ...emptyTrayIndices.filter((emptyIndex) => emptyIndex !== index)];
-                await animateBoardClusterToTray(selected.cells, orderedSlots);
+                await animateBoardClusterToTray(prioritizedCells, orderedSlots);
                 commitMove(`인접한 보석 ${selected.cells.length}개를 포켓으로 한 번에 옮겼어요.`, selected.cells.length, false);
                 return;
             }
