@@ -1865,47 +1865,110 @@
             if (!context) return;
 
             const startTime = context.currentTime + startDelayMs / 1000;
-            const liftPitch = 260 + accent * 26;
-            const crackPitch = 820 + accent * 44;
+            const liftPitch = 210 + accent * 18;
+            const boomPitch = 92 + accent * 6;
+            const crackPitch = 1240 + accent * 58;
 
+            playNoiseBurst(context, {
+                startTime,
+                duration: 0.11,
+                volume: 0.006,
+                filterType: "highpass",
+                filterFrequency: 1400 + accent * 80,
+                filterQ: 0.8
+            });
             playTone(context, {
                 startTime,
                 type: "triangle",
                 startFrequency: liftPitch,
-                endFrequency: liftPitch * 2.1,
-                duration: 0.18,
-                volume: 0.015,
-                filterFrequency: 1800,
+                endFrequency: liftPitch * 2.8,
+                duration: 0.14,
+                volume: 0.008,
+                filterFrequency: 2200,
                 filterQ: 0.9
             });
 
             playNoiseBurst(context, {
-                startTime: startTime + 0.16,
-                duration: 0.12,
-                volume: 0.012 + accent * 0.001,
-                filterFrequency: 2400 + accent * 140,
-                filterQ: 0.9
+                startTime: startTime + 0.13,
+                duration: 0.16,
+                volume: 0.017 + accent * 0.0016,
+                filterType: "bandpass",
+                filterFrequency: 1700 + accent * 120,
+                filterQ: 0.7
             });
 
             playTone(context, {
+                startTime: startTime + 0.128,
+                type: "sine",
+                startFrequency: boomPitch,
+                endFrequency: Math.max(44, boomPitch * 0.48),
+                duration: 0.34,
+                volume: 0.03 + accent * 0.002,
+                filterType: "lowpass",
+                filterFrequency: 320,
+                filterQ: 0.5
+            });
+
+            playTone(context, {
+                startTime: startTime + 0.138,
+                type: "triangle",
+                startFrequency: boomPitch * 1.9,
+                endFrequency: boomPitch * 0.92,
+                duration: 0.22,
+                volume: 0.016 + accent * 0.001,
+                filterType: "lowpass",
+                filterFrequency: 780,
+                filterQ: 0.7
+            });
+
+            playNoiseBurst(context, {
                 startTime: startTime + 0.17,
+                duration: 0.08,
+                volume: 0.014 + accent * 0.0012,
+                filterType: "highpass",
+                filterFrequency: 3000 + accent * 160,
+                filterQ: 0.8
+            });
+
+            playNoiseBurst(context, {
+                startTime: startTime + 0.24,
+                duration: 0.06,
+                volume: 0.010 + accent * 0.0008,
+                filterType: "bandpass",
+                filterFrequency: 2200 + accent * 120,
+                filterQ: 1.1
+            });
+
+            playNoiseBurst(context, {
+                startTime: startTime + 0.31,
+                duration: 0.05,
+                volume: 0.008 + accent * 0.0007,
+                filterType: "bandpass",
+                filterFrequency: 2800 + accent * 140,
+                filterQ: 1.2
+            });
+
+            playTone(context, {
+                startTime: startTime + 0.155,
                 type: "sawtooth",
                 startFrequency: crackPitch,
-                endFrequency: crackPitch * 0.62,
-                duration: 0.26,
-                volume: 0.017 + accent * 0.0015,
-                filterFrequency: 2600,
+                endFrequency: crackPitch * 0.54,
+                duration: 0.18,
+                volume: 0.012 + accent * 0.0013,
+                filterType: "highpass",
+                filterFrequency: 2400,
                 filterQ: 0.8
             });
 
             playTone(context, {
-                startTime: startTime + 0.19,
+                startTime: startTime + 0.205,
                 type: "square",
-                startFrequency: crackPitch * 1.48,
-                endFrequency: crackPitch * 0.84,
-                duration: 0.18,
-                volume: 0.006 + accent * 0.0008,
-                filterFrequency: 3400,
+                startFrequency: crackPitch * 1.26,
+                endFrequency: crackPitch * 0.74,
+                duration: 0.12,
+                volume: 0.0048 + accent * 0.0007,
+                filterType: "highpass",
+                filterFrequency: 3200,
                 filterQ: 0.5
             });
         }
