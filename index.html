@@ -543,6 +543,24 @@
             [0, 0, 0, 0, 7, 7, 0, 0, 0, 0]
         ];
 
+        const TUTORIAL_IMAGE_MAP = [
+            [0, 0, 1, 0, 0],
+            [0, 2, 3, 4, 0],
+            [0, 5, 6, 7, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0]
+        ];
+
+        const TUTORIAL_BOARD_STATE = [
+            [0, 0, 1, 0, 0],
+            [0, 2, 3, 4, 0],
+            [0, 0, 6, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ];
+
+        const TUTORIAL_TRAY_STATE = [5, 7, 1];
+
         function scaleMap(sourceMap, factor) {
             return sourceMap.flatMap((row) => {
                 const scaledRow = row.flatMap((cell) => Array(factor).fill(cell));
@@ -551,6 +569,21 @@
         }
 
         const MAP_DEFINITIONS = [
+            {
+                id: "tutorial",
+                baseImageMap: TUTORIAL_IMAGE_MAP,
+                scale: 1,
+                boardCellSize: 56,
+                trayCellSize: 42,
+                initialBoardState: TUTORIAL_BOARD_STATE,
+                initialTrayState: TUTORIAL_TRAY_STATE,
+                startMessage: "튜토리얼 맵이에요. 하단 포켓의 3개 보석을 같은 색 칸에 올리면 바로 클리어됩니다.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            },
             {
                 id: "heart",
                 baseImageMap: BASE_IMAGE_MAP,
@@ -632,6 +665,13 @@
         const TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
         const INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
         const POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
+        if (ACTIVE_MAP.boardCellSize) {
+            document.documentElement.style.setProperty("--board-cell-size", `${ACTIVE_MAP.boardCellSize}px`);
+        }
+        if (ACTIVE_MAP.trayCellSize) {
+            document.documentElement.style.setProperty("--tray-cell-size", `${ACTIVE_MAP.trayCellSize}px`);
+        }
+        boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
         const INITIAL_LAYOUT_INDEX = new Map(
             INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
         );
@@ -934,6 +974,10 @@
         }
 
         function createBoardState() {
+            if (ACTIVE_MAP.initialBoardState) {
+                return ACTIVE_MAP.initialBoardState.map((row) => [...row]);
+            }
+
             const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
 
             for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -2632,14 +2676,14 @@
 
         function resetGame() {
             boardState = createBoardState();
-            trayState = Array(POCKET_SIZE).fill(0);
+            trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
             clearSparkles();
             clearCelebrationTimers();
             selected = null;
             moves = 0;
             solved = false;
             completedColorIds = getCompletedColorIds();
-            setStatus("배경색을 보면서 보석을 제자리로 정리해 보세요.");
+            setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
             render();
         }
 
