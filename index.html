@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Jewel Pocket Puzzle</title>
     <style>
         :root {
@@ -12,6 +12,17 @@
             --ink: #3f3127;
             --line: rgba(76, 56, 35, 0.16);
             --shadow: 0 26px 60px rgba(83, 54, 27, 0.16);
+            --app-shell-width: min(100vw, 430px);
+            --viewport-gap: 20px;
+            --pocket-bottom-offset: 20px;
+            --ad-banner-height: 56px;
+            --ad-banner-gap: 14px;
+            --action-bar-height: 68px;
+            --action-bar-gap: 16px;
+            --pocket-reserved-height: 364px;
+            --action-button-size: 68px;
+            --action-button-gap: 22px;
+            --pocket-shell-width: calc((12 * var(--tray-cell-size)) + (11 * var(--tray-gap)) + 36px);
             --board-cell-size: 36px;
             --board-gap: 0px;
             --tray-cell-size: 40px;
@@ -66,23 +77,32 @@
             margin: 0;
             min-height: 100vh;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            padding: 20px;
-            background: #f7efe4;
+            padding: 0;
+            background: #000;
             color: var(--ink);
             font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+            overflow-x: hidden;
         }
 
         .app {
-            width: max-content;
-            max-width: 100%;
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            width: var(--app-shell-width);
+            max-width: var(--app-shell-width);
+            height: 100dvh;
+            min-height: 100dvh;
+            margin: 0 auto;
             padding: 0;
             border-radius: 0;
-            background: transparent;
+            background: #f7efe4;
             border: 0;
             box-shadow: none;
             backdrop-filter: none;
+            overflow: hidden;
         }
 
         .panel {
@@ -107,16 +127,42 @@
         }
 
         .board-stage {
+            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 100%;
+            padding:
+                var(--viewport-gap)
+                var(--viewport-gap)
+                calc(var(--pocket-reserved-height) + var(--pocket-bottom-offset) + 12px);
+            gap: 0;
         }
 
         .board-wrap {
             display: flex;
             justify-content: center;
-            overflow: visible;
+            align-items: center;
+            width: 100%;
+            flex: 1 1 auto;
+            overflow: hidden;
             padding-bottom: 0;
+            touch-action: none;
+        }
+
+        .board-panzoom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: max-content;
+            margin: 0 auto;
+            transform-origin: center center;
+            touch-action: none;
+            will-change: transform;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .board {
@@ -436,14 +482,27 @@
         }
 
         .pocket-dock {
+            position: absolute;
+            left: 50%;
+            bottom: calc(
+                var(--pocket-bottom-offset) +
+                var(--ad-banner-height) +
+                var(--ad-banner-gap) +
+                var(--action-bar-height) +
+                var(--action-bar-gap)
+            );
+            transform: translateX(-50%);
             display: flex;
             flex-direction: column;
             gap: 12px;
             align-items: center;
+            width: min(var(--pocket-shell-width), calc(var(--app-shell-width) - (var(--viewport-gap) * 2)));
+            max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
             padding: 16px 18px 18px;
             border-radius: 22px;
             background: rgba(255, 251, 245, 0.52);
             border: 1px solid rgba(214, 186, 152, 0.78);
+            z-index: 18;
         }
 
         .pocket-stack {
@@ -452,6 +511,59 @@
             gap: 10px;
             width: 100%;
             align-items: center;
+        }
+
+        .bottom-actions {
+            position: absolute;
+            left: 50%;
+            bottom: calc(var(--pocket-bottom-offset) + var(--ad-banner-height) + var(--ad-banner-gap));
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0;
+            width: min(var(--pocket-shell-width), calc(var(--app-shell-width) - (var(--viewport-gap) * 2)));
+            max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
+            padding: 0 4px;
+            z-index: 18;
+        }
+
+        .bottom-ad-slot {
+            position: absolute;
+            left: 50%;
+            bottom: var(--pocket-bottom-offset);
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: min(var(--pocket-shell-width), calc(var(--app-shell-width) - (var(--viewport-gap) * 2)));
+            max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
+            height: var(--ad-banner-height);
+            border-radius: 18px;
+            border: 1px dashed rgba(194, 157, 112, 0.72);
+            background: rgba(255, 250, 241, 0.62);
+            color: rgba(123, 87, 48, 0.72);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            z-index: 16;
+        }
+
+        .pocket-action-button {
+            appearance: none;
+            -webkit-appearance: none;
+            width: var(--action-button-size);
+            aspect-ratio: 1;
+            border: 1px solid rgba(194, 157, 112, 0.72);
+            border-radius: 16px;
+            background: rgba(255, 250, 241, 0.94);
+            color: #7b5730;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            box-shadow: 0 8px 16px rgba(129, 88, 40, 0.08);
+            cursor: pointer;
         }
 
         .pocket-group {
@@ -477,21 +589,101 @@
             background: transparent;
         }
 
+        .tutorial-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 30;
+        }
+
+        .tutorial-focus {
+            position: absolute;
+            border: 2px solid rgba(255, 196, 77, 0.96);
+            border-radius: 14px;
+            box-shadow:
+                0 0 0 2px rgba(255, 246, 214, 0.72),
+                0 10px 22px rgba(164, 100, 22, 0.18);
+            animation: tutorial-focus-pulse 1.08s ease-in-out infinite;
+        }
+
+        .tutorial-hint {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transform: translateX(-50%);
+            animation: tutorial-hint-float 1.08s ease-in-out infinite;
+        }
+
+        .tutorial-hint.below {
+            flex-direction: column-reverse;
+        }
+
+        @keyframes tutorial-focus-pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow:
+                    0 0 0 2px rgba(255, 246, 214, 0.72),
+                    0 10px 22px rgba(164, 100, 22, 0.18);
+            }
+
+            50% {
+                transform: scale(1.04);
+                box-shadow:
+                    0 0 0 4px rgba(255, 244, 197, 0.9),
+                    0 12px 24px rgba(164, 100, 22, 0.2);
+            }
+        }
+
+        @keyframes tutorial-hint-float {
+            0%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-4px);
+            }
+        }
+
         @media (max-width: 980px) {
             :root {
+                --app-shell-width: min(100vw, 430px);
+                --viewport-gap: 16px;
+                --pocket-bottom-offset: 16px;
+                --ad-banner-height: 54px;
+                --ad-banner-gap: 12px;
+                --action-bar-height: 62px;
+                --action-bar-gap: 14px;
+                --action-button-size: 62px;
+                --action-button-gap: 18px;
+                --pocket-reserved-height: 350px;
                 --board-cell-size: 30px;
                 --board-gap: 0px;
                 --tray-cell-size: 36px;
                 --tray-gap: 6px;
+                --pocket-shell-width: calc((12 * var(--tray-cell-size)) + (11 * var(--tray-gap)) + 36px);
             }
         }
 
         @media (max-width: 540px) {
             :root {
+                --app-shell-width: 100vw;
+                --viewport-gap: 12px;
+                --pocket-bottom-offset: 12px;
+                --ad-banner-height: 50px;
+                --ad-banner-gap: 10px;
+                --action-bar-height: 124px;
+                --action-bar-gap: 12px;
+                --action-button-size: 56px;
+                --action-button-gap: 16px;
+                --pocket-reserved-height: 424px;
                 --board-cell-size: 24px;
                 --board-gap: 0px;
                 --tray-cell-size: 34px;
                 --tray-gap: 6px;
+                --pocket-shell-width: calc((6 * var(--tray-cell-size)) + (5 * var(--tray-gap)) + 36px);
             }
 
             .cell {
@@ -505,14 +697,26 @@
             .tray-slot {
                 min-height: var(--tray-cell-size);
             }
+
+            .bottom-actions {
+                display: grid;
+                grid-template-columns: repeat(2, var(--action-button-size));
+                justify-content: space-between;
+                row-gap: var(--action-button-gap);
+                column-gap: calc(var(--action-button-gap) + 10px);
+                padding: 0;
+            }
         }
     </style>
 </head>
 <body>
     <main class="app">
         <section class="panel board-stage">
+            <div class="tutorial-layer" id="tutorialLayer" aria-hidden="true"></div>
             <div class="board-wrap">
-                <div class="board" id="board" aria-label="20x20 퍼즐 보드"></div>
+                <div class="board-panzoom" id="boardPanzoom">
+                    <div class="board" id="board" aria-label="20x20 퍼즐 보드"></div>
+                </div>
             </div>
 
             <div class="pocket-dock">
@@ -526,6 +730,15 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bottom-actions" aria-label="하단 액션 버튼">
+                <button class="pocket-action-button" type="button">버튼 1</button>
+                <button class="pocket-action-button" type="button">버튼 2</button>
+                <button class="pocket-action-button" type="button">버튼 3</button>
+                <button class="pocket-action-button" type="button">버튼 4</button>
+            </div>
+
+            <div class="bottom-ad-slot" aria-label="배너 광고 영역">배너 광고 영역</div>
         </section>
     </main>
 
@@ -554,12 +767,12 @@
         const TUTORIAL_BOARD_STATE = [
             [0, 0, 1, 0, 0],
             [0, 2, 3, 4, 0],
-            [0, 0, 6, 0, 0],
-            [0, 0, 0, 0, 0],
+            [0, 7, 6, 5, 0],
+            [0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0]
         ];
 
-        const TUTORIAL_TRAY_STATE = [5, 7, 1];
+        const TUTORIAL_TRAY_STATE = [];
 
         function scaleMap(sourceMap, factor) {
             return sourceMap.flatMap((row) => {
@@ -577,7 +790,7 @@
                 trayCellSize: 42,
                 initialBoardState: TUTORIAL_BOARD_STATE,
                 initialTrayState: TUTORIAL_TRAY_STATE,
-                startMessage: "튜토리얼 맵이에요. 하단 포켓의 3개 보석을 같은 색 칸에 올리면 바로 클리어됩니다.",
+                startMessage: "튜토리얼 맵이에요. 포켓은 비어 있어요. 잘못 놓인 보석 2개를 빈 포켓을 거쳐 제자리로 옮기면 바로 클리어됩니다.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -596,10 +809,45 @@
             }
         ];
 
+        const MAX_GRID_ROWS = 20;
+        const MAX_GRID_COLS = 20;
+
+        function padMapToGrid(sourceMap, rows = MAX_GRID_ROWS, cols = MAX_GRID_COLS) {
+            const sourceRows = sourceMap.length;
+            const sourceCols = sourceMap[0]?.length || 0;
+
+            if (sourceRows > rows || sourceCols > cols) {
+                throw new Error(`Map exceeds max grid size: ${sourceRows}x${sourceCols} > ${rows}x${cols}`);
+            }
+
+            const rowOffset = Math.floor((rows - sourceRows) / 2);
+            const colOffset = Math.floor((cols - sourceCols) / 2);
+            const paddedMap = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+            sourceMap.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    paddedMap[rowOffset + rowIndex][colOffset + colIndex] = cell;
+                });
+            });
+
+            return {
+                map: paddedMap,
+                rowOffset,
+                colOffset,
+                sourceRows,
+                sourceCols
+            };
+        }
+
         function buildMapConfig(definition) {
-            const targetMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const scaledTargetMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const paddedTarget = padMapToGrid(scaledTargetMap);
+            const targetMap = paddedTarget.map;
             const rows = targetMap.length;
             const cols = targetMap[0].length;
+            const initialBoardState = definition.initialBoardState
+                ? padMapToGrid(definition.initialBoardState, rows, cols).map
+                : null;
             const targetPositions = targetMap.flatMap((row, rowIndex) =>
                 row
                     .map((target, colIndex) => (target ? { row: rowIndex, col: colIndex } : null))
@@ -620,8 +868,15 @@
             return {
                 ...definition,
                 targetMap,
+                initialBoardState,
                 rows,
                 cols,
+                mapOffset: {
+                    row: paddedTarget.rowOffset,
+                    col: paddedTarget.colOffset
+                },
+                sourceRows: paddedTarget.sourceRows,
+                sourceCols: paddedTarget.sourceCols,
                 targetPositions,
                 targetColorCounts,
                 totalTargetCells: targetPositions.length,
@@ -655,9 +910,17 @@
         const CLUSTER_STEP_MS = 85;
         const SOUND_VOLUME_MULTIPLIER = 2.3;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const appElement = document.querySelector(".app");
+        const boardWrapElement = document.querySelector(".board-wrap");
+        const boardPanzoomElement = document.getElementById("boardPanzoom");
         const boardElement = document.getElementById("board");
         const topTrayElement = document.getElementById("topTray");
         const bottomTrayElement = document.getElementById("bottomTray");
+        const pocketDockElement = document.querySelector(".pocket-dock");
+        const bottomActionsElement = document.querySelector(".bottom-actions");
+        const bottomAdSlotElement = document.querySelector(".bottom-ad-slot");
+        const boardStageElement = document.querySelector(".board-stage");
+        const tutorialLayerElement = document.getElementById("tutorialLayer");
 
         const ROWS = ACTIVE_MAP.rows;
         const COLS = ACTIVE_MAP.cols;
@@ -665,12 +928,8 @@
         const TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
         const INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
         const POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
-        if (ACTIVE_MAP.boardCellSize) {
-            document.documentElement.style.setProperty("--board-cell-size", `${ACTIVE_MAP.boardCellSize}px`);
-        }
-        if (ACTIVE_MAP.trayCellSize) {
-            document.documentElement.style.setProperty("--tray-cell-size", `${ACTIVE_MAP.trayCellSize}px`);
-        }
+        const DEFAULT_BOARD_CELL_SIZE = ACTIVE_MAP.boardCellSize ?? 36;
+        const DEFAULT_TRAY_CELL_SIZE = ACTIVE_MAP.trayCellSize ?? 40;
         boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
         const INITIAL_LAYOUT_INDEX = new Map(
             INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
@@ -702,6 +961,27 @@
         let sparkleCleanupTimer = null;
         let completedColorIds = new Set();
         let celebrationTimers = [];
+        let tutorialOverlayFrame = null;
+        const boardInteraction = {
+            scale: 1,
+            minScale: 1,
+            maxScale: 3.2,
+            panX: 0,
+            panY: 0,
+            touches: new Map(),
+            pinchStartDistance: 0,
+            pinchStartScale: 1,
+            panStartX: 0,
+            panStartY: 0,
+            basePanX: 0,
+            basePanY: 0,
+            suppressClickUntil: 0,
+            lastTapAt: 0,
+            lastTapX: 0,
+            lastTapY: 0,
+            pointerId: null,
+            isPointerDragging: false
+        };
         const MATCH_SPARKLE_MS = 640;
         const COLOR_COMPLETE_STEP_MS = 92;
         const DIAMOND_PARTICLE_PRESETS = [
@@ -2088,9 +2368,510 @@
             renderTrayRange(bottomTrayElement, TOP_POCKET_COUNT, POCKET_SIZE, "하단 2열");
         }
 
+        function getBoardInteractionMetrics() {
+            if (!boardWrapElement || !boardPanzoomElement) {
+                return { wrapWidth: 0, wrapHeight: 0, contentWidth: 0, contentHeight: 0 };
+            }
+
+            return {
+                wrapWidth: boardWrapElement.clientWidth,
+                wrapHeight: boardWrapElement.clientHeight,
+                contentWidth: boardPanzoomElement.offsetWidth,
+                contentHeight: boardPanzoomElement.offsetHeight
+            };
+        }
+
+        function clampBoardPan(scale = boardInteraction.scale, panX = boardInteraction.panX, panY = boardInteraction.panY) {
+            const metrics = getBoardInteractionMetrics();
+            const maxPanX = Math.max(0, (metrics.contentWidth * scale - metrics.wrapWidth) / 2);
+            const maxPanY = Math.max(0, (metrics.contentHeight * scale - metrics.wrapHeight) / 2);
+
+            return {
+                x: Math.min(maxPanX, Math.max(-maxPanX, panX)),
+                y: Math.min(maxPanY, Math.max(-maxPanY, panY))
+            };
+        }
+
+        function applyBoardTransform() {
+            if (!boardPanzoomElement) return;
+
+            if (boardInteraction.scale <= 1.001) {
+                boardInteraction.scale = 1;
+                boardInteraction.panX = 0;
+                boardInteraction.panY = 0;
+            } else {
+                const clampedPan = clampBoardPan();
+                boardInteraction.panX = clampedPan.x;
+                boardInteraction.panY = clampedPan.y;
+            }
+
+            boardPanzoomElement.style.transform = `translate(${boardInteraction.panX}px, ${boardInteraction.panY}px) scale(${boardInteraction.scale})`;
+            scheduleTutorialOverlayRender();
+        }
+
+        function setBoardScale(nextScale) {
+            boardInteraction.scale = Math.min(boardInteraction.maxScale, Math.max(boardInteraction.minScale, nextScale));
+            applyBoardTransform();
+        }
+
+        function zoomBoardByDelta(delta, zoomIntensity = 0.0018) {
+            const scaleFactor = Math.exp(-delta * zoomIntensity);
+            setBoardScale(boardInteraction.scale * scaleFactor);
+        }
+
+        function resetBoardTransform() {
+            boardInteraction.scale = 1;
+            boardInteraction.panX = 0;
+            boardInteraction.panY = 0;
+            applyBoardTransform();
+        }
+
+        function getTouchDistance(firstTouch, secondTouch) {
+            return Math.hypot(secondTouch.clientX - firstTouch.clientX, secondTouch.clientY - firstTouch.clientY);
+        }
+
+        function storeBoardTouches(touchList) {
+            Array.from(touchList).forEach((touch) => {
+                boardInteraction.touches.set(touch.identifier, {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+            });
+        }
+
+        function initializeBoardGestureState() {
+            const activeTouches = [...boardInteraction.touches.values()];
+
+            if (activeTouches.length >= 2) {
+                boardInteraction.pinchStartDistance = getTouchDistance(activeTouches[0], activeTouches[1]);
+                boardInteraction.pinchStartScale = boardInteraction.scale;
+                boardInteraction.basePanX = boardInteraction.panX;
+                boardInteraction.basePanY = boardInteraction.panY;
+                return;
+            }
+
+            if (activeTouches.length === 1) {
+                boardInteraction.panStartX = activeTouches[0].clientX;
+                boardInteraction.panStartY = activeTouches[0].clientY;
+                boardInteraction.basePanX = boardInteraction.panX;
+                boardInteraction.basePanY = boardInteraction.panY;
+            }
+        }
+
+        function initializeBoardGestures() {
+            if (!boardWrapElement || !boardPanzoomElement) return;
+
+            const preventBrowserGestureZoom = (event) => {
+                event.preventDefault();
+            };
+            const DOUBLE_TAP_MS = 280;
+            const DOUBLE_TAP_DISTANCE = 26;
+            const preventBoardPageZoom = (event) => {
+                if (!boardWrapElement.contains(event.target)) return;
+                event.preventDefault();
+            };
+
+            boardWrapElement.addEventListener(
+                "click",
+                (event) => {
+                    if (Date.now() < boardInteraction.suppressClickUntil) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                },
+                true
+            );
+
+            document.addEventListener("gesturestart", preventBoardPageZoom, { passive: false, capture: true });
+            document.addEventListener("gesturechange", preventBoardPageZoom, { passive: false, capture: true });
+            document.addEventListener("gestureend", preventBoardPageZoom, { passive: false, capture: true });
+            document.addEventListener(
+                "wheel",
+                (event) => {
+                    if (!boardWrapElement.contains(event.target)) return;
+                    if (!(event.ctrlKey || event.metaKey)) return;
+
+                    event.preventDefault();
+                    zoomBoardByDelta(event.deltaY);
+                    boardInteraction.suppressClickUntil = Date.now() + 240;
+                },
+                { passive: false, capture: true }
+            );
+
+            boardWrapElement.addEventListener("gesturestart", preventBrowserGestureZoom, { passive: false });
+            boardWrapElement.addEventListener("gesturechange", preventBrowserGestureZoom, { passive: false });
+            boardWrapElement.addEventListener("gestureend", preventBrowserGestureZoom, { passive: false });
+            boardWrapElement.addEventListener(
+                "wheel",
+                (event) => {
+                    if (!(event.ctrlKey || event.metaKey)) return;
+
+                    event.preventDefault();
+                    zoomBoardByDelta(event.deltaY);
+                    boardInteraction.suppressClickUntil = Date.now() + 240;
+                },
+                { passive: false }
+            );
+
+            boardWrapElement.addEventListener("pointerdown", (event) => {
+                if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+                if (boardInteraction.scale <= 1.001) return;
+
+                boardInteraction.pointerId = event.pointerId;
+                boardInteraction.isPointerDragging = true;
+                boardInteraction.panStartX = event.clientX;
+                boardInteraction.panStartY = event.clientY;
+                boardInteraction.basePanX = boardInteraction.panX;
+                boardInteraction.basePanY = boardInteraction.panY;
+                boardWrapElement.setPointerCapture(event.pointerId);
+                event.preventDefault();
+            });
+
+            boardWrapElement.addEventListener("pointermove", (event) => {
+                if (!boardInteraction.isPointerDragging || event.pointerId !== boardInteraction.pointerId) return;
+
+                boardInteraction.panX = boardInteraction.basePanX + (event.clientX - boardInteraction.panStartX);
+                boardInteraction.panY = boardInteraction.basePanY + (event.clientY - boardInteraction.panStartY);
+                applyBoardTransform();
+                boardInteraction.suppressClickUntil = Date.now() + 240;
+                event.preventDefault();
+            });
+
+            const stopPointerDrag = (event) => {
+                if (event.pointerId != null && event.pointerId !== boardInteraction.pointerId) return;
+                boardInteraction.pointerId = null;
+                boardInteraction.isPointerDragging = false;
+            };
+
+            boardWrapElement.addEventListener("pointerup", stopPointerDrag);
+            boardWrapElement.addEventListener("pointercancel", stopPointerDrag);
+            boardWrapElement.addEventListener("pointerleave", stopPointerDrag);
+
+            boardWrapElement.addEventListener(
+                "touchstart",
+                (event) => {
+                    if (event.touches.length === 1) {
+                        const touch = event.touches[0];
+                        const now = Date.now();
+                        const tapDistance = Math.hypot(
+                            touch.clientX - boardInteraction.lastTapX,
+                            touch.clientY - boardInteraction.lastTapY
+                        );
+
+                        if (now - boardInteraction.lastTapAt <= DOUBLE_TAP_MS && tapDistance <= DOUBLE_TAP_DISTANCE) {
+                            resetBoardTransform();
+                            boardInteraction.lastTapAt = 0;
+                            boardInteraction.suppressClickUntil = now + 300;
+                            event.preventDefault();
+                            return;
+                        }
+
+                        boardInteraction.lastTapAt = now;
+                        boardInteraction.lastTapX = touch.clientX;
+                        boardInteraction.lastTapY = touch.clientY;
+                    } else {
+                        boardInteraction.lastTapAt = 0;
+                    }
+
+                    storeBoardTouches(event.changedTouches);
+                    initializeBoardGestureState();
+
+                    if (boardInteraction.touches.size >= 2 || boardInteraction.scale > 1.001) {
+                        event.preventDefault();
+                    }
+                },
+                { passive: false }
+            );
+
+            boardWrapElement.addEventListener(
+                "touchmove",
+                (event) => {
+                    storeBoardTouches(event.touches);
+                    const activeTouches = [...boardInteraction.touches.values()];
+
+                    if (activeTouches.length >= 2) {
+                        const nextDistance = getTouchDistance(activeTouches[0], activeTouches[1]);
+                        if (boardInteraction.pinchStartDistance > 0) {
+                            setBoardScale(
+                                boardInteraction.pinchStartScale * (nextDistance / boardInteraction.pinchStartDistance)
+                            );
+                        }
+                        boardInteraction.suppressClickUntil = Date.now() + 240;
+                        event.preventDefault();
+                        return;
+                    }
+
+                    if (activeTouches.length === 1 && boardInteraction.scale > 1.001) {
+                        const activeTouch = activeTouches[0];
+                        boardInteraction.panX = boardInteraction.basePanX + (activeTouch.clientX - boardInteraction.panStartX);
+                        boardInteraction.panY = boardInteraction.basePanY + (activeTouch.clientY - boardInteraction.panStartY);
+                        applyBoardTransform();
+                        boardInteraction.suppressClickUntil = Date.now() + 240;
+                        event.preventDefault();
+                    }
+                },
+                { passive: false }
+            );
+
+            const clearEndedTouches = (touchList) => {
+                Array.from(touchList).forEach((touch) => {
+                    boardInteraction.touches.delete(touch.identifier);
+                });
+                initializeBoardGestureState();
+                applyBoardTransform();
+            };
+
+            boardWrapElement.addEventListener("touchend", (event) => {
+                clearEndedTouches(event.changedTouches);
+            });
+
+            boardWrapElement.addEventListener("touchcancel", (event) => {
+                clearEndedTouches(event.changedTouches);
+            });
+        }
+
+        function updateResponsiveLayout() {
+            const root = document.documentElement;
+            const rootStyles = getComputedStyle(root);
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const compactLayout = viewportWidth <= 540;
+            const viewportGap = parseFloat(rootStyles.getPropertyValue("--viewport-gap")) || 12;
+            const trayGap = parseFloat(rootStyles.getPropertyValue("--tray-gap")) || 6;
+            const pocketBottomOffset = parseFloat(rootStyles.getPropertyValue("--pocket-bottom-offset")) || 12;
+            const adBannerHeight = parseFloat(rootStyles.getPropertyValue("--ad-banner-height")) || 50;
+            const adBannerGap = parseFloat(rootStyles.getPropertyValue("--ad-banner-gap")) || 10;
+            const actionBarGap = parseFloat(rootStyles.getPropertyValue("--action-bar-gap")) || 12;
+            const actionButtonSize = parseFloat(rootStyles.getPropertyValue("--action-button-size")) || 56;
+            const actionButtonGap = parseFloat(rootStyles.getPropertyValue("--action-button-gap")) || 16;
+            const appShellWidth = Math.min(viewportWidth, 430);
+            const trayColumns = compactLayout ? 6 : 12;
+            const trayRowsPerGroup = Math.ceil(TOP_POCKET_COUNT / trayColumns);
+            const totalTrayRows = trayRowsPerGroup * TRAY_ROW_COUNT;
+            const actionColumns = compactLayout ? 2 : 4;
+            const actionRows = Math.ceil(4 / actionColumns);
+            const pocketHorizontalPadding = 36;
+            const availablePocketWidth = Math.max(180, appShellWidth - viewportGap * 2);
+            const nextTrayCellSize = Math.max(
+                18,
+                Math.floor(
+                    Math.min(
+                        DEFAULT_TRAY_CELL_SIZE,
+                        (availablePocketWidth - pocketHorizontalPadding - trayGap * (trayColumns - 1)) /
+                            trayColumns
+                    )
+                )
+            );
+            const pocketContentHeight =
+                totalTrayRows * nextTrayCellSize +
+                Math.max(0, totalTrayRows - TRAY_ROW_COUNT) * trayGap +
+                10;
+            const pocketDockHeight = pocketContentHeight + 34;
+            const nextActionBarHeight =
+                actionRows * actionButtonSize +
+                Math.max(0, actionRows - 1) * actionButtonGap;
+            const pocketReservedHeight = Math.ceil(
+                pocketBottomOffset +
+                adBannerHeight +
+                adBannerGap +
+                nextActionBarHeight +
+                actionBarGap +
+                pocketDockHeight +
+                16
+            );
+            const availableBoardWidth = Math.max(120, appShellWidth - viewportGap * 2);
+            const availableBoardHeight = Math.max(120, viewportHeight - viewportGap * 2 - pocketReservedHeight);
+            const nextBoardCellSize = Math.max(
+                16,
+                Math.floor(
+                    Math.min(
+                        availableBoardWidth / COLS,
+                        availableBoardHeight / ROWS
+                    )
+                )
+            );
+
+            root.style.setProperty("--app-shell-width", `${appShellWidth}px`);
+            root.style.setProperty("--board-cell-size", `${nextBoardCellSize}px`);
+            root.style.setProperty("--tray-cell-size", `${nextTrayCellSize}px`);
+            root.style.setProperty("--action-bar-height", `${nextActionBarHeight}px`);
+            root.style.setProperty("--pocket-reserved-height", `${pocketReservedHeight}px`);
+
+            if (appElement) {
+                appElement.style.width = `${appShellWidth}px`;
+                appElement.style.maxWidth = `${appShellWidth}px`;
+            }
+
+            if (pocketDockElement) {
+                pocketDockElement.style.maxWidth = `calc(${appShellWidth}px - (${viewportGap}px * 2))`;
+            }
+
+            if (bottomActionsElement) {
+                bottomActionsElement.style.maxWidth = `calc(${appShellWidth}px - (${viewportGap}px * 2))`;
+            }
+
+            if (bottomAdSlotElement) {
+                bottomAdSlotElement.style.maxWidth = `calc(${appShellWidth}px - (${viewportGap}px * 2))`;
+            }
+
+            requestAnimationFrame(() => {
+                applyBoardTransform();
+            });
+        }
+
+        function isTutorialMap() {
+            return ACTIVE_MAP.id === "tutorial";
+        }
+
+        function clearTutorialOverlay() {
+            if (tutorialOverlayFrame) {
+                window.cancelAnimationFrame(tutorialOverlayFrame);
+                tutorialOverlayFrame = null;
+            }
+
+            tutorialLayerElement.innerHTML = "";
+        }
+
+        function findTutorialMisplacedBoardCells() {
+            return TARGET_POSITIONS
+                .filter((position) => {
+                    const gem = boardState[position.row][position.col];
+                    return gem && gem !== TARGET_MAP[position.row][position.col];
+                })
+                .sort((left, right) => left.row - right.row || left.col - right.col);
+        }
+
+        function findTutorialEmptyColorSlot(colorId) {
+            return (
+                TARGET_POSITIONS.find(
+                    (position) =>
+                        TARGET_MAP[position.row][position.col] === colorId &&
+                        boardState[position.row][position.col] === 0
+                ) || null
+            );
+        }
+
+        function getTutorialHintState() {
+            if (!isTutorialMap() || solved || isAnimating) {
+                return null;
+            }
+
+            if (selected) {
+                if (selected.source === "board") {
+                    const emptyColorSlot = findTutorialEmptyColorSlot(selected.color);
+                    if (emptyColorSlot) {
+                        return {
+                            type: "board",
+                            row: emptyColorSlot.row,
+                            col: emptyColorSlot.col
+                        };
+                    }
+
+                    const firstOpenPocket = getEmptyTrayIndices()[0];
+                    if (firstOpenPocket != null) {
+                        return {
+                            type: "tray",
+                            index: firstOpenPocket
+                        };
+                    }
+                }
+
+                if (selected.source === "tray") {
+                    const emptyColorSlot = findTutorialEmptyColorSlot(selected.color);
+                    if (emptyColorSlot) {
+                        return {
+                            type: "board",
+                            row: emptyColorSlot.row,
+                            col: emptyColorSlot.col
+                        };
+                    }
+                }
+            }
+
+            const placeableTrayIndex = trayState.findIndex((gem) => gem && findTutorialEmptyColorSlot(gem));
+            if (placeableTrayIndex !== -1) {
+                return {
+                    type: "tray",
+                    index: placeableTrayIndex
+                };
+            }
+
+            const misplacedCells = findTutorialMisplacedBoardCells();
+            if (misplacedCells.length) {
+                return {
+                    type: "board",
+                    row: misplacedCells[0].row,
+                    col: misplacedCells[0].col
+                };
+            }
+
+            return null;
+        }
+
+        function getTutorialTargetElement(hintState) {
+            if (!hintState) return null;
+
+            if (hintState.type === "board") {
+                return boardElement.querySelector(`[data-row="${hintState.row}"][data-col="${hintState.col}"]`);
+            }
+
+            return tutorialLayerElement.parentElement.querySelector(`.tray-slot[data-index="${hintState.index}"]`);
+        }
+
+        function renderTutorialOverlay() {
+            tutorialLayerElement.innerHTML = "";
+
+            const hintState = getTutorialHintState();
+            if (!hintState) {
+                return;
+            }
+
+            const targetElement = getTutorialTargetElement(hintState);
+            if (!targetElement) {
+                return;
+            }
+
+            const stageRect = boardStageElement.getBoundingClientRect();
+            const targetRect = targetElement.getBoundingClientRect();
+            const relativeLeft = targetRect.left - stageRect.left;
+            const relativeTop = targetRect.top - stageRect.top;
+            const placeBelow = relativeTop < 88;
+
+            const focus = document.createElement("div");
+            focus.className = "tutorial-focus";
+            focus.style.left = `${relativeLeft - 5}px`;
+            focus.style.top = `${relativeTop - 5}px`;
+            focus.style.width = `${targetRect.width + 10}px`;
+            focus.style.height = `${targetRect.height + 10}px`;
+
+            const hint = document.createElement("div");
+            hint.className = `tutorial-hint${placeBelow ? " below" : ""}`;
+            hint.style.left = `${relativeLeft + targetRect.width / 2}px`;
+            hint.style.top = `${placeBelow ? relativeTop + targetRect.height + 2 : relativeTop - 28}px`;
+            tutorialLayerElement.append(focus);
+        }
+
+        function scheduleTutorialOverlayRender() {
+            if (!isTutorialMap()) {
+                clearTutorialOverlay();
+                return;
+            }
+
+            if (tutorialOverlayFrame) {
+                window.cancelAnimationFrame(tutorialOverlayFrame);
+            }
+
+            tutorialOverlayFrame = window.requestAnimationFrame(() => {
+                tutorialOverlayFrame = null;
+                renderTutorialOverlay();
+            });
+        }
+
         function render() {
+            updateResponsiveLayout();
             renderBoard();
             renderTrays();
+            scheduleTutorialOverlayRender();
         }
 
         function clearSelection(message) {
@@ -2687,6 +3468,12 @@
             render();
         }
 
+        window.addEventListener("resize", () => {
+            updateResponsiveLayout();
+            scheduleTutorialOverlayRender();
+        });
+
+        initializeBoardGestures();
         resetGame();
     </script>
 </body>
