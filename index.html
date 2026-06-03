@@ -549,6 +549,225 @@
             z-index: 16;
         }
 
+        .stage-clear-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 50% 42%, rgba(255, 206, 65, 0.2), transparent 26%),
+                radial-gradient(circle at 50% 50%, rgba(255, 83, 40, 0.12), transparent 44%),
+                rgba(10, 6, 1, 0.44);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.24s ease;
+            z-index: 48;
+        }
+
+        .stage-clear-overlay.active {
+            opacity: 1;
+        }
+
+        .stage-clear-panel {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            padding: 28px 30px;
+            border-radius: 30px;
+            background:
+                linear-gradient(180deg, rgba(255, 253, 246, 0.98), rgba(255, 238, 210, 0.98));
+            border: 2px solid rgba(255, 175, 57, 0.9);
+            box-shadow:
+                0 0 0 8px rgba(255, 214, 122, 0.16),
+                0 24px 54px rgba(68, 24, 2, 0.34);
+            transform: translateY(24px) scale(0.86);
+            transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.28, 1);
+        }
+
+        .stage-clear-overlay.active .stage-clear-panel {
+            transform: translateY(0) scale(1);
+            animation: stage-clear-panel-pop 0.68s cubic-bezier(0.18, 0.88, 0.24, 1) both;
+        }
+
+        .stage-clear-title {
+            margin: 0;
+            color: #ff5a1f;
+            font-size: 34px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            text-shadow:
+                0 2px 0 rgba(255, 241, 214, 0.9),
+                0 10px 20px rgba(255, 116, 37, 0.24);
+        }
+
+        .stage-clear-subtitle {
+            margin: 0;
+            color: rgba(120, 52, 18, 0.92);
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+        }
+
+        .fireworks-layer {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        .firework-burst {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            transform: translate(-50%, -50%);
+            animation: firework-pop 1.26s ease-out forwards;
+        }
+
+        .firework-core {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle, rgba(255,255,255,0.98) 0 24%, var(--burst-color, #ffd54e) 24% 58%, rgba(255,255,255,0) 72%);
+            transform: translate(-50%, -50%);
+            box-shadow:
+                0 0 18px rgba(255, 255, 255, 0.8),
+                0 0 38px var(--burst-glow, rgba(255, 83, 40, 0.7));
+            animation: firework-core-flash 1.18s ease-out forwards;
+        }
+
+        .firework-ring {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 4px solid var(--burst-color, #ffd54e);
+            transform: translate(-50%, -50%) scale(0.3);
+            opacity: 0;
+            animation: firework-ring 1.18s ease-out forwards;
+        }
+
+        .firework-spark {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 7px;
+            height: 42px;
+            border-radius: 999px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,1), var(--spark-color, #ffcf6b) 40%, rgba(255,255,255,0) 100%);
+            transform:
+                translate(-50%, -50%)
+                rotate(var(--spark-rotation, 0deg))
+                translateY(-6px);
+            transform-origin: center 54px;
+            opacity: 0;
+            animation: firework-spark 1.18s cubic-bezier(0.18, 0.84, 0.26, 1) forwards;
+            box-shadow:
+                0 0 16px rgba(255, 255, 255, 0.8),
+                0 0 28px var(--burst-glow, rgba(255, 83, 40, 0.72));
+        }
+
+        @keyframes stage-clear-panel-pop {
+            0% {
+                transform: translateY(24px) scale(0.84);
+            }
+
+            58% {
+                transform: translateY(-4px) scale(1.04);
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes firework-pop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.2);
+            }
+
+            10% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.32);
+            }
+        }
+
+        @keyframes firework-core-flash {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.18);
+            }
+
+            12% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.65);
+            }
+        }
+
+        @keyframes firework-ring {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.2);
+            }
+
+            18% {
+                opacity: 0.94;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(4.6);
+            }
+        }
+
+        @keyframes firework-spark {
+            0% {
+                opacity: 0;
+                transform:
+                    translate(-50%, -50%)
+                    rotate(var(--spark-rotation, 0deg))
+                    translateY(-4px)
+                    scaleY(0.4);
+            }
+
+            12% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform:
+                    translate(-50%, -50%)
+                    rotate(var(--spark-rotation, 0deg))
+                    translateY(-74px)
+                    scaleY(1);
+            }
+        }
+
         .pocket-action-button {
             appearance: none;
             -webkit-appearance: none;
@@ -739,6 +958,14 @@
             </div>
 
             <div class="bottom-ad-slot" aria-label="배너 광고 영역">배너 광고 영역</div>
+
+            <div class="stage-clear-overlay" id="stageClearOverlay" aria-hidden="true">
+                <div class="fireworks-layer" id="fireworksLayer"></div>
+                <div class="stage-clear-panel">
+                    <h2 class="stage-clear-title" id="stageClearTitle">STAGE CLEAR</h2>
+                    <p class="stage-clear-subtitle" id="stageClearSubtitle">다음 스테이지로 이동합니다</p>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -890,9 +1117,6 @@
             };
         }
 
-        const ACTIVE_MAP = buildMapConfig(MAP_DEFINITIONS[0]);
-        const TARGET_MAP = ACTIVE_MAP.targetMap;
-
         const COLOR_PALETTE = {
             1: { name: "피치", color: "#ff9c8b" },
             2: { name: "골드", color: "#f4bd4d" },
@@ -921,46 +1145,38 @@
         const bottomAdSlotElement = document.querySelector(".bottom-ad-slot");
         const boardStageElement = document.querySelector(".board-stage");
         const tutorialLayerElement = document.getElementById("tutorialLayer");
-
-        const ROWS = ACTIVE_MAP.rows;
-        const COLS = ACTIVE_MAP.cols;
-        const TARGET_POSITIONS = ACTIVE_MAP.targetPositions;
-        const TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
-        const INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
-        const POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
-        const DEFAULT_BOARD_CELL_SIZE = ACTIVE_MAP.boardCellSize ?? 36;
-        const DEFAULT_TRAY_CELL_SIZE = ACTIVE_MAP.trayCellSize ?? 40;
-        boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
-        const INITIAL_LAYOUT_INDEX = new Map(
-            INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
-        );
-        const TARGET_NEIGHBOR_PAIRS = TARGET_POSITIONS.flatMap((position) => {
-            const neighbors = [];
-            [
-                { row: position.row + 1, col: position.col },
-                { row: position.row, col: position.col + 1 }
-            ].forEach((neighbor) => {
-                if (!TARGET_MAP[neighbor.row]?.[neighbor.col]) return;
-                neighbors.push([
-                    INITIAL_LAYOUT_INDEX.get(`${position.row}-${position.col}`),
-                    INITIAL_LAYOUT_INDEX.get(`${neighbor.row}-${neighbor.col}`)
-                ]);
-            });
-            return neighbors;
-        });
-        const TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
+        const stageClearOverlayElement = document.getElementById("stageClearOverlay");
+        const stageClearTitleElement = document.getElementById("stageClearTitle");
+        const stageClearSubtitleElement = document.getElementById("stageClearSubtitle");
+        const fireworksLayerElement = document.getElementById("fireworksLayer");
+        let currentMapIndex = 0;
+        let ACTIVE_MAP = null;
+        let TARGET_MAP = null;
+        let ROWS = 0;
+        let COLS = 0;
+        let TARGET_POSITIONS = [];
+        let TARGET_COLOR_COUNTS = {};
+        let INITIAL_LAYOUT_ORDER = [];
+        let POCKET_UNLOCK_RULE = {};
+        let DEFAULT_BOARD_CELL_SIZE = 36;
+        let DEFAULT_TRAY_CELL_SIZE = 40;
+        let INITIAL_LAYOUT_INDEX = new Map();
+        let TARGET_NEIGHBOR_PAIRS = [];
+        let TOTAL_TARGET_CELLS = 0;
         let boardState = [];
         let trayState = [];
         let selected = null;
         let moves = 0;
         let solved = false;
         let isAnimating = false;
+        let isStageTransitioning = false;
         let audioContext = null;
         let audioNoiseBuffer = null;
         let sparkleCells = new Map();
         let sparkleCleanupTimer = null;
         let completedColorIds = new Set();
         let celebrationTimers = [];
+        let stageClearTimers = [];
         let tutorialOverlayFrame = null;
         const boardInteraction = {
             scale: 1,
@@ -992,6 +1208,39 @@
             { dx: 0, dy: -24, size: 11, rotation: 10, delay: 92 },
             { dx: 0, dy: 24, size: 10, rotation: -18, delay: 112 }
         ];
+
+        function syncActiveMap(nextMapIndex = 0) {
+            currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            ACTIVE_MAP = buildMapConfig(MAP_DEFINITIONS[currentMapIndex]);
+            TARGET_MAP = ACTIVE_MAP.targetMap;
+            ROWS = ACTIVE_MAP.rows;
+            COLS = ACTIVE_MAP.cols;
+            TARGET_POSITIONS = ACTIVE_MAP.targetPositions;
+            TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
+            INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
+            POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
+            DEFAULT_BOARD_CELL_SIZE = ACTIVE_MAP.boardCellSize ?? 36;
+            DEFAULT_TRAY_CELL_SIZE = ACTIVE_MAP.trayCellSize ?? 40;
+            INITIAL_LAYOUT_INDEX = new Map(
+                INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
+            );
+            TARGET_NEIGHBOR_PAIRS = TARGET_POSITIONS.flatMap((position) => {
+                const neighbors = [];
+                [
+                    { row: position.row + 1, col: position.col },
+                    { row: position.row, col: position.col + 1 }
+                ].forEach((neighbor) => {
+                    if (!TARGET_MAP[neighbor.row]?.[neighbor.col]) return;
+                    neighbors.push([
+                        INITIAL_LAYOUT_INDEX.get(`${position.row}-${position.col}`),
+                        INITIAL_LAYOUT_INDEX.get(`${neighbor.row}-${neighbor.col}`)
+                    ]);
+                });
+                return neighbors;
+            });
+            TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
+            boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
+        }
 
         function shuffle(list) {
             const copy = [...list];
@@ -1611,6 +1860,56 @@
             });
         }
 
+        async function playFireworkBurstSound(startDelayMs = 0, accent = 0) {
+            const context = await ensureAudioContext();
+            if (!context) return;
+
+            const startTime = context.currentTime + startDelayMs / 1000;
+            const liftPitch = 260 + accent * 26;
+            const crackPitch = 820 + accent * 44;
+
+            playTone(context, {
+                startTime,
+                type: "triangle",
+                startFrequency: liftPitch,
+                endFrequency: liftPitch * 2.1,
+                duration: 0.18,
+                volume: 0.015,
+                filterFrequency: 1800,
+                filterQ: 0.9
+            });
+
+            playNoiseBurst(context, {
+                startTime: startTime + 0.16,
+                duration: 0.12,
+                volume: 0.012 + accent * 0.001,
+                filterFrequency: 2400 + accent * 140,
+                filterQ: 0.9
+            });
+
+            playTone(context, {
+                startTime: startTime + 0.17,
+                type: "sawtooth",
+                startFrequency: crackPitch,
+                endFrequency: crackPitch * 0.62,
+                duration: 0.26,
+                volume: 0.017 + accent * 0.0015,
+                filterFrequency: 2600,
+                filterQ: 0.8
+            });
+
+            playTone(context, {
+                startTime: startTime + 0.19,
+                type: "square",
+                startFrequency: crackPitch * 1.48,
+                endFrequency: crackPitch * 0.84,
+                duration: 0.18,
+                volume: 0.006 + accent * 0.0008,
+                filterFrequency: 3400,
+                filterQ: 0.5
+            });
+        }
+
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
             if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
@@ -1732,6 +2031,129 @@
         function clearCelebrationTimers() {
             celebrationTimers.forEach((timerId) => window.clearTimeout(timerId));
             celebrationTimers = [];
+        }
+
+        function clearStageClearTimers() {
+            stageClearTimers.forEach((timerId) => window.clearTimeout(timerId));
+            stageClearTimers = [];
+
+            if (fireworksLayerElement) {
+                fireworksLayerElement.innerHTML = "";
+            }
+
+            if (stageClearOverlayElement) {
+                stageClearOverlayElement.classList.remove("active");
+                stageClearOverlayElement.setAttribute("aria-hidden", "true");
+            }
+        }
+
+        function spawnFireworkBurst(leftPercent, topPercent) {
+            if (!fireworksLayerElement) return;
+
+            const burst = document.createElement("div");
+            burst.className = "firework-burst";
+            burst.style.left = `${leftPercent}%`;
+            burst.style.top = `${topPercent}%`;
+
+            const palette = [
+                { color: "#ff4b3a", glow: "rgba(255, 75, 58, 0.88)" },
+                { color: "#ffe600", glow: "rgba(255, 230, 0, 0.88)" },
+                { color: "#00d9ff", glow: "rgba(0, 217, 255, 0.9)" },
+                { color: "#6d52ff", glow: "rgba(109, 82, 255, 0.9)" },
+                { color: "#39ff73", glow: "rgba(57, 255, 115, 0.88)" },
+                { color: "#ff4fd8", glow: "rgba(255, 79, 216, 0.9)" }
+            ];
+            const baseColor = palette[Math.floor(Math.random() * palette.length)];
+            const sparkCount = 18;
+            const core = document.createElement("span");
+            core.className = "firework-core";
+            core.style.setProperty("--burst-color", baseColor.color);
+            core.style.setProperty("--burst-glow", baseColor.glow);
+
+            const ring = document.createElement("span");
+            ring.className = "firework-ring";
+            ring.style.setProperty("--burst-color", baseColor.color);
+
+            burst.append(core, ring);
+
+            for (let index = 0; index < sparkCount; index += 1) {
+                const spark = document.createElement("span");
+                spark.className = "firework-spark";
+                const sparkColor = palette[(index + Math.floor(Math.random() * palette.length)) % palette.length];
+                spark.style.setProperty("--spark-rotation", `${(360 / sparkCount) * index}deg`);
+                spark.style.setProperty("--spark-color", sparkColor.color);
+                spark.style.setProperty("--burst-glow", sparkColor.glow);
+                burst.appendChild(spark);
+            }
+
+            fireworksLayerElement.appendChild(burst);
+            const cleanupTimer = window.setTimeout(() => {
+                burst.remove();
+            }, 1450);
+            stageClearTimers.push(cleanupTimer);
+        }
+
+        function startStageClearSequence() {
+            const isLastStage = currentMapIndex >= MAP_DEFINITIONS.length - 1;
+            const nextStageNumber = isLastStage ? 1 : currentMapIndex + 2;
+
+            isStageTransitioning = true;
+            selected = null;
+
+            if (stageClearTitleElement) {
+                stageClearTitleElement.textContent = "스테이지 클리어";
+            }
+
+            if (stageClearSubtitleElement) {
+                stageClearSubtitleElement.textContent = isLastStage
+                    ? "모든 스테이지를 클리어했어요. 처음 스테이지로 돌아갑니다."
+                    : `${nextStageNumber} 스테이지로 이동합니다.`;
+            }
+
+            if (stageClearOverlayElement) {
+                stageClearOverlayElement.classList.add("active");
+                stageClearOverlayElement.setAttribute("aria-hidden", "false");
+            }
+
+            [
+                { left: 18, top: 22, delay: 0, accent: 0 },
+                { left: 82, top: 20, delay: 180, accent: 1 },
+                { left: 30, top: 42, delay: 360, accent: 2 },
+                { left: 70, top: 40, delay: 560, accent: 1 },
+                { left: 50, top: 24, delay: 760, accent: 3 },
+                { left: 24, top: 30, delay: 1080, accent: 2 },
+                { left: 76, top: 28, delay: 1320, accent: 4 },
+                { left: 50, top: 34, delay: 1600, accent: 3 }
+            ].forEach(({ left, top, delay }) => {
+                const timerId = window.setTimeout(() => {
+                    spawnFireworkBurst(left, top);
+                }, delay);
+                stageClearTimers.push(timerId);
+            });
+
+            [
+                { delay: 0, accent: 0 },
+                { delay: 180, accent: 1 },
+                { delay: 360, accent: 2 },
+                { delay: 560, accent: 1 },
+                { delay: 760, accent: 3 },
+                { delay: 1080, accent: 2 },
+                { delay: 1320, accent: 4 },
+                { delay: 1600, accent: 3 }
+            ].forEach(({ delay, accent }) => {
+                void playFireworkBurstSound(delay, accent);
+            });
+
+            void playColorCompleteSound(40);
+            void playColorCompleteSound(980);
+
+            const nextStageTimer = window.setTimeout(() => {
+                clearStageClearTimers();
+                isStageTransitioning = false;
+                syncActiveMap(currentMapIndex + 1);
+                resetGame();
+            }, 4200);
+            stageClearTimers.push(nextStageTimer);
         }
 
         function cleanupExpiredSparkles(now = performance.now()) {
@@ -3030,6 +3452,10 @@
             if (justSolved) {
                 clearCelebrationTimers();
                 scheduleFullBoardCelebration();
+                const stageClearTimer = window.setTimeout(() => {
+                    startStageClearSequence();
+                }, 760);
+                stageClearTimers.push(stageClearTimer);
                 return;
             }
 
@@ -3066,7 +3492,7 @@
         }
 
         async function handleBoardClick(row, col) {
-            if (solved || isAnimating) return;
+            if (solved || isAnimating || isStageTransitioning) return;
             if (isLockedCorrectGem(row, col)) return;
 
             const gem = boardState[row][col];
@@ -3310,7 +3736,7 @@
         }
 
         async function handleTrayClick(index) {
-            if (solved || isAnimating) return;
+            if (solved || isAnimating || isStageTransitioning) return;
 
             const gem = trayState[index];
             const openedPocketIndices = getOpenedPocketIndexSet();
@@ -3456,13 +3882,16 @@
         }
 
         function resetGame() {
+            clearStageClearTimers();
             boardState = createBoardState();
             trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
             clearSparkles();
             clearCelebrationTimers();
+            resetBoardTransform();
             selected = null;
             moves = 0;
             solved = false;
+            isStageTransitioning = false;
             completedColorIds = getCompletedColorIds();
             setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
             render();
@@ -3473,6 +3902,7 @@
             scheduleTutorialOverlayRender();
         });
 
+        syncActiveMap(0);
         initializeBoardGestures();
         resetGame();
     </script>
