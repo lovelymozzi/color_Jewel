@@ -985,27 +985,336 @@
 
         const TUTORIAL_IMAGE_MAP = [
             [0, 0, 1, 0, 0],
-            [0, 2, 3, 4, 0],
-            [0, 5, 6, 7, 0],
-            [0, 0, 1, 0, 0],
+            [0, 2, 1, 3, 0],
+            [0, 2, 4, 3, 0],
+            [0, 0, 4, 0, 0],
             [0, 0, 0, 0, 0]
         ];
 
         const TUTORIAL_BOARD_STATE = [
-            [0, 0, 1, 0, 0],
-            [0, 2, 3, 4, 0],
-            [0, 7, 6, 5, 0],
-            [0, 0, 1, 0, 0],
+            [0, 0, 3, 0, 0],
+            [0, 4, 3, 1, 0],
+            [0, 4, 2, 1, 0],
+            [0, 0, 2, 0, 0],
             [0, 0, 0, 0, 0]
         ];
 
         const TUTORIAL_TRAY_STATE = [];
+
+        const APPLE_IMAGE_MAP = [
+            [0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 5, 5, 5, 0, 0, 1, 1, 1, 0, 0],
+            [0, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 0],
+            [5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1],
+            [5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1],
+            [5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1],
+            [0, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 5, 5, 5, 5, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 5, 5, 5, 5, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 5, 5, 5, 1, 0, 0, 0, 0]
+        ];
+
+        const BEAR_IMAGE_MAP = [
+            [0, 6, 6, 0, 0, 0, 0, 6, 6, 0],
+            [6, 1, 1, 6, 0, 0, 6, 1, 1, 6],
+            [6, 1, 6, 6, 6, 6, 6, 6, 1, 6],
+            [0, 6, 6, 6, 6, 6, 6, 6, 6, 0],
+            [6, 6, 7, 6, 6, 6, 6, 7, 6, 6],
+            [6, 6, 6, 6, 1, 1, 6, 6, 6, 6],
+            [6, 6, 6, 1, 1, 1, 1, 6, 6, 6],
+            [0, 6, 6, 6, 1, 1, 6, 6, 6, 0],
+            [0, 0, 6, 6, 6, 6, 6, 6, 0, 0],
+            [0, 0, 0, 6, 6, 6, 6, 0, 0, 0]
+        ];
+
+        const STRAWBERRY_IMAGE_MAP = [
+            [0, 0, 0, 3, 3, 3, 3, 0, 0, 0],
+            [0, 0, 3, 3, 3, 3, 3, 3, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 2, 2, 1, 1, 0, 0],
+            [0, 1, 1, 2, 1, 1, 2, 1, 1, 0],
+            [1, 1, 2, 1, 2, 2, 1, 2, 1, 1],
+            [1, 1, 2, 2, 1, 1, 2, 2, 1, 1],
+            [0, 1, 1, 2, 2, 2, 2, 1, 1, 0],
+            [0, 0, 1, 1, 2, 2, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0]
+        ];
+
+        const PUPPY_IMAGE_MAP = [
+            [6, 6, 0, 0, 0, 0, 0, 0, 6, 6],
+            [6, 6, 6, 1, 1, 1, 1, 6, 6, 6],
+            [6, 6, 1, 1, 1, 1, 1, 1, 6, 6],
+            [6, 1, 1, 7, 1, 1, 7, 1, 1, 6],
+            [6, 1, 1, 1, 1, 1, 1, 1, 1, 6],
+            [0, 6, 1, 1, 7, 7, 1, 1, 6, 0],
+            [0, 6, 1, 1, 1, 1, 1, 1, 6, 0],
+            [0, 0, 6, 1, 4, 4, 1, 6, 0, 0],
+            [0, 0, 0, 6, 6, 6, 6, 0, 0, 0],
+            [0, 0, 0, 0, 6, 6, 0, 0, 0, 0]
+        ];
+
+        const HEART_IMAGE_MAP = [
+            [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+            [1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
+        ];
 
         function scaleMap(sourceMap, factor) {
             return sourceMap.flatMap((row) => {
                 const scaledRow = row.flatMap((cell) => Array(factor).fill(cell));
                 return Array.from({ length: factor }, () => [...scaledRow]);
             });
+        }
+
+        const PALETTE_COLOR_IDS = [1, 2, 3, 4, 5, 6, 7];
+        const CARDINAL_DIRECTIONS = [
+            { row: -1, col: 0 },
+            { row: 1, col: 0 },
+            { row: 0, col: -1 },
+            { row: 0, col: 1 }
+        ];
+
+        function getMapColorCounts(sourceMap) {
+            return sourceMap.reduce((counts, row) => {
+                row.forEach((cell) => {
+                    if (!cell) return;
+                    counts[cell] = (counts[cell] || 0) + 1;
+                });
+                return counts;
+            }, {});
+        }
+
+        function getCellsByColor(sourceMap, colorId) {
+            return sourceMap.flatMap((row, rowIndex) =>
+                row
+                    .map((cell, colIndex) => (cell === colorId ? { row: rowIndex, col: colIndex } : null))
+                    .filter(Boolean)
+            );
+        }
+
+        function getLeastUsedColorIds(colorCounts, excludedColorIds, count, seed = 0) {
+            const excludedSet = new Set(excludedColorIds);
+
+            return [...PALETTE_COLOR_IDS]
+                .filter((colorId) => !excludedSet.has(colorId))
+                .sort((left, right) => {
+                    const countDiff = (colorCounts[left] || 0) - (colorCounts[right] || 0);
+                    if (countDiff) return countDiff;
+                    return ((left + seed) % PALETTE_COLOR_IDS.length) - ((right + seed) % PALETTE_COLOR_IDS.length);
+                })
+                .slice(0, count);
+        }
+
+        function chooseSpreadSeeds(cells, count, seed = 0) {
+            if (!cells.length) return [];
+
+            const seeds = [cells[Math.abs(seed * 11) % cells.length]];
+
+            while (seeds.length < count) {
+                let bestCell = null;
+                let bestScore = -1;
+
+                cells.forEach((cell, index) => {
+                    if (seeds.some((seedCell) => seedCell.row === cell.row && seedCell.col === cell.col)) {
+                        return;
+                    }
+
+                    const minDistance = seeds.reduce(
+                        (distance, seedCell) =>
+                            Math.min(distance, Math.abs(cell.row - seedCell.row) + Math.abs(cell.col - seedCell.col)),
+                        Number.POSITIVE_INFINITY
+                    );
+                    const tieBreaker = (index * 17 + seed * 13) % 101;
+                    const score = minDistance * 1000 + tieBreaker;
+
+                    if (score > bestScore) {
+                        bestCell = cell;
+                        bestScore = score;
+                    }
+                });
+
+                seeds.push(bestCell || cells[0]);
+            }
+
+            return seeds;
+        }
+
+        function splitCellsIntoBlobs(cells, blobCount, seed = 0) {
+            if (blobCount <= 1 || cells.length <= 1) {
+                return [cells];
+            }
+
+            const seeds = chooseSpreadSeeds(cells, Math.min(blobCount, cells.length), seed);
+            const blobs = seeds.map((seedCell) => [seedCell]);
+            const seedKeys = new Set(seeds.map((cell) => toCellKey(cell.row, cell.col)));
+            const remainingCells = cells.filter((cell) => !seedKeys.has(toCellKey(cell.row, cell.col)));
+
+            remainingCells
+                .sort((left, right) => left.row - right.row || left.col - right.col)
+                .forEach((cell, cellIndex) => {
+                    let bestBlobIndex = 0;
+                    let bestDistance = Number.POSITIVE_INFINITY;
+
+                    seeds.forEach((seedCell, blobIndex) => {
+                        const distance = Math.abs(cell.row - seedCell.row) + Math.abs(cell.col - seedCell.col);
+                        if (
+                            distance < bestDistance ||
+                            (distance === bestDistance && (blobIndex + cellIndex + seed) % seeds.length < bestBlobIndex)
+                        ) {
+                            bestDistance = distance;
+                            bestBlobIndex = blobIndex;
+                        }
+                    });
+
+                    blobs[bestBlobIndex].push(cell);
+                });
+
+            return blobs;
+        }
+
+        function getLargestMapClusterSize(sourceMap) {
+            const visited = new Set();
+            let largestClusterSize = 0;
+
+            sourceMap.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    if (!cell) return;
+
+                    const startKey = toCellKey(rowIndex, colIndex);
+                    if (visited.has(startKey)) {
+                        return;
+                    }
+
+                    let clusterSize = 0;
+                    const stack = [{ row: rowIndex, col: colIndex }];
+                    visited.add(startKey);
+
+                    while (stack.length) {
+                        const current = stack.pop();
+                        clusterSize += 1;
+
+                        CARDINAL_DIRECTIONS.forEach((direction) => {
+                            const nextRow = current.row + direction.row;
+                            const nextCol = current.col + direction.col;
+                            const nextKey = toCellKey(nextRow, nextCol);
+
+                            if (
+                                nextRow < 0 ||
+                                nextRow >= sourceMap.length ||
+                                nextCol < 0 ||
+                                nextCol >= sourceMap[0].length ||
+                                visited.has(nextKey) ||
+                                sourceMap[nextRow][nextCol] !== cell
+                            ) {
+                                return;
+                            }
+
+                            visited.add(nextKey);
+                            stack.push({ row: nextRow, col: nextCol });
+                        });
+                    }
+
+                    largestClusterSize = Math.max(largestClusterSize, clusterSize);
+                });
+            });
+
+            return largestClusterSize;
+        }
+
+        function createSpatialBlobColorMap(sourceMap, seed = 0) {
+            const activeCells = sourceMap.flatMap((row, rowIndex) =>
+                row
+                    .map((cell, colIndex) => (cell ? { row: rowIndex, col: colIndex } : null))
+                    .filter(Boolean)
+            );
+            const blobCount = Math.min(6, Math.max(4, Math.round(activeCells.length / 42)));
+            const nextMap = sourceMap.map((row) => row.map(() => 0));
+            const sourceColorCounts = getMapColorCounts(sourceMap);
+            const sourceColorIds = Object.entries(sourceColorCounts)
+                .sort((left, right) => right[1] - left[1] || Number(left[0]) - Number(right[0]))
+                .map(([colorId]) => Number(colorId));
+            const extraColorIds = getLeastUsedColorIds(
+                sourceColorCounts,
+                sourceColorIds,
+                Math.max(0, blobCount - sourceColorIds.length),
+                seed
+            );
+            const blobColorIds = [...sourceColorIds, ...extraColorIds].slice(0, blobCount);
+            const blobs = splitCellsIntoBlobs(activeCells, blobColorIds.length, seed).sort((left, right) => {
+                const leftCenter = left.reduce(
+                    (center, cell) => ({
+                        row: center.row + cell.row / left.length,
+                        col: center.col + cell.col / left.length
+                    }),
+                    { row: 0, col: 0 }
+                );
+                const rightCenter = right.reduce(
+                    (center, cell) => ({
+                        row: center.row + cell.row / right.length,
+                        col: center.col + cell.col / right.length
+                    }),
+                    { row: 0, col: 0 }
+                );
+                return leftCenter.row - rightCenter.row || leftCenter.col - rightCenter.col;
+            });
+
+            blobs.forEach((blob, blobIndex) => {
+                blob.forEach(({ row, col }) => {
+                    nextMap[row][col] = blobColorIds[blobIndex];
+                });
+            });
+
+            return nextMap;
+        }
+
+        function balanceShapeColors(sourceMap, seed = 0) {
+            const nextMap = sourceMap.map((row) => [...row]);
+            const activeCellCount = nextMap.reduce(
+                (count, row) => count + row.reduce((rowCount, cell) => rowCount + (cell ? 1 : 0), 0),
+                0
+            );
+            const maxAllowedCount = Math.max(1, Math.floor(activeCellCount / 2));
+            let pass = 0;
+
+            // Keep the original silhouette blocks, and only split colors that are too dominant.
+            while (pass < PALETTE_COLOR_IDS.length) {
+                const colorCounts = getMapColorCounts(nextMap);
+                const dominantEntry = Object.entries(colorCounts)
+                    .map(([colorId, count]) => ({ colorId: Number(colorId), count }))
+                    .sort((left, right) => right.count - left.count || left.colorId - right.colorId)
+                    .find(({ count }) => count > maxAllowedCount);
+
+                if (!dominantEntry) {
+                    break;
+                }
+
+                const dominantCells = getCellsByColor(nextMap, dominantEntry.colorId);
+                const splitCount = Math.ceil(dominantCells.length / maxAllowedCount);
+                const extraColorIds = getLeastUsedColorIds(colorCounts, [dominantEntry.colorId], splitCount - 1, seed + pass);
+                const blobColorIds = [dominantEntry.colorId, ...extraColorIds];
+                const blobs = splitCellsIntoBlobs(dominantCells, blobColorIds.length, seed + pass);
+
+                blobs.forEach((blob, blobIndex) => {
+                    blob.forEach(({ row, col }) => {
+                        nextMap[row][col] = blobColorIds[blobIndex];
+                    });
+                });
+
+                pass += 1;
+            }
+
+            if (getLargestMapClusterSize(nextMap) < Math.max(10, Math.floor(activeCellCount * 0.12))) {
+                return createSpatialBlobColorMap(sourceMap, seed);
+            }
+
+            return nextMap;
         }
 
         const MAP_DEFINITIONS = [
@@ -1017,7 +1326,57 @@
                 trayCellSize: 42,
                 initialBoardState: TUTORIAL_BOARD_STATE,
                 initialTrayState: TUTORIAL_TRAY_STATE,
-                startMessage: "튜토리얼 맵이에요. 포켓은 비어 있어요. 잘못 놓인 보석 2개를 빈 포켓을 거쳐 제자리로 옮기면 바로 클리어됩니다.",
+                startMessage: "튜토리얼 맵이에요. 포켓은 비어 있어요. 보석을 빈 포켓을 거쳐 맞는 색 자리로 옮기면 됩니다.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            },
+            {
+                id: "apple",
+                baseImageMap: APPLE_IMAGE_MAP,
+                scale: 1,
+                startMessage: "사과 스테이지예요. 같은 색 칸에 보석을 맞춰 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            },
+            {
+                id: "bear",
+                baseImageMap: BEAR_IMAGE_MAP,
+                scale: 1,
+                balancedColors: true,
+                colorSeed: 2,
+                startMessage: "곰돌이 스테이지예요. 색을 맞춰 얼굴을 완성해 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            },
+            {
+                id: "strawberry",
+                baseImageMap: STRAWBERRY_IMAGE_MAP,
+                scale: 1,
+                balancedColors: true,
+                colorSeed: 3,
+                startMessage: "딸기 스테이지예요. 보석을 정리해 딸기 모양을 채워 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
+            },
+            {
+                id: "puppy",
+                baseImageMap: PUPPY_IMAGE_MAP,
+                scale: 1,
+                balancedColors: true,
+                colorSeed: 4,
+                startMessage: "강아지 스테이지예요. 칸 색을 맞춰 귀여운 얼굴을 완성해 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1026,8 +1385,11 @@
             },
             {
                 id: "heart",
-                baseImageMap: BASE_IMAGE_MAP,
+                baseImageMap: HEART_IMAGE_MAP,
                 scale: 2,
+                balancedColors: true,
+                colorSeed: 5,
+                startMessage: "하트 스테이지예요. 전체 모양을 완성해 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1067,7 +1429,10 @@
         }
 
         function buildMapConfig(definition) {
-            const scaledTargetMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const rawScaledMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const scaledTargetMap = definition.balancedColors
+                ? balanceShapeColors(rawScaledMap, definition.colorSeed ?? 0)
+                : rawScaledMap;
             const paddedTarget = padMapToGrid(scaledTargetMap);
             const targetMap = paddedTarget.map;
             const rows = targetMap.length;
@@ -1118,11 +1483,11 @@
         }
 
         const COLOR_PALETTE = {
-            1: { name: "피치", color: "#ff9c8b" },
+            1: { name: "루비", color: "#ff5c4d" },
             2: { name: "골드", color: "#f4bd4d" },
             3: { name: "민트", color: "#59d7a7" },
             4: { name: "하늘", color: "#6cb8ff" },
-            5: { name: "라일락", color: "#ca9dff" },
+            5: { name: "로즈", color: "#ff96aa" },
             6: { name: "코코아", color: "#a9744f" },
             7: { name: "플럼", color: "#8a5cf6" }
         };
@@ -1502,32 +1867,124 @@
             }
         }
 
+        function hasMatchedInitialCells(board) {
+            return TARGET_POSITIONS.some(
+                (position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]
+            );
+        }
+
+        function removeMatchedInitialCells(board) {
+            const shuffledPositions = () => shuffle(TARGET_POSITIONS);
+
+            for (let pass = 0; pass < TOTAL_TARGET_CELLS * 3; pass += 1) {
+                const matchedCells = TARGET_POSITIONS.filter(
+                    (position) => board[position.row][position.col] === TARGET_MAP[position.row][position.col]
+                );
+
+                if (!matchedCells.length) {
+                    return true;
+                }
+
+                let swapped = false;
+
+                for (const source of shuffle(matchedCells)) {
+                    const sourceColor = board[source.row][source.col];
+                    const candidate = shuffledPositions().find((target) => {
+                        if (target.row === source.row && target.col === source.col) return false;
+
+                        const targetColor = board[target.row][target.col];
+                        return (
+                            sourceColor !== TARGET_MAP[target.row][target.col] &&
+                            targetColor !== TARGET_MAP[source.row][source.col]
+                        );
+                    });
+
+                    if (!candidate) continue;
+
+                    [board[source.row][source.col], board[candidate.row][candidate.col]] = [
+                        board[candidate.row][candidate.col],
+                        board[source.row][source.col]
+                    ];
+                    swapped = true;
+                    break;
+                }
+
+                if (!swapped) {
+                    return false;
+                }
+            }
+
+            return !hasMatchedInitialCells(board);
+        }
+
+        function buildDerangedInitialColors() {
+            const groupedPositions = [...INITIAL_LAYOUT_ORDER].sort((left, right) => {
+                const leftColor = TARGET_MAP[left.row][left.col];
+                const rightColor = TARGET_MAP[right.row][right.col];
+                return leftColor - rightColor || left.row - right.row || left.col - right.col;
+            });
+            const groupedColors = groupedPositions.map((position) => TARGET_MAP[position.row][position.col]);
+            const colorCounts = groupedColors.reduce((counts, color) => {
+                counts.set(color, (counts.get(color) || 0) + 1);
+                return counts;
+            }, new Map());
+            const maxCount = Math.max(...colorCounts.values());
+            const colorCount = groupedColors.length;
+
+            if (maxCount > Math.floor(colorCount / 2)) {
+                return null;
+            }
+
+            const extraShift = colorCount > maxCount ? Math.floor(Math.random() * (colorCount - maxCount)) : 0;
+            const shift = maxCount + extraShift;
+            const shiftedColors = groupedColors.map((_, index) => groupedColors[(index + shift) % colorCount]);
+            const colorByPosition = new Map(
+                groupedPositions.map((position, index) => [toCellKey(position.row, position.col), shiftedColors[index]])
+            );
+
+            return INITIAL_LAYOUT_ORDER.map((position) => colorByPosition.get(toCellKey(position.row, position.col)));
+        }
+
         function createBoardState() {
             if (ACTIVE_MAP.initialBoardState) {
                 return ACTIVE_MAP.initialBoardState.map((row) => [...row]);
             }
 
-            const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
+            const createEmptyBoard = () => TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
+            const targetColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
 
-            for (let attempt = 0; attempt < 10; attempt += 1) {
-                const offset =
-                    INITIAL_LAYOUT_OFFSETS[Math.floor(Math.random() * INITIAL_LAYOUT_OFFSETS.length)] ||
-                    INITIAL_LAYOUT_OFFSETS[0];
-                const board = TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
+            for (let attempt = 0; attempt < 12; attempt += 1) {
+                const sourceColors = buildDerangedInitialColors();
+                if (!sourceColors) break;
+                const board = createEmptyBoard();
 
                 INITIAL_LAYOUT_ORDER.forEach((position, index) => {
-                    board[position.row][position.col] = sourceColors[(index + offset) % sourceColors.length];
+                    board[position.row][position.col] = sourceColors[index];
                 });
 
-                softenInitialClusters(board);
-                breakLargeInitialClusters(board);
-
-                if (getBoardClusterStats(board).maxClusterSize <= INITIAL_MAX_CLUSTER_SIZE) {
+                if (!hasMatchedInitialCells(board)) {
                     return board;
                 }
             }
 
-            return createBoardState();
+            for (let offset = 1; offset < targetColors.length; offset += 1) {
+                const board = createEmptyBoard();
+
+                INITIAL_LAYOUT_ORDER.forEach((position, index) => {
+                    board[position.row][position.col] = targetColors[(index + offset) % targetColors.length];
+                });
+
+                if (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board)) {
+                    return board;
+                }
+            }
+
+            const fallbackBoard = createEmptyBoard();
+            INITIAL_LAYOUT_ORDER.forEach((position, index) => {
+                fallbackBoard[position.row][position.col] = targetColors[(index + 1) % targetColors.length];
+            });
+            removeMatchedInitialCells(fallbackBoard);
+            return fallbackBoard;
         }
 
         function setStatus(message) {
