@@ -1526,6 +1526,28 @@
             return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 180;
         }
 
+        function scheduleFullBoardCelebration(startDelayMs = 0) {
+            const completedCells = TARGET_POSITIONS
+                .filter((position) => boardState[position.row][position.col] === TARGET_MAP[position.row][position.col])
+                .sort((left, right) => left.row - right.row || left.col - right.col);
+
+            completedCells.forEach((cell, index) => {
+                const timerId = window.setTimeout(() => {
+                    markCorrectPlacementSparkle(cell.row, cell.col);
+                    render();
+                }, startDelayMs + index * COLOR_COMPLETE_STEP_MS);
+                celebrationTimers.push(timerId);
+            });
+
+            void playColorCompleteSound(startDelayMs);
+
+            if (completedCells.length > 10) {
+                void playColorCompleteSound(startDelayMs + 220);
+            }
+
+            return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 260;
+        }
+
         function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
             const initialOpenCount = POCKET_UNLOCK_RULE.initialOpenCount ?? 12;
             const completedColorsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.completedColorsPerUnlock ?? 1);
@@ -2179,6 +2201,12 @@
                 void playPlaceSound(clusterSize);
             }
             render();
+
+            if (justSolved) {
+                clearCelebrationTimers();
+                scheduleFullBoardCelebration();
+                return;
+            }
 
             if (newlyCompletedColorIds.length) {
                 let nextDelayMs = 0;
