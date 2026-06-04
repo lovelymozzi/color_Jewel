@@ -975,6 +975,12 @@
             display: none;
         }
 
+        .pixel-admin-stage-editor {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 6px;
+        }
+
         .pixel-admin-close,
         .pixel-admin-action {
             appearance: none;
@@ -1066,6 +1072,7 @@
             position: relative;
             width: 40px;
             height: 40px;
+            overflow: visible;
         }
 
         .pixel-admin-swatch {
@@ -1097,26 +1104,28 @@
 
         .pixel-admin-swatch-delete {
             position: absolute;
-            top: -4px;
-            right: -4px;
+            top: 2px;
+            right: 2px;
+            z-index: 1;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             padding: 0;
             border: 0;
             border-radius: 999px;
-            background: rgba(103, 68, 35, 0.82);
+            background: rgba(103, 68, 35, 0.88);
             color: #fff7eb;
             font: inherit;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
             line-height: 1;
             cursor: pointer;
             opacity: 0;
             transform: scale(0.88);
             pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(255, 247, 235, 0.92);
             transition: opacity 0.16s ease, transform 0.16s ease, background 0.16s ease;
         }
 
@@ -1476,6 +1485,11 @@
             <button class="pixel-admin-close" id="pixelAdminClose" type="button" aria-label="픽셀 어드민 닫기">닫기</button>
         </div>
 
+        <label class="pixel-admin-field pixel-admin-stage-editor" for="pixelAdminTitleInput">
+            <span class="pixel-admin-field-label">제목</span>
+            <input class="pixel-admin-input" id="pixelAdminTitleInput" type="text" maxlength="24" placeholder="스테이지 제목" />
+        </label>
+
         <p class="pixel-admin-help" id="pixelAdminHelp">20x20 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. `#`는 자동으로 붙습니다.</p>
         <p class="pixel-admin-selection" id="pixelAdminSelection">선택된 색상</p>
         <div class="pixel-admin-palette-tools">
@@ -1695,17 +1709,27 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
 
-        const STRAWBERRY_IMAGE_MAP = [
-            [0, 0, 0, 3, 3, 3, 3, 0, 0, 0],
-            [0, 0, 3, 3, 3, 3, 3, 3, 0, 0],
-            [0, 0, 0, 5, 1, 1, 1, 0, 0, 0],
-            [0, 0, 5, 1, 2, 2, 1, 1, 0, 0],
-            [0, 5, 1, 2, 1, 1, 2, 1, 1, 0],
-            [5, 1, 2, 1, 2, 2, 1, 2, 1, 1],
-            [1, 5, 2, 2, 1, 1, 2, 2, 1, 1],
-            [0, 1, 1, 2, 2, 2, 2, 1, 1, 0],
-            [0, 0, 1, 1, 2, 2, 1, 1, 0, 0],
-            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0]
+        const BUBBLE_TEA_IMAGE_MAP = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 3, 8, 8, 1, 1, 8, 8, 3, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 3, 8, 2, 2, 2, 2, 2, 2, 8, 3, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 3, 8, 2, 2, 2, 2, 2, 2, 2, 2, 8, 3, 0, 0],
+            [0, 0, 0, 0, 0, 0, 3, 8, 4, 4, 4, 4, 4, 4, 4, 4, 8, 3, 0, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 4, 5, 5, 4, 4, 4, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 5, 5, 5, 5, 4, 9, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 5, 5, 5, 5, 4, 9, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 4, 5, 5, 4, 4, 9, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 4, 4, 4, 4, 4, 9, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 4, 6, 7, 6, 7, 6, 9, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 3, 8, 4, 6, 7, 6, 7, 6, 7, 6, 9, 4, 8, 3, 0],
+            [0, 0, 0, 0, 0, 0, 3, 8, 4, 6, 6, 7, 6, 6, 9, 4, 8, 3, 0, 0],
+            [0, 0, 0, 0, 0, 0, 3, 8, 4, 4, 6, 6, 6, 4, 9, 4, 8, 3, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 3, 8, 4, 4, 4, 4, 4, 4, 8, 3, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 3, 8, 8, 8, 8, 8, 8, 3, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0]
         ];
 
         const PUPPY_IMAGE_MAP = [
@@ -1986,13 +2010,14 @@
         const MAP_DEFINITIONS = [
             {
                 id: "tutorial",
+                displayName: "튜토리얼",
                 baseImageMap: TUTORIAL_IMAGE_MAP,
                 scale: 1,
                 boardCellSize: 56,
                 trayCellSize: 42,
                 initialBoardState: TUTORIAL_BOARD_STATE,
                 initialTrayState: TUTORIAL_TRAY_STATE,
-                startMessage: "튜토리얼 맵이에요. 빈 포켓을 거쳐 보석을 같은 색 자리로 옮겨 보세요.",
+                startMessageTemplate: "{title} 맵이에요. 빈 포켓을 거쳐 보석을 같은 색 자리로 옮겨 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2001,9 +2026,10 @@
             },
             {
                 id: "apple",
+                displayName: "사과",
                 baseImageMap: APPLE_IMAGE_MAP,
                 scale: 1,
-                startMessage: "사과 스테이지예요. 같은 색 칸에 보석을 맞춰 보세요.",
+                startMessageTemplate: "{title} 스테이지예요. 같은 색 칸에 보석을 맞춰 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2012,9 +2038,10 @@
             },
             {
                 id: "bear",
+                displayName: "곰돌이",
                 baseImageMap: BEAR_IMAGE_MAP,
                 scale: 1,
-                startMessage: "곰돌이 스테이지예요. 색을 맞춰 얼굴을 완성해 보세요.",
+                startMessageTemplate: "{title} 스테이지예요. 색을 맞춰 얼굴을 완성해 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2023,9 +2050,11 @@
             },
             {
                 id: "strawberry",
-                baseImageMap: STRAWBERRY_IMAGE_MAP,
+                displayName: "버블티",
+                overrideVersion: 2,
+                baseImageMap: BUBBLE_TEA_IMAGE_MAP,
                 scale: 1,
-                startMessage: "딸기 스테이지예요. 보석을 정리해 딸기 모양을 채워 보세요.",
+                startMessageTemplate: "{title} 스테이지예요. 보석을 정리해 컵 안을 채워 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2034,9 +2063,10 @@
             },
             {
                 id: "puppy",
+                displayName: "강아지",
                 baseImageMap: PUPPY_IMAGE_MAP,
                 scale: 1,
-                startMessage: "강아지 스테이지예요. 색을 맞춰 귀여운 얼굴을 완성해 보세요.",
+                startMessageTemplate: "{title} 스테이지예요. 색을 맞춰 귀여운 얼굴을 완성해 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2045,9 +2075,10 @@
             },
             {
                 id: "heart",
+                displayName: "하트",
                 baseImageMap: HEART_IMAGE_MAP,
                 scale: 2,
-                startMessage: "하트 스테이지예요. 전체 모양을 완성해 보세요.",
+                startMessageTemplate: "{title} 스테이지예요. 전체 모양을 완성해 보세요.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2104,6 +2135,38 @@
 
         function getMapDefinitionById(mapId) {
             return MAP_DEFINITIONS.find((definition) => definition.id === mapId) || null;
+        }
+
+        function normalizeStageDisplayName(value) {
+            return String(value || "")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 24);
+        }
+
+        function getStageOverrideVersion(definitionOrMapId) {
+            const definition =
+                typeof definitionOrMapId === "string"
+                    ? getMapDefinitionById(definitionOrMapId)
+                    : definitionOrMapId;
+            return Math.max(1, Number(definition?.overrideVersion) || 1);
+        }
+
+        function getStageResolvedDisplayName(definition) {
+            return (
+                normalizeStageDisplayName(definition?.adminDisplayName) ||
+                normalizeStageDisplayName(definition?.displayName) ||
+                String(definition?.id || "").toUpperCase()
+            );
+        }
+
+        function getStageStartMessage(definition) {
+            const title = getStageResolvedDisplayName(definition);
+            const template =
+                (typeof definition?.startMessageTemplate === "string" && definition.startMessageTemplate.trim()) ||
+                definition?.startMessage ||
+                "배경색을 보면서 보석을 제자리로 정리해 보세요.";
+            return template.includes("{title}") ? template.replaceAll("{title}", title) : template;
         }
 
         function normalizeStoredPixelAdminMap(rawMap) {
@@ -2200,6 +2263,8 @@
 
             const storagePayload = readPixelAdminStageStorage();
             storagePayload[definition.id] = {
+                overrideVersion: getStageOverrideVersion(definition),
+                displayName: normalizeStageDisplayName(definition.adminDisplayName) || null,
                 map: clonePixelMap(definition.adminTargetMap || buildStageCanvasMapFromBase(definition)),
                 palette: clonePaletteMeta(definition.adminPalette || {})
             };
@@ -2223,21 +2288,37 @@
 
         function loadPersistedPixelAdminStageOverrides() {
             const storagePayload = readPixelAdminStageStorage();
+            let didMutateStorage = false;
 
             Object.entries(storagePayload).forEach(([mapId, override]) => {
                 const definition = getMapDefinitionById(mapId);
                 if (!definition || !override || typeof override !== "object") {
+                    delete storagePayload[mapId];
+                    didMutateStorage = true;
+                    return;
+                }
+
+                if ((Number(override.overrideVersion) || 1) !== getStageOverrideVersion(definition)) {
+                    delete storagePayload[mapId];
+                    didMutateStorage = true;
                     return;
                 }
 
                 const normalizedMap = normalizeStoredPixelAdminMap(override.map);
                 if (!normalizedMap) {
+                    delete storagePayload[mapId];
+                    didMutateStorage = true;
                     return;
                 }
 
                 definition.adminTargetMap = clonePixelMap(normalizedMap);
                 definition.adminPalette = normalizeStoredPixelAdminPalette(override.palette);
+                definition.adminDisplayName = normalizeStageDisplayName(override.displayName) || null;
             });
+
+            if (didMutateStorage) {
+                writePixelAdminStageStorage(storagePayload);
+            }
         }
 
         function clearPixelAdminAutoSaveTimer() {
@@ -2271,6 +2352,10 @@
 
             definition.adminTargetMap = clonePixelMap(pixelAdminState.draftMap);
             definition.adminPalette = clonePaletteMeta(pixelAdminState.draftPalette);
+            definition.adminDisplayName =
+                normalizeStageDisplayName(pixelAdminState.draftDisplayName) ||
+                normalizeStageDisplayName(definition.displayName) ||
+                null;
 
             const didPersist = persistPixelAdminStageOverride(definition);
             if (didPersist) {
@@ -2301,16 +2386,8 @@
         }
 
         function getMapDisplayName(mapId) {
-            return (
-                {
-                    tutorial: "튜토리얼",
-                    apple: "사과",
-                    bear: "곰돌이",
-                    strawberry: "딸기",
-                    puppy: "강아지",
-                    heart: "하트"
-                }[mapId] || String(mapId || "").toUpperCase()
-            );
+            const definition = getMapDefinitionById(mapId);
+            return definition ? getStageResolvedDisplayName(definition) : String(mapId || "").toUpperCase();
         }
 
         function getDefaultPixelAdminColorLabel(mapId, colorId) {
@@ -2376,6 +2453,8 @@
 
             return {
                 ...definition,
+                displayName: getStageResolvedDisplayName(definition),
+                startMessage: getStageStartMessage(definition),
                 targetMap,
                 initialBoardState,
                 rows,
@@ -2448,6 +2527,23 @@
                     6: "#85542B",
                     7: "#1F1E1E"
                 }
+            },
+            strawberry: {
+                palette: {
+                    1: "#FF6F61",
+                    2: "#F3E5D8",
+                    3: "#6E4026",
+                    4: "#DCA46A",
+                    5: "#C27B45",
+                    6: "#2B190F",
+                    7: "#5B3925",
+                    8: "#FFF7EE",
+                    9: "#9A5E35"
+                },
+                cssVars: {
+                    "--app-bg": "#fff4ea",
+                    "--grid-bg": "rgba(182, 124, 72, 0.08)"
+                }
             }
         };
 
@@ -2518,6 +2614,7 @@
         const pixelAdminToggleElement = document.getElementById("pixelAdminToggle");
         const pixelAdminCloseElement = document.getElementById("pixelAdminClose");
         const pixelAdminStageElement = document.getElementById("pixelAdminStage");
+        const pixelAdminTitleInputElement = document.getElementById("pixelAdminTitleInput");
         const pixelAdminHelpElement = document.getElementById("pixelAdminHelp");
         const pixelAdminSelectionElement = document.getElementById("pixelAdminSelection");
         const pixelAdminAddColorElement = document.getElementById("pixelAdminAddColor");
@@ -2578,6 +2675,7 @@
             currentMapId: null,
             draftMap: null,
             draftPalette: {},
+            draftDisplayName: "",
             selectedColorId: 0,
             canvasZoom: 1,
             canvasMetrics: null,
@@ -2703,7 +2801,7 @@
                 return false;
             }
 
-            return !new Set(getPixelAdminBaseColorIds(mapId)).has(colorId);
+            return true;
         }
 
         function getPixelAdminColorHex(mapId, colorId, paletteMeta = null) {
@@ -2728,12 +2826,20 @@
             return getDefaultPixelAdminColorLabel(mapId, colorId);
         }
 
+        function getPixelAdminExportBaseName(mapId) {
+            if (mapId === "strawberry") {
+                return "BUBBLE_TEA";
+            }
+
+            return mapId.toUpperCase();
+        }
+
         function getPixelAdminExportName(mapId) {
             if (mapId === "apple") {
                 return "EDITABLE_APPLE_MATRIX";
             }
 
-            return `${mapId.toUpperCase()}_IMAGE_MAP`;
+            return `${getPixelAdminExportBaseName(mapId)}_IMAGE_MAP`;
         }
 
         function getResolvedPixelAdminSelection(mapId, currentSelection, sourceMap, paletteMeta = {}) {
@@ -2751,6 +2857,7 @@
             }
 
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
+            const exportBaseName = getPixelAdminExportBaseName(mapId);
             const paletteRows = paletteIds
                 .map((colorId) => {
                     const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
@@ -2760,7 +2867,7 @@
 
             const rows = sourceMap.map((row) => `    [${row.join(", ")}]`).join(",\n");
             const paletteBlock = paletteRows
-                ? `const ${mapId.toUpperCase()}_PALETTE = {\n${paletteRows}\n};\n\n`
+                ? `const ${exportBaseName}_PALETTE = {\n${paletteRows}\n};\n\n`
                 : "";
             return `${paletteBlock}const ${getPixelAdminExportName(mapId)} = [\n${rows}\n];`;
         }
@@ -2900,6 +3007,19 @@
             renderPixelAdmin();
         }
 
+        function updatePixelAdminStageTitleDraft(nextValue) {
+            const definition = getMapDefinitionById(pixelAdminState.currentMapId);
+            if (!definition) {
+                return;
+            }
+
+            pixelAdminState.draftDisplayName = String(nextValue || "").slice(0, 24);
+            pixelAdminState.isDirty = true;
+            pixelAdminState.message = "스테이지 제목을 수정했어요. 잠시 후 자동 저장됩니다.";
+            schedulePixelAdminAutoSave(700);
+            renderPixelAdmin();
+        }
+
         function addPixelAdminColor() {
             const nextColorId = getNextPixelAdminColorId(pixelAdminState.draftMap || [], pixelAdminState.draftPalette);
             pixelAdminState.draftPalette[nextColorId] = {
@@ -2963,6 +3083,7 @@
             pixelAdminState.currentMapId = definition.id;
             pixelAdminState.draftMap = getStageEditorCanvasMap(definition);
             pixelAdminState.draftPalette = clonePaletteMeta(getStagePaletteMeta(definition, pixelAdminState.draftMap));
+            pixelAdminState.draftDisplayName = getStageResolvedDisplayName(definition);
             pixelAdminState.canvasZoom = 1;
             pixelAdminState.canvasMetrics = null;
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
@@ -3363,6 +3484,10 @@
 
             definition.adminTargetMap = clonePixelMap(pixelAdminState.draftMap);
             definition.adminPalette = clonePaletteMeta(pixelAdminState.draftPalette);
+            definition.adminDisplayName =
+                normalizeStageDisplayName(pixelAdminState.draftDisplayName) ||
+                normalizeStageDisplayName(definition.displayName) ||
+                null;
             const didPersist = persistPixelAdminStageOverride(definition);
             syncActiveMap(currentMapIndex);
             resetGame();
@@ -3390,6 +3515,7 @@
             clearPixelAdminAutoSaveTimer();
             definition.adminTargetMap = null;
             definition.adminPalette = null;
+            definition.adminDisplayName = null;
             clearPersistedPixelAdminStageOverride(definition.id);
             syncActiveMap(currentMapIndex);
             resetGame();
@@ -3462,17 +3588,22 @@
 
             const rows = sourceMap.length;
             const cols = sourceMap[0].length;
+            const draftDisplayName =
+                normalizeStageDisplayName(pixelAdminState.draftDisplayName) || getMapDisplayName(mapId);
             const selectedColorHex = getPixelAdminColorHex(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const selectedColorLabel = getPixelAdminColorLabel(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
 
-            pixelAdminStageElement.textContent = `${getMapDisplayName(mapId)} - ${rows} x ${cols}`;
-            pixelAdminHelpElement.textContent = "캔버스를 직접 칠하거나 아래 코드를 수정할 수 있어요. 색상을 추가하고, `#` 없이 6자리 HEX를 입력한 뒤 적용해 주세요.";
+            pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
+            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 색상은 추가할 수 있고, HEX는 `#` 없이 6자리만 입력하면 됩니다.";
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             if (!pixelAdminState.exportIsDirty) {
                 pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta);
+            }
+            if (pixelAdminTitleInputElement) {
+                pixelAdminTitleInputElement.value = pixelAdminState.draftDisplayName || "";
             }
             if (pixelAdminColorHexTextElement) {
                 pixelAdminColorHexTextElement.value = selectedColorMeta?.color?.replace(/^#/, "") || "";
@@ -4608,7 +4739,7 @@
             if (stageClearSubtitleElement) {
                 stageClearSubtitleElement.textContent = isLastStage
                     ? "모든 스테이지를 클리어했어요. 처음 스테이지로 돌아갑니다."
-                    : `${nextStageNumber}번째 스테이지를 시작합니다.`;
+                    : `${nextStageNumber}번째 스테이지, ${getMapDisplayName(MAP_DEFINITIONS[currentMapIndex + 1].id)}을(를) 시작합니다.`;
             }
 
             if (stageClearOverlayElement) {
@@ -6492,6 +6623,10 @@
 
         pixelAdminColorHexPickerElement?.addEventListener("input", (event) => {
             updateSelectedPixelAdminColorDraft({ color: event.target.value });
+        });
+
+        pixelAdminTitleInputElement?.addEventListener("input", (event) => {
+            updatePixelAdminStageTitleDraft(event.target.value);
         });
 
         pixelAdminExportElement?.addEventListener("input", () => {
