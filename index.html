@@ -2845,7 +2845,7 @@
             return getDefaultPixelAdminColorLabel(mapId, colorId);
         }
 
-        function getPixelAdminExportBaseName(mapId) {
+        function getPixelAdminDefaultExportBaseName(mapId) {
             if (mapId === "strawberry") {
                 return "BUBBLE_TEA";
             }
@@ -2853,12 +2853,37 @@
             return mapId.toUpperCase();
         }
 
-        function getPixelAdminExportName(mapId) {
+        function normalizePixelAdminExportBaseName(value) {
+            return String(value || "")
+                .toUpperCase()
+                .replace(/[^A-Z0-9]+/g, "_")
+                .replace(/^_+|_+$/g, "")
+                .replace(/_+/g, "_")
+                .slice(0, 48);
+        }
+
+        function getPixelAdminTitleFromExportBaseName(value) {
+            const normalized = normalizePixelAdminExportBaseName(value)
+                .replace(/^EDITABLE_/, "")
+                .replace(/_(?:IMAGE_MAP|MATRIX|PALETTE)$/, "");
+            return normalizeStageDisplayName(normalized.replace(/_/g, " "));
+        }
+
+        function getPixelAdminExportBaseName(mapId, displayName = "") {
+            const normalizedFromTitle = normalizePixelAdminExportBaseName(displayName);
+            if (normalizedFromTitle) {
+                return normalizedFromTitle;
+            }
+
+            return getPixelAdminDefaultExportBaseName(mapId);
+        }
+
+        function getPixelAdminExportName(mapId, displayName = "") {
             if (mapId === "apple") {
                 return "EDITABLE_APPLE_MATRIX";
             }
 
-            return `${getPixelAdminExportBaseName(mapId)}_IMAGE_MAP`;
+            return `${getPixelAdminExportBaseName(mapId, displayName)}_IMAGE_MAP`;
         }
 
         function getResolvedPixelAdminSelection(mapId, currentSelection, sourceMap, paletteMeta = {}) {
@@ -2870,13 +2895,13 @@
             return paletteIds[0] ?? 0;
         }
 
-        function serializePixelAdminMap(mapId, sourceMap, paletteMeta = {}) {
+        function serializePixelAdminMap(mapId, sourceMap, paletteMeta = {}, displayName = "") {
             if (!sourceMap.length) {
                 return "";
             }
 
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
-            const exportBaseName = getPixelAdminExportBaseName(mapId);
+            const exportBaseName = getPixelAdminExportBaseName(mapId, displayName);
             const paletteRows = paletteIds
                 .map((colorId) => {
                     const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
@@ -2888,7 +2913,19 @@
             const paletteBlock = paletteRows
                 ? `const ${exportBaseName}_PALETTE = {\n${paletteRows}\n};\n\n`
                 : "";
-            return `${paletteBlock}const ${getPixelAdminExportName(mapId)} = [\n${rows}\n];`;
+            return `${paletteBlock}const ${getPixelAdminExportName(mapId, displayName)} = [\n${rows}\n];`;
+        }
+
+        function extractPixelAdminExportBaseName(source, mapId) {
+            const paletteNameMatch = source.match(/const\s+([A-Z0-9_]+)_PALETTE\s*=\s*\{/);
+            const preferredMatrixName = getPixelAdminExportName(mapId);
+            const matrixNameMatch =
+                source.match(new RegExp(`const\\s+(${preferredMatrixName}|[A-Z0-9_]+)\\s*=\\s*\\[`)) ||
+                source.match(/const\s+([A-Z0-9_]+)\s*=\s*\[/);
+            const rawName = matrixNameMatch?.[1] || paletteNameMatch?.[1] || "";
+            return normalizePixelAdminExportBaseName(rawName)
+                .replace(/^EDITABLE_/, "")
+                .replace(/_(?:IMAGE_MAP|MATRIX|PALETTE)$/, "");
         }
 
         function parsePixelAdminPaletteBlock(block) {
@@ -2967,10 +3004,12 @@
 
             const draftPalette = paletteMatch ? parsePixelAdminPaletteBlock(paletteMatch[1]) : {};
             const draftMap = parsePixelAdminMatrixBlock(matrixMatch[1]);
+            const exportBaseName = extractPixelAdminExportBaseName(source, mapId);
 
             return {
                 draftPalette,
-                draftMap
+                draftMap,
+                draftDisplayName: getPixelAdminTitleFromExportBaseName(exportBaseName)
             };
         }
 
@@ -2982,6 +3021,9 @@
             const parsed = parsePixelAdminExport(pixelAdminExportElement.value, pixelAdminState.currentMapId);
             pixelAdminState.draftMap = clonePixelMap(parsed.draftMap);
             pixelAdminState.draftPalette = clonePaletteMeta(parsed.draftPalette);
+            if (parsed.draftDisplayName) {
+                pixelAdminState.draftDisplayName = parsed.draftDisplayName;
+            }
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 pixelAdminState.currentMapId,
                 pixelAdminState.selectedColorId,
@@ -3619,7 +3661,7 @@
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             if (!pixelAdminState.exportIsDirty) {
-                pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta);
+                pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta, draftDisplayName);
             }
             if (pixelAdminTitleInputElement) {
                 pixelAdminTitleInputElement.value = pixelAdminState.draftDisplayName || "";
