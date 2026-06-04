@@ -1020,6 +1020,10 @@
             cursor: not-allowed;
         }
 
+        .pixel-admin-swatch-card {
+            position: relative;
+        }
+
         .pixel-admin-swatch {
             appearance: none;
             -webkit-appearance: none;
@@ -1035,6 +1039,44 @@
             color: #6d4925;
             text-align: left;
             cursor: pointer;
+        }
+
+        .pixel-admin-swatch-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(103, 68, 35, 0.82);
+            color: #fff7eb;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.88);
+            pointer-events: none;
+            transition: opacity 0.16s ease, transform 0.16s ease, background 0.16s ease;
+        }
+
+        .pixel-admin-swatch-card:hover .pixel-admin-swatch-delete,
+        .pixel-admin-swatch-card:focus-within .pixel-admin-swatch-delete {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .pixel-admin-swatch-delete:hover,
+        .pixel-admin-swatch-delete:focus-visible {
+            background: rgba(194, 55, 34, 0.92);
+            outline: none;
         }
 
         .pixel-admin-swatch.selected {
@@ -1057,12 +1099,7 @@
 
         .pixel-admin-swatch.empty .pixel-admin-swatch-chip,
         .pixel-admin-cell.empty {
-            background:
-                linear-gradient(45deg, rgba(195, 182, 164, 0.3) 25%, transparent 25%, transparent 75%, rgba(195, 182, 164, 0.3) 75%),
-                linear-gradient(45deg, rgba(195, 182, 164, 0.3) 25%, transparent 25%, transparent 75%, rgba(195, 182, 164, 0.3) 75%);
-            background-position: 0 0, 7px 7px;
-            background-size: 14px 14px;
-            background-color: #ffffff;
+            background: #ffffff;
         }
 
         .pixel-admin-swatch-label {
@@ -1089,10 +1126,17 @@
         .pixel-admin-grid {
             display: grid;
             grid-template-columns: repeat(var(--pixel-admin-cols, 20), minmax(0, 1fr));
-            gap: 2px;
+            gap: 1px;
             width: 100%;
             max-width: 100%;
             margin: 0;
+            padding: 1px;
+            border: 1px solid rgba(179, 149, 113, 0.9);
+            border-radius: 12px;
+            background: rgba(179, 149, 113, 0.9);
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .pixel-admin-cell {
@@ -1103,15 +1147,16 @@
             height: auto;
             aspect-ratio: 1 / 1;
             padding: 0;
-            border: 1px solid rgba(110, 79, 43, 0.18);
-            border-radius: 4px;
+            border: 0;
+            border-radius: 0;
             background: var(--cell-color, #ffffff);
             cursor: pointer;
+            transition: box-shadow 0.14s ease, filter 0.14s ease;
         }
 
         .pixel-admin-cell:hover {
-            transform: scale(1.08);
-            border-color: rgba(255, 140, 49, 0.88);
+            filter: brightness(0.98) saturate(1.06);
+            box-shadow: inset 0 0 0 2px rgba(255, 140, 49, 0.88);
         }
 
         .pixel-admin-actions {
@@ -2033,6 +2078,9 @@
                     color: normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color) || "#CCCCCC"
                 };
             });
+
+            // Gem sprites are cached per color id, so clear them whenever a palette changes.
+            jewelImageCache.clear();
         }
 
         function applyMapTheme(mapId) {
@@ -2133,6 +2181,13 @@
             isDirty: false,
             message: "`Shift + A`로 언제든 열고 닫을 수 있습니다."
         };
+        const pixelAdminInteraction = {
+            isDrawing: false,
+            drawColorId: null,
+            lastPaintedCellKey: null,
+            pendingMessage: "",
+            didPaint: false
+        };
         const boardInteraction = {
             scale: 1,
             minScale: 1,
@@ -2213,6 +2268,32 @@
             });
 
             return [...colorIds].sort((left, right) => left - right);
+        }
+
+        function getPixelAdminBaseColorIds(mapId) {
+            const definition = getMapDefinitionById(mapId);
+            if (!definition) {
+                return [];
+            }
+
+            const colorIds = new Set();
+            buildStageCanvasMapFromBase(definition).forEach((row) => {
+                row.forEach((colorId) => {
+                    if (colorId) {
+                        colorIds.add(colorId);
+                    }
+                });
+            });
+
+            return [...colorIds].sort((left, right) => left - right);
+        }
+
+        function canRemovePixelAdminColor(mapId, colorId) {
+            if (colorId === 0) {
+                return false;
+            }
+
+            return !new Set(getPixelAdminBaseColorIds(mapId)).has(colorId);
         }
 
         function getPixelAdminColorHex(mapId, colorId, paletteMeta = null) {
@@ -2317,6 +2398,37 @@
             renderPixelAdmin();
         }
 
+        function removePixelAdminColor(colorId) {
+            const mapId = pixelAdminState.currentMapId;
+            if (!pixelAdminState.draftMap || !canRemovePixelAdminColor(mapId, colorId)) {
+                return;
+            }
+
+            let erasedCellCount = 0;
+            pixelAdminState.draftMap = pixelAdminState.draftMap.map((row) =>
+                row.map((cellColorId) => {
+                    if (cellColorId !== colorId) {
+                        return cellColorId;
+                    }
+
+                    erasedCellCount += 1;
+                    return 0;
+                })
+            );
+            delete pixelAdminState.draftPalette[colorId];
+            pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
+                mapId,
+                pixelAdminState.selectedColorId === colorId ? 0 : pixelAdminState.selectedColorId,
+                pixelAdminState.draftMap,
+                pixelAdminState.draftPalette
+            );
+            pixelAdminState.isDirty = true;
+            pixelAdminState.message = erasedCellCount
+                ? `C${colorId} 색상을 삭제하고 ${erasedCellCount}개 셀을 비웠어요.`
+                : `C${colorId} 색상을 팔레트에서 삭제했어요.`;
+            renderPixelAdmin();
+        }
+
         function syncPixelAdminWithActiveMap(force = false) {
             if (!pixelAdminElement) {
                 return;
@@ -2358,22 +2470,126 @@
         }
 
         function paintPixelAdminCell(rowIndex, colIndex, colorId) {
+            return paintPixelAdminCellWithOptions(rowIndex, colIndex, colorId);
+        }
+
+        function setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta = {}) {
+            const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
+
+            cell.dataset.row = String(rowIndex);
+            cell.dataset.col = String(colIndex);
+            cell.classList.toggle("empty", colorId === 0);
+            if (colorId === 0) {
+                cell.style.removeProperty("--cell-color");
+            } else {
+                cell.style.setProperty("--cell-color", colorHex);
+            }
+            cell.setAttribute(
+                "aria-label",
+                `${rowIndex + 1} row ${colIndex + 1} col ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} pixel`
+            );
+            cell.title = `${rowIndex + 1}, ${colIndex + 1} · ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}`;
+        }
+
+        function paintPixelAdminCellWithOptions(rowIndex, colIndex, colorId, options = {}) {
+            const {
+                cellElement = null,
+                render = true,
+                updateMessage = true
+            } = options;
+
             if (!pixelAdminState.draftMap?.[rowIndex]) {
-                return;
+                return false;
             }
 
             if (pixelAdminState.draftMap[rowIndex][colIndex] === colorId) {
-                return;
+                return false;
             }
 
             pixelAdminState.draftMap[rowIndex][colIndex] = colorId;
             pixelAdminState.isDirty = true;
-            pixelAdminState.message = `Cell ${rowIndex + 1}, ${colIndex + 1} was painted with ${getPixelAdminColorLabel(
+            const nextMessage = `Cell ${rowIndex + 1}, ${colIndex + 1} was painted with ${getPixelAdminColorLabel(
                 pixelAdminState.currentMapId,
                 colorId,
                 pixelAdminState.draftPalette
             )}.`;
-            renderPixelAdmin();
+            if (updateMessage) {
+                pixelAdminState.message = nextMessage;
+            } else {
+                pixelAdminInteraction.pendingMessage = nextMessage;
+            }
+
+            if (cellElement) {
+                setPixelAdminCellPresentation(
+                    cellElement,
+                    rowIndex,
+                    colIndex,
+                    colorId,
+                    pixelAdminState.currentMapId,
+                    pixelAdminState.draftPalette
+                );
+            }
+
+            if (render) {
+                renderPixelAdmin();
+            }
+
+            return true;
+        }
+
+        function startPixelAdminDrawing(colorId) {
+            pixelAdminInteraction.isDrawing = true;
+            pixelAdminInteraction.drawColorId = colorId;
+            pixelAdminInteraction.lastPaintedCellKey = null;
+            pixelAdminInteraction.pendingMessage = "";
+            pixelAdminInteraction.didPaint = false;
+        }
+
+        function stopPixelAdminDrawing() {
+            if (!pixelAdminInteraction.isDrawing) {
+                return;
+            }
+
+            pixelAdminInteraction.isDrawing = false;
+            pixelAdminInteraction.drawColorId = null;
+            pixelAdminInteraction.lastPaintedCellKey = null;
+
+            if (pixelAdminInteraction.pendingMessage) {
+                pixelAdminState.message = pixelAdminInteraction.pendingMessage;
+            }
+
+            const shouldRender = pixelAdminInteraction.didPaint;
+            pixelAdminInteraction.pendingMessage = "";
+            pixelAdminInteraction.didPaint = false;
+
+            if (shouldRender) {
+                renderPixelAdmin();
+            }
+        }
+
+        function paintPixelAdminCellFromElement(cellElement, colorId) {
+            if (!cellElement) {
+                return;
+            }
+
+            const rowIndex = Number(cellElement.dataset.row);
+            const colIndex = Number(cellElement.dataset.col);
+            const cellKey = `${rowIndex}-${colIndex}`;
+
+            if (pixelAdminInteraction.lastPaintedCellKey === cellKey) {
+                return;
+            }
+
+            const changed = paintPixelAdminCellWithOptions(rowIndex, colIndex, colorId, {
+                cellElement,
+                render: false,
+                updateMessage: false
+            });
+
+            pixelAdminInteraction.lastPaintedCellKey = cellKey;
+            if (changed) {
+                pixelAdminInteraction.didPaint = true;
+            }
         }
 
         function applyPixelAdminDraft() {
@@ -2485,12 +2701,15 @@
 
             pixelAdminPaletteElement.innerHTML = "";
             paletteIds.forEach((colorId) => {
+                const swatchCard = document.createElement("div");
                 const swatch = document.createElement("button");
                 const swatchChip = document.createElement("span");
                 const swatchLabel = document.createElement("span");
                 const swatchHex = document.createElement("span");
                 const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
+                const removableColor = canRemovePixelAdminColor(mapId, colorId);
 
+                swatchCard.className = "pixel-admin-swatch-card";
                 swatch.type = "button";
                 swatch.className = "pixel-admin-swatch";
                 if (colorId === pixelAdminState.selectedColorId) swatch.classList.add("selected");
@@ -2510,7 +2729,25 @@
                     pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} is selected.`;
                     renderPixelAdmin();
                 });
-                pixelAdminPaletteElement.appendChild(swatch);
+
+                swatchCard.appendChild(swatch);
+
+                if (removableColor) {
+                    const deleteButton = document.createElement("button");
+                    deleteButton.type = "button";
+                    deleteButton.className = "pixel-admin-swatch-delete";
+                    deleteButton.textContent = "x";
+                    deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 삭제`);
+                    deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 삭제`;
+                    deleteButton.addEventListener("click", (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        removePixelAdminColor(colorId);
+                    });
+                    swatchCard.appendChild(deleteButton);
+                }
+
+                pixelAdminPaletteElement.appendChild(swatchCard);
             });
 
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
@@ -2518,24 +2755,33 @@
             sourceMap.forEach((row, rowIndex) => {
                 row.forEach((colorId, colIndex) => {
                     const cell = document.createElement("button");
-                    const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
 
                     cell.type = "button";
                     cell.className = "pixel-admin-cell";
-                    if (colorId === 0) {
-                        cell.classList.add("empty");
-                    } else {
-                        cell.style.setProperty("--cell-color", colorHex);
-                    }
-                    cell.setAttribute(
-                        "aria-label",
-                        `${rowIndex + 1} row ${colIndex + 1} col ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} pixel`
-                    );
-                    cell.title = `${rowIndex + 1}, ${colIndex + 1} · ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}`;
-                    cell.addEventListener("click", () => paintPixelAdminCell(rowIndex, colIndex, pixelAdminState.selectedColorId));
+                    setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta);
+                    cell.addEventListener("mousedown", (event) => {
+                        if (event.button !== 0 && event.button !== 2) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        startPixelAdminDrawing(event.button === 2 ? 0 : pixelAdminState.selectedColorId);
+                        paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
+                    });
+                    cell.addEventListener("mouseenter", (event) => {
+                        if (!pixelAdminInteraction.isDrawing) {
+                            return;
+                        }
+
+                        if (!(event.buttons & 1) && !(event.buttons & 2)) {
+                            stopPixelAdminDrawing();
+                            return;
+                        }
+
+                        paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
+                    });
                     cell.addEventListener("contextmenu", (event) => {
                         event.preventDefault();
-                        paintPixelAdminCell(rowIndex, colIndex, 0);
                     });
                     pixelAdminGridElement.appendChild(cell);
                 });
@@ -5472,6 +5718,18 @@
 
         pixelAdminNextLevelElement?.addEventListener("click", () => {
             goToNextLevelFromAdmin();
+        });
+
+        pixelAdminGridElement?.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+        });
+
+        window.addEventListener("mouseup", () => {
+            stopPixelAdminDrawing();
+        });
+
+        window.addEventListener("blur", () => {
+            stopPixelAdminDrawing();
         });
 
         window.addEventListener("resize", () => {
