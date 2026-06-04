@@ -1099,7 +1099,7 @@
 
         .pixel-admin-swatch.empty .pixel-admin-swatch-chip,
         .pixel-admin-cell.empty {
-            background: #ffffff;
+            background: var(--app-bg);
         }
 
         .pixel-admin-swatch-label {
@@ -1119,17 +1119,17 @@
             overflow-y: auto;
             padding: 12px;
             border-radius: 20px;
-            background: rgba(245, 236, 223, 0.72);
+            background: var(--app-bg);
             border: 1px solid rgba(204, 179, 146, 0.72);
         }
 
         .pixel-admin-grid {
             display: grid;
-            grid-template-columns: repeat(var(--pixel-admin-cols, 20), minmax(0, 1fr));
+            grid-template-columns: repeat(var(--pixel-admin-cols, 20), var(--pixel-admin-cell-size, 16px));
             gap: 1px;
-            width: 100%;
-            max-width: 100%;
-            margin: 0;
+            width: max-content;
+            max-width: none;
+            margin: 0 auto;
             padding: 1px;
             border: 1px solid rgba(179, 149, 113, 0.9);
             border-radius: 12px;
@@ -1149,7 +1149,7 @@
             padding: 0;
             border: 0;
             border-radius: 0;
-            background: var(--cell-color, #ffffff);
+            background: var(--cell-color, var(--app-bg));
             cursor: pointer;
             transition: box-shadow 0.14s ease, filter 0.14s ease;
         }
@@ -1366,7 +1366,7 @@
             <button class="pixel-admin-action" id="pixelAdminNextLevel" type="button">Next Level</button>
         </div>
 
-        <textarea class="pixel-admin-export" id="pixelAdminExport" readonly spellcheck="false"></textarea>
+        <textarea class="pixel-admin-export" id="pixelAdminExport" spellcheck="false"></textarea>
         <p class="pixel-admin-note" id="pixelAdminMessage">`Shift + A`로 언제든 열고 닫을 수 있습니다.</p>
     </aside>
 
@@ -2179,6 +2179,7 @@
             draftPalette: {},
             selectedColorId: 0,
             isDirty: false,
+            exportIsDirty: false,
             message: "`Shift + A`로 언제든 열고 닫을 수 있습니다."
         };
         const pixelAdminInteraction = {
@@ -2355,6 +2356,108 @@
             return `${paletteBlock}const ${getPixelAdminExportName(mapId)} = [\n${rows}\n];`;
         }
 
+        function parsePixelAdminPaletteBlock(block) {
+            const palette = {};
+            const entryMatches = [...block.matchAll(/(\d+)\s*:\s*["']([^"']+)["']/g)];
+
+            if (!entryMatches.length && block.trim()) {
+                throw new Error("팔레트 코드 형식을 이해하지 못했어요.");
+            }
+
+            entryMatches.forEach((match) => {
+                const colorId = Number(match[1]);
+                const normalized = normalizeHexColor(match[2]);
+                if (!normalized) {
+                    throw new Error(`C${colorId} 색상은 6자리 HEX여야 해요.`);
+                }
+                palette[colorId] = { color: normalized };
+            });
+
+            return palette;
+        }
+
+        function parsePixelAdminMatrixBlock(block) {
+            const rowMatches = [...block.matchAll(/\[([^\[\]]*?)\]/g)];
+
+            if (!rowMatches.length) {
+                throw new Error("매트릭스 행을 찾지 못했어요.");
+            }
+
+            const rows = rowMatches.map((match) => {
+                const row = match[1]
+                    .split(",")
+                    .map((value) => value.trim())
+                    .filter(Boolean)
+                    .map((value) => {
+                        if (!/^-?\d+$/.test(value)) {
+                            throw new Error(`숫자 값이 아닌 셀이 있어요: ${value}`);
+                        }
+                        return Number(value);
+                    });
+
+                if (!row.length) {
+                    throw new Error("비어 있는 행이 있어요.");
+                }
+
+                return row;
+            });
+
+            const columnCount = rows[0].length;
+            if (rows.some((row) => row.length !== columnCount)) {
+                throw new Error("모든 행의 칸 수가 같아야 해요.");
+            }
+
+            if (rows.length > MAX_GRID_ROWS || columnCount > MAX_GRID_COLS) {
+                throw new Error(`매트릭스가 너무 커요. 최대 ${MAX_GRID_ROWS}x${MAX_GRID_COLS}까지 가능해요.`);
+            }
+
+            return rows;
+        }
+
+        function parsePixelAdminExport(text, mapId) {
+            const source = String(text || "").trim();
+            if (!source) {
+                throw new Error("코드 창이 비어 있어요.");
+            }
+
+            const paletteMatch = source.match(/const\s+[A-Z0-9_]+_PALETTE\s*=\s*\{([\s\S]*?)\};/);
+            const matrixName = getPixelAdminExportName(mapId);
+            const matrixMatch =
+                source.match(new RegExp(`const\\s+${matrixName}\\s*=\\s*\\[([\\s\\S]*?)\\];`)) ||
+                source.match(/const\s+[A-Z0-9_]+\s*=\s*\[([\s\S]*?)\];/);
+
+            if (!matrixMatch) {
+                throw new Error("매트릭스 const 블록을 찾지 못했어요.");
+            }
+
+            const draftPalette = paletteMatch ? parsePixelAdminPaletteBlock(paletteMatch[1]) : {};
+            const draftMap = parsePixelAdminMatrixBlock(matrixMatch[1]);
+
+            return {
+                draftPalette,
+                draftMap
+            };
+        }
+
+        function syncPixelAdminDraftFromExportInput() {
+            if (!pixelAdminExportElement || !pixelAdminState.exportIsDirty) {
+                return true;
+            }
+
+            const parsed = parsePixelAdminExport(pixelAdminExportElement.value, pixelAdminState.currentMapId);
+            pixelAdminState.draftMap = clonePixelMap(parsed.draftMap);
+            pixelAdminState.draftPalette = clonePaletteMeta(parsed.draftPalette);
+            pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
+                pixelAdminState.currentMapId,
+                pixelAdminState.selectedColorId,
+                pixelAdminState.draftMap,
+                pixelAdminState.draftPalette
+            );
+            pixelAdminState.isDirty = true;
+            pixelAdminState.exportIsDirty = false;
+            return true;
+        }
+
         function getSuggestedPixelAdminHex(nextColorId) {
             const presets = ["#FF6B6B", "#FFD166", "#06D6A0", "#4DABF7", "#B197FC", "#F783AC", "#FFA94D", "#74C0FC"];
             return presets[(nextColorId - 1) % presets.length];
@@ -2453,6 +2556,7 @@
                 pixelAdminState.draftPalette
             );
             pixelAdminState.isDirty = false;
+            pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "`Shift + A`로 언제든 열고 닫을 수 있습니다.";
             renderPixelAdmin();
         }
@@ -2463,6 +2567,24 @@
                 syncPixelAdminWithActiveMap();
             }
             renderPixelAdmin();
+        }
+
+        function syncPixelAdminGridMetrics(columnCount) {
+            if (!pixelAdminGridElement || !pixelAdminGridElement.parentElement || !columnCount) {
+                return;
+            }
+
+            const gap = 1;
+            const gridPadding = 2;
+            const availableWidth = Math.max(0, pixelAdminGridElement.parentElement.clientWidth);
+            const cellSize = Math.max(
+                12,
+                Math.floor((availableWidth - gridPadding - gap * (columnCount - 1)) / columnCount)
+            );
+            const gridWidth = columnCount * cellSize + gap * (columnCount - 1) + gridPadding;
+
+            pixelAdminGridElement.style.setProperty("--pixel-admin-cell-size", `${cellSize}px`);
+            pixelAdminGridElement.style.width = `${gridWidth}px`;
         }
 
         function togglePixelAdmin() {
@@ -2598,11 +2720,20 @@
                 return;
             }
 
+            try {
+                syncPixelAdminDraftFromExportInput();
+            } catch (error) {
+                pixelAdminState.message = error.message || "코드 창 내용을 적용하지 못했어요.";
+                renderPixelAdmin();
+                return;
+            }
+
             definition.adminTargetMap = clonePixelMap(pixelAdminState.draftMap);
             definition.adminPalette = clonePaletteMeta(pixelAdminState.draftPalette);
             syncActiveMap(currentMapIndex);
             resetGame();
             pixelAdminState.isDirty = false;
+            pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "Canvas and palette changes were applied to this stage.";
             renderPixelAdmin();
         }
@@ -2624,6 +2755,7 @@
             syncActiveMap(currentMapIndex);
             resetGame();
             syncPixelAdminWithActiveMap(true);
+            pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "The default canvas and palette were restored.";
             renderPixelAdmin();
         }
@@ -2683,10 +2815,12 @@
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
 
             pixelAdminStageElement.textContent = `${mapId.toUpperCase()} · ${rows} x ${cols}`;
-            pixelAdminHelpElement.textContent = "Edit the final 20x20 canvas. Add colors, enter 6-digit HEX without #, paint with click, and erase with right click.";
+            pixelAdminHelpElement.textContent = "Edit the canvas or the code below. Add colors, enter 6-digit HEX without #, drag to paint, right drag to erase, then apply.";
             pixelAdminSelectionElement.textContent = `Selected: ${selectedColorLabel}${selectedColorMeta ? ` · ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " · Unsaved changes" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
-            pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta);
+            if (!pixelAdminState.exportIsDirty) {
+                pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta);
+            }
             if (pixelAdminColorHexTextElement) {
                 pixelAdminColorHexTextElement.value = selectedColorMeta?.color?.replace(/^#/, "") || "";
                 pixelAdminColorHexTextElement.disabled = !selectedColorMeta;
@@ -2751,6 +2885,7 @@
             });
 
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
+            syncPixelAdminGridMetrics(cols);
             pixelAdminGridElement.innerHTML = "";
             sourceMap.forEach((row, rowIndex) => {
                 row.forEach((colorId, colIndex) => {
@@ -5700,6 +5835,13 @@
             updateSelectedPixelAdminColorDraft({ color: event.target.value });
         });
 
+        pixelAdminExportElement?.addEventListener("input", () => {
+            pixelAdminState.exportIsDirty = true;
+            pixelAdminState.isDirty = true;
+            pixelAdminState.message = "코드 창을 수정했어요. 스테이지 적용을 누르면 반영됩니다.";
+            renderPixelAdmin();
+        });
+
         pixelAdminApplyElement?.addEventListener("click", () => {
             applyPixelAdminDraft();
         });
@@ -5735,6 +5877,9 @@
         window.addEventListener("resize", () => {
             updateResponsiveLayout();
             scheduleTutorialOverlayRender();
+            if (pixelAdminState.isOpen) {
+                renderPixelAdmin();
+            }
         });
 
         syncActiveMap(0);
