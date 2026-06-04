@@ -4517,7 +4517,12 @@
                 void playColorCompleteSound(startDelayMs + 220);
             }
 
-            return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 260;
+            if (!completedCells.length) {
+                return startDelayMs;
+            }
+
+            const lastSparkleStartDelay = startDelayMs + (completedCells.length - 1) * COLOR_COMPLETE_STEP_MS;
+            return lastSparkleStartDelay + MATCH_SPARKLE_MS + 120;
         }
 
         function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
@@ -5727,10 +5732,10 @@
 
             if (justSolved) {
                 clearCelebrationTimers();
-                scheduleFullBoardCelebration();
+                const stageClearDelay = scheduleFullBoardCelebration();
                 const stageClearTimer = window.setTimeout(() => {
                     startStageClearSequence();
-                }, 760);
+                }, stageClearDelay);
                 stageClearTimers.push(stageClearTimer);
                 return;
             }
