@@ -634,6 +634,10 @@
             letter-spacing: -0.01em;
         }
 
+        .stage-clear-subtitle:empty {
+            display: none;
+        }
+
         .fireworks-layer {
             position: absolute;
             inset: 0;
@@ -1372,26 +1376,31 @@
                 --app-shell-width: 100vw;
                 --viewport-gap: 12px;
                 --pocket-bottom-offset: 12px;
-                --ad-banner-height: 50px;
+                --ad-banner-height: 46px;
                 --ad-banner-gap: 10px;
-                --action-bar-height: 124px;
+                --action-bar-height: 56px;
                 --action-bar-gap: 12px;
-                --action-button-size: 56px;
-                --action-button-gap: 16px;
-                --pocket-reserved-height: 424px;
-                --board-cell-size: 24px;
+                --action-button-size: 50px;
+                --action-button-gap: 8px;
+                --pocket-reserved-height: 252px;
+                --board-cell-size: 18px;
                 --board-gap: 0px;
-                --tray-cell-size: 34px;
-                --tray-gap: 6px;
-                --pocket-shell-width: calc((6 * var(--tray-cell-size)) + (5 * var(--tray-gap)) + 36px);
+                --tray-cell-size: 24px;
+                --tray-gap: 4px;
+                --pocket-shell-width: calc((12 * var(--tray-cell-size)) + (11 * var(--tray-gap)) + 28px);
             }
 
             .cell {
                 border-radius: 8px;
             }
 
+            .pocket-dock {
+                padding: 12px 14px 14px;
+                border-radius: 20px;
+            }
+
             .tray {
-                grid-template-columns: repeat(6, var(--tray-cell-size));
+                grid-template-columns: repeat(12, var(--tray-cell-size));
             }
 
             .tray-slot {
@@ -1399,12 +1408,24 @@
             }
 
             .bottom-actions {
-                display: grid;
-                grid-template-columns: repeat(2, var(--action-button-size));
+                display: flex;
+                align-items: center;
                 justify-content: space-between;
-                row-gap: var(--action-button-gap);
-                column-gap: calc(var(--action-button-gap) + 10px);
-                padding: 0;
+                gap: var(--action-button-gap);
+                padding: 0 2px;
+            }
+
+            .pocket-action-button {
+                width: var(--action-button-size);
+                aspect-ratio: 1;
+                border-radius: 16px;
+                font-size: 13px;
+                box-shadow: 0 6px 12px rgba(129, 88, 40, 0.08);
+            }
+
+            .bottom-ad-slot {
+                height: var(--ad-banner-height);
+                font-size: 12px;
             }
 
             .pixel-admin-toggle {
@@ -1464,7 +1485,7 @@
                 <div class="fireworks-layer" id="fireworksLayer"></div>
                 <div class="stage-clear-panel">
                     <h2 class="stage-clear-title" id="stageClearTitle">스테이지 클리어</h2>
-                    <p class="stage-clear-subtitle" id="stageClearSubtitle">다음 스테이지로 이동합니다.</p>
+                    <p class="stage-clear-subtitle" id="stageClearSubtitle"></p>
                 </div>
             </div>
         </section>
@@ -2151,6 +2172,63 @@
             return padMapToGrid(scaledTargetMap).map;
         }
 
+        function getNonZeroMapBounds(...maps) {
+            let minRow = Number.POSITIVE_INFINITY;
+            let maxRow = Number.NEGATIVE_INFINITY;
+            let minCol = Number.POSITIVE_INFINITY;
+            let maxCol = Number.NEGATIVE_INFINITY;
+            let rowCount = 0;
+            let colCount = 0;
+
+            maps.forEach((sourceMap) => {
+                if (!Array.isArray(sourceMap) || !sourceMap.length || !Array.isArray(sourceMap[0])) {
+                    return;
+                }
+
+                rowCount = Math.max(rowCount, sourceMap.length);
+                colCount = Math.max(colCount, sourceMap[0].length || 0);
+
+                sourceMap.forEach((row, rowIndex) => {
+                    row.forEach((cell, colIndex) => {
+                        if (!cell) {
+                            return;
+                        }
+
+                        minRow = Math.min(minRow, rowIndex);
+                        maxRow = Math.max(maxRow, rowIndex);
+                        minCol = Math.min(minCol, colIndex);
+                        maxCol = Math.max(maxCol, colIndex);
+                    });
+                });
+            });
+
+            if (!Number.isFinite(minRow) || !Number.isFinite(minCol)) {
+                return {
+                    minRow: 0,
+                    maxRow: Math.max(0, rowCount - 1),
+                    minCol: 0,
+                    maxCol: Math.max(0, colCount - 1)
+                };
+            }
+
+            return {
+                minRow,
+                maxRow,
+                minCol,
+                maxCol
+            };
+        }
+
+        function cropMapToBounds(sourceMap, bounds) {
+            if (!Array.isArray(sourceMap) || !sourceMap.length) {
+                return [];
+            }
+
+            return sourceMap
+                .slice(bounds.minRow, bounds.maxRow + 1)
+                .map((row) => row.slice(bounds.minCol, bounds.maxCol + 1));
+        }
+
         function getStageEditorCanvasMap(definition) {
             return definition.adminTargetMap
                 ? clonePixelMap(definition.adminTargetMap)
@@ -2742,7 +2820,7 @@
         const boardInteraction = {
             scale: 1,
             minScale: 1,
-            maxScale: 3.2,
+            maxScale: 4.2,
             panX: 0,
             panY: 0,
             touches: new Map(),
@@ -2759,8 +2837,23 @@
             pointerId: null,
             isPointerDragging: false
         };
-        const MATCH_SPARKLE_MS = 420;
-        const COLOR_COMPLETE_STEP_MS = 38;
+        const MATCH_SPARKLE_MS = 240;
+        const COLOR_COMPLETE_STEP_MS = 20;
+        const FULL_BOARD_CELEBRATION_MAX_MS = 680;
+        const FIREWORK_BURST_CLEANUP_MS = 1450;
+        const STAGE_CLEAR_FIREWORK_SEQUENCE = [
+            { left: 18, top: 22, delay: 0, accent: 0 },
+            { left: 82, top: 20, delay: 120, accent: 1 },
+            { left: 30, top: 42, delay: 220, accent: 2 },
+            { left: 70, top: 40, delay: 340, accent: 1 },
+            { left: 50, top: 24, delay: 460, accent: 3 },
+            { left: 24, top: 30, delay: 620, accent: 2 },
+            { left: 76, top: 28, delay: 760, accent: 4 },
+            { left: 50, top: 34, delay: 900, accent: 3 }
+        ];
+        const STAGE_TRANSITION_DELAY_MS = Math.max(
+            ...STAGE_CLEAR_FIREWORK_SEQUENCE.map(({ delay }) => delay)
+        ) + FIREWORK_BURST_CLEANUP_MS;
         const DIAMOND_PARTICLE_PRESETS = [
             { dx: -18, dy: -16, size: 16, rotation: -24, delay: 0 },
             { dx: 20, dy: -14, size: 14, rotation: 18, delay: 30 },
@@ -4806,14 +4899,11 @@
             fireworksLayerElement.appendChild(burst);
             const cleanupTimer = window.setTimeout(() => {
                 burst.remove();
-            }, 1450);
+            }, FIREWORK_BURST_CLEANUP_MS);
             stageClearTimers.push(cleanupTimer);
         }
 
         function startStageClearSequence() {
-            const isLastStage = currentMapIndex >= MAP_DEFINITIONS.length - 1;
-            const nextStageNumber = isLastStage ? 1 : currentMapIndex + 2;
-
             isStageTransitioning = true;
             selected = null;
 
@@ -4822,9 +4912,7 @@
             }
 
             if (stageClearSubtitleElement) {
-                stageClearSubtitleElement.textContent = isLastStage
-                    ? "모든 스테이지를 클리어했어요. 처음 스테이지로 돌아갑니다."
-                    : `${nextStageNumber}번째 스테이지, ${getMapDisplayName(MAP_DEFINITIONS[currentMapIndex + 1].id)}을(를) 시작합니다.`;
+                stageClearSubtitleElement.textContent = "";
             }
 
             if (stageClearOverlayElement) {
@@ -4832,44 +4920,26 @@
                 stageClearOverlayElement.setAttribute("aria-hidden", "false");
             }
 
-            [
-                { left: 18, top: 22, delay: 0, accent: 0 },
-                { left: 82, top: 20, delay: 180, accent: 1 },
-                { left: 30, top: 42, delay: 360, accent: 2 },
-                { left: 70, top: 40, delay: 560, accent: 1 },
-                { left: 50, top: 24, delay: 760, accent: 3 },
-                { left: 24, top: 30, delay: 1080, accent: 2 },
-                { left: 76, top: 28, delay: 1320, accent: 4 },
-                { left: 50, top: 34, delay: 1600, accent: 3 }
-            ].forEach(({ left, top, delay }) => {
+            STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ left, top, delay }) => {
                 const timerId = window.setTimeout(() => {
                     spawnFireworkBurst(left, top);
                 }, delay);
                 stageClearTimers.push(timerId);
             });
 
-            [
-                { delay: 0, accent: 0 },
-                { delay: 180, accent: 1 },
-                { delay: 360, accent: 2 },
-                { delay: 560, accent: 1 },
-                { delay: 760, accent: 3 },
-                { delay: 1080, accent: 2 },
-                { delay: 1320, accent: 4 },
-                { delay: 1600, accent: 3 }
-            ].forEach(({ delay, accent }) => {
+            STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ delay, accent }) => {
                 void playFireworkBurstSound(delay, accent);
             });
 
-            void playColorCompleteSound(40);
-            void playColorCompleteSound(980);
+            void playColorCompleteSound(30);
+            void playColorCompleteSound(520);
 
             const nextStageTimer = window.setTimeout(() => {
                 clearStageClearTimers();
                 isStageTransitioning = false;
                 syncActiveMap(currentMapIndex + 1);
                 resetGame();
-            }, 4200);
+            }, STAGE_TRANSITION_DELAY_MS);
             stageClearTimers.push(nextStageTimer);
         }
 
@@ -4986,34 +5056,37 @@
 
             void playColorCompleteSound(startDelayMs);
 
-            return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 180;
+            return startDelayMs + completedCells.length * COLOR_COMPLETE_STEP_MS + 90;
         }
 
         function scheduleFullBoardCelebration(startDelayMs = 0) {
             const completedCells = TARGET_POSITIONS
                 .filter((position) => boardState[position.row][position.col] === TARGET_MAP[position.row][position.col])
                 .sort((left, right) => left.row - right.row || left.col - right.col);
+            const sparkleStepMs = completedCells.length
+                ? Math.max(8, Math.min(COLOR_COMPLETE_STEP_MS, Math.floor(FULL_BOARD_CELEBRATION_MAX_MS / completedCells.length)))
+                : COLOR_COMPLETE_STEP_MS;
 
             completedCells.forEach((cell, index) => {
                 const timerId = window.setTimeout(() => {
                     markCorrectPlacementSparkle(cell.row, cell.col);
                     scheduleRender();
-                }, startDelayMs + index * COLOR_COMPLETE_STEP_MS);
+                }, startDelayMs + index * sparkleStepMs);
                 celebrationTimers.push(timerId);
             });
 
             void playColorCompleteSound(startDelayMs);
 
             if (completedCells.length > 10) {
-                void playColorCompleteSound(startDelayMs + 220);
+                void playColorCompleteSound(startDelayMs + 120);
             }
 
             if (!completedCells.length) {
                 return startDelayMs;
             }
 
-            const lastSparkleStartDelay = startDelayMs + (completedCells.length - 1) * COLOR_COMPLETE_STEP_MS;
-            return lastSparkleStartDelay + MATCH_SPARKLE_MS + 120;
+            const lastSparkleStartDelay = startDelayMs + (completedCells.length - 1) * sparkleStepMs;
+            return lastSparkleStartDelay + MATCH_SPARKLE_MS + 60;
         }
 
         function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
@@ -5436,6 +5509,42 @@
             return burst;
         }
 
+        function bindTapActivation(element, handler) {
+            if (!element) {
+                return;
+            }
+
+            element.addEventListener(
+                "touchend",
+                (event) => {
+                    if (event.touches?.length || (event.changedTouches && event.changedTouches.length !== 1)) {
+                        return;
+                    }
+
+                    if (Date.now() < boardInteraction.suppressClickUntil) {
+                        return;
+                    }
+
+                    if (event.cancelable) {
+                        event.preventDefault();
+                    }
+                    boardInteraction.suppressClickUntil = Date.now() + 120;
+                    handler();
+                },
+                { passive: false }
+            );
+
+            element.addEventListener("click", (event) => {
+                if (Date.now() < boardInteraction.suppressClickUntil) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+
+                handler();
+            });
+        }
+
         function renderBoard() {
             boardElement.innerHTML = "";
             const now = performance.now();
@@ -5487,7 +5596,9 @@
                     if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs));
 
                     if (!button.disabled) {
-                        button.addEventListener("click", () => handleBoardClick(row, col));
+                        bindTapActivation(button, () => {
+                            void handleBoardClick(row, col);
+                        });
                     }
                     boardElement.appendChild(button);
                 }
@@ -5523,7 +5634,9 @@
                 if (isSelected("tray", index)) button.classList.add("selected");
                 if (shouldRenderGems && gem) button.appendChild(createGem(gem));
 
-                button.addEventListener("click", () => handleTrayClick(index));
+                bindTapActivation(button, () => {
+                    void handleTrayClick(index);
+                });
                 container.appendChild(button);
             }
         }
@@ -5560,8 +5673,8 @@
         function applyBoardTransform() {
             if (!boardPanzoomElement) return;
 
-            if (boardInteraction.scale <= 1.001) {
-                boardInteraction.scale = 1;
+            if (boardInteraction.scale <= boardInteraction.minScale + 0.001) {
+                boardInteraction.scale = boardInteraction.minScale;
                 boardInteraction.panX = 0;
                 boardInteraction.panY = 0;
             } else {
@@ -5574,14 +5687,33 @@
             scheduleTutorialOverlayRender();
         }
 
-        function setBoardScale(nextScale) {
-            boardInteraction.scale = Math.min(boardInteraction.maxScale, Math.max(boardInteraction.minScale, nextScale));
+        function setBoardScale(nextScale, options = {}) {
+            const { anchorClientX = null, anchorClientY = null } = options;
+            const previousScale = boardInteraction.scale || 1;
+            const clampedScale = Math.min(boardInteraction.maxScale, Math.max(boardInteraction.minScale, nextScale));
+
+            if (
+                anchorClientX != null &&
+                anchorClientY != null &&
+                boardWrapElement &&
+                Math.abs(clampedScale - previousScale) > 0.0001
+            ) {
+                const wrapRect = boardWrapElement.getBoundingClientRect();
+                const anchorX = anchorClientX - wrapRect.left - wrapRect.width / 2;
+                const anchorY = anchorClientY - wrapRect.top - wrapRect.height / 2;
+                const scaleRatio = clampedScale / previousScale;
+
+                boardInteraction.panX = anchorX - (anchorX - boardInteraction.panX) * scaleRatio;
+                boardInteraction.panY = anchorY - (anchorY - boardInteraction.panY) * scaleRatio;
+            }
+
+            boardInteraction.scale = clampedScale;
             applyBoardTransform();
         }
 
-        function zoomBoardByDelta(delta, zoomIntensity = 0.0018) {
+        function zoomBoardByDelta(delta, zoomIntensity = 0.0018, options = {}) {
             const scaleFactor = Math.exp(-delta * zoomIntensity);
-            setBoardScale(boardInteraction.scale * scaleFactor);
+            setBoardScale(boardInteraction.scale * scaleFactor, options);
         }
 
         function resetBoardTransform() {
@@ -5657,7 +5789,10 @@
                     if (!(event.ctrlKey || event.metaKey)) return;
 
                     event.preventDefault();
-                    zoomBoardByDelta(event.deltaY);
+                    zoomBoardByDelta(event.deltaY, 0.0018, {
+                        anchorClientX: event.clientX,
+                        anchorClientY: event.clientY
+                    });
                     boardInteraction.suppressClickUntil = Date.now() + 240;
                 },
                 { passive: false, capture: true }
@@ -5672,7 +5807,10 @@
                     if (!(event.ctrlKey || event.metaKey)) return;
 
                     event.preventDefault();
-                    zoomBoardByDelta(event.deltaY);
+                    zoomBoardByDelta(event.deltaY, 0.0018, {
+                        anchorClientX: event.clientX,
+                        anchorClientY: event.clientY
+                    });
                     boardInteraction.suppressClickUntil = Date.now() + 240;
                 },
                 { passive: false }
@@ -5680,7 +5818,7 @@
 
             boardWrapElement.addEventListener("pointerdown", (event) => {
                 if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-                if (boardInteraction.scale <= 1.001) return;
+                if (boardInteraction.scale <= boardInteraction.minScale + 0.001) return;
 
                 boardInteraction.pointerId = event.pointerId;
                 boardInteraction.isPointerDragging = true;
@@ -5741,7 +5879,10 @@
                     storeBoardTouches(event.changedTouches);
                     initializeBoardGestureState();
 
-                    if (boardInteraction.touches.size >= 2 || boardInteraction.scale > 1.001) {
+                    if (
+                        boardInteraction.touches.size >= 2 ||
+                        boardInteraction.scale > boardInteraction.minScale + 0.001
+                    ) {
                         event.preventDefault();
                     }
                 },
@@ -5757,8 +5898,14 @@
                     if (activeTouches.length >= 2) {
                         const nextDistance = getTouchDistance(activeTouches[0], activeTouches[1]);
                         if (boardInteraction.pinchStartDistance > 0) {
+                            const midpointX = (activeTouches[0].clientX + activeTouches[1].clientX) / 2;
+                            const midpointY = (activeTouches[0].clientY + activeTouches[1].clientY) / 2;
                             setBoardScale(
-                                boardInteraction.pinchStartScale * (nextDistance / boardInteraction.pinchStartDistance)
+                                boardInteraction.pinchStartScale * (nextDistance / boardInteraction.pinchStartDistance),
+                                {
+                                    anchorClientX: midpointX,
+                                    anchorClientY: midpointY
+                                }
                             );
                         }
                         boardInteraction.suppressClickUntil = Date.now() + 240;
@@ -5766,7 +5913,10 @@
                         return;
                     }
 
-                    if (activeTouches.length === 1 && boardInteraction.scale > 1.001) {
+                    if (
+                        activeTouches.length === 1 &&
+                        boardInteraction.scale > boardInteraction.minScale + 0.001
+                    ) {
                         const activeTouch = activeTouches[0];
                         boardInteraction.panX = boardInteraction.basePanX + (activeTouch.clientX - boardInteraction.panStartX);
                         boardInteraction.panY = boardInteraction.basePanY + (activeTouch.clientY - boardInteraction.panStartY);
@@ -5810,15 +5960,14 @@
             const actionButtonSize = parseFloat(rootStyles.getPropertyValue("--action-button-size")) || 56;
             const actionButtonGap = parseFloat(rootStyles.getPropertyValue("--action-button-gap")) || 16;
             const appShellWidth = Math.min(viewportWidth, 430);
-            const trayColumns = compactLayout ? 6 : 12;
-            const trayRowsPerGroup = Math.ceil(TOP_POCKET_COUNT / trayColumns);
-            const totalTrayRows = trayRowsPerGroup * TRAY_ROW_COUNT;
-            const actionColumns = compactLayout ? 2 : 4;
+            const trayColumns = TOP_POCKET_COUNT;
+            const totalTrayRows = TRAY_ROW_COUNT;
+            const actionColumns = 4;
             const actionRows = Math.ceil(4 / actionColumns);
-            const pocketHorizontalPadding = 36;
+            const pocketHorizontalPadding = compactLayout ? 28 : 36;
             const availablePocketWidth = Math.max(180, appShellWidth - viewportGap * 2);
             const nextTrayCellSize = Math.max(
-                18,
+                compactLayout ? 22 : 18,
                 Math.floor(
                     Math.min(
                         DEFAULT_TRAY_CELL_SIZE,
@@ -5844,17 +5993,20 @@
                 pocketDockHeight +
                 16
             );
-            const availableBoardWidth = Math.max(120, appShellWidth - viewportGap * 2);
             const availableBoardHeight = Math.max(120, viewportHeight - viewportGap * 2 - pocketReservedHeight);
+            const availableBoardWidth = Math.max(120, appShellWidth - viewportGap * 2);
             const nextBoardCellSize = Math.max(
-                16,
+                compactLayout ? 17 : 16,
                 Math.floor(
                     Math.min(
+                        DEFAULT_BOARD_CELL_SIZE,
                         availableBoardWidth / COLS,
                         availableBoardHeight / ROWS
                     )
                 )
             );
+            boardInteraction.minScale = compactLayout ? 0.82 : 1;
+            boardInteraction.maxScale = compactLayout ? 4.8 : 4.2;
 
             root.style.setProperty("--app-shell-width", `${appShellWidth}px`);
             root.style.setProperty("--board-cell-size", `${nextBoardCellSize}px`);
