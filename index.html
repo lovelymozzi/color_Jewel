@@ -1274,6 +1274,31 @@
             gap: 8px;
         }
 
+        .pixel-admin-export-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .pixel-admin-export-label {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(116, 86, 54, 0.78);
+        }
+
+        .pixel-admin-copy-mini {
+            flex: 0 0 auto;
+            min-height: 32px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            line-height: 1;
+        }
+
         .pixel-admin-export {
             width: 100%;
             min-height: 128px;
@@ -1500,6 +1525,10 @@
             <button class="pixel-admin-action" id="pixelAdminNextLevel" type="button">다음 레벨</button>
         </div>
 
+        <div class="pixel-admin-export-toolbar">
+            <p class="pixel-admin-export-label">코드값</p>
+            <button class="pixel-admin-action pixel-admin-copy-mini" id="pixelAdminCopyMini" type="button">복사</button>
+        </div>
         <textarea class="pixel-admin-export" id="pixelAdminExport" spellcheck="false"></textarea>
         <p class="pixel-admin-note" id="pixelAdminMessage">`Shift + A`로 어드민을 열고 닫을 수 있습니다.</p>
     </aside>
@@ -1621,27 +1650,27 @@
         });
 
         const APPLE_IMAGE_MAP = [
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "LG", "LG", "LG", "LG", "DG", "DG", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "DG", "DG", "DG", "LG", "LG", "LG", "LG", "DG", "  ", "  ", "  ", "LB", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "DG", "LG", "LG", "LG", "DG", "  ", "  ", "DB", "DB", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "DG", "LG", "LG", "LL", "DG", "  ", "DB", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "DG", "DG", "DG", "  ", "DB", "DB", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "BO", "BO", "BO", "BO", "  ", "DB", "DB", "  ", "BO", "BO", "BO", "BO", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "BO", "CO", "CO", "CO", "BO", "  ", "DB", "BO", "CO", "CO", "CO", "CO", "BO", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "BO", "CO", "HI", "HI", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO", "  ", "  "],
-            ["  ", "  ", "BO", "CO", "HI", "RE", "RE", "HI", "CO", "CO", "HI", "HI", "CO", "CO", "CO", "CO", "CO", "CO", "BO", "  "],
-            ["  ", "BO", "CO", "CO", "HI", "RE", "RE", "HI", "HI", "HI", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO"],
-            ["  ", "BO", "CO", "CO", "HI", "HI", "HI", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO"],
-            ["  ", "BO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO"],
-            ["  ", "  ", "BO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO", "  "],
-            ["  ", "  ", "BO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO", "  "],
-            ["  ", "  ", "  ", "BO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "BO", "  ", "  "],
-            ["  ", "  ", "  ", "BO", "SH", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "CO", "SH", "BO", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "BO", "SH", "SH", "SH", "SH", "SH", "SH", "SH", "SH", "SH", "SH", "BO", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "BO", "BO", "SH", "SH", "BO", "BO", "SH", "SH", "BO", "BO", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "BO", "BO", "  ", "  ", "BO", "BO", "  ", "  ", "  ", "  ", "  ", "  ", "  "]
-        ].map((row) => row.map((cell) => APPLE_SYMBOL_TO_COLOR_ID[cell]));
+            [0, 0, 0, 3, 3, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 3, 2, 1, 1, 1, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 3, 2, 2, 1, 3, 0, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 3, 2, 3, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 3, 3, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 6, 6, 6, 6, 4, 5, 6, 6, 6, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 6, 8, 8, 8, 6, 5, 6, 7, 7, 7, 7, 6, 0, 0, 0, 0],
+            [0, 0, 0, 6, 8, 8, 9, 9, 8, 8, 8, 8, 8, 8, 7, 7, 6, 0, 0, 0],
+            [0, 0, 0, 6, 8, 9, 10, 10, 9, 9, 8, 9, 9, 8, 7, 7, 6, 0, 0, 0],
+            [0, 0, 6, 8, 8, 9, 10, 10, 9, 9, 8, 8, 8, 8, 7, 7, 7, 6, 0, 0],
+            [0, 0, 6, 8, 8, 9, 9, 9, 8, 8, 8, 8, 8, 8, 7, 7, 7, 6, 0, 0],
+            [0, 0, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 6, 0, 0],
+            [0, 0, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 6, 0, 0],
+            [0, 0, 0, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 6, 0, 0, 0],
+            [0, 0, 0, 6, 7, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 0, 0, 0],
+            [0, 0, 0, 0, 6, 7, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 0, 0, 0, 0],
+            [0, 0, 0, 0, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 6, 6, 7, 7, 6, 6, 7, 7, 6, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
 
         const BEAR_IMAGE_MAP = [
             [0, 6, 5, 0, 0, 0, 0, 5, 6, 0],
@@ -2388,16 +2417,16 @@
         const MAP_THEME_OVERRIDES = {
             apple: {
                 palette: {
-                    1: "#9BEC0B",
-                    2: "#50CF02",
-                    3: "#059210",
-                    4: "#7E5128",
-                    5: "#5D3917",
-                    6: "#700300",
-                    7: "#9B0101",
-                    8: "#EE4035",
-                    9: "#FA4F3E",
-                    10: "#FCF277"
+                    1: "#97E808",
+                    2: "#54BF0D",
+                    3: "#059310",
+                    4: "#7E5129",
+                    5: "#593618",
+                    6: "#740202",
+                    7: "#990001",
+                    8: "#CF0202",
+                    9: "#FD4A3C",
+                    10: "#FCF372"
                 }
             }
         };
@@ -2486,6 +2515,7 @@
         const pixelAdminReloadElement = document.getElementById("pixelAdminReload");
         const pixelAdminRestoreElement = document.getElementById("pixelAdminRestore");
         const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
+        const pixelAdminCopyMiniElement = document.getElementById("pixelAdminCopyMini");
         const pixelAdminPreviousLevelElement = document.getElementById("pixelAdminPreviousLevel");
         const pixelAdminNextLevelElement = document.getElementById("pixelAdminNextLevel");
         const pixelAdminResizeHandleElement = document.getElementById("pixelAdminResizeHandle");
@@ -6465,6 +6495,10 @@
         });
 
         pixelAdminCopyElement?.addEventListener("click", () => {
+            void copyPixelAdminExport();
+        });
+
+        pixelAdminCopyMiniElement?.addEventListener("click", () => {
             void copyPixelAdminExport();
         });
 
