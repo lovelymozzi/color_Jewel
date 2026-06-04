@@ -885,7 +885,7 @@
             top: 12px;
             right: 12px;
             bottom: 12px;
-            width: min(390px, calc(100vw - 24px));
+            width: var(--pixel-admin-width, min(390px, calc(100vw - 24px)));
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -899,6 +899,35 @@
             pointer-events: none;
             transition: transform 0.24s ease, opacity 0.24s ease;
             z-index: 79;
+        }
+
+        .pixel-admin-resize-handle {
+            position: absolute;
+            left: -8px;
+            top: 20px;
+            bottom: 20px;
+            width: 18px;
+            cursor: ew-resize;
+            touch-action: none;
+            z-index: 2;
+        }
+
+        .pixel-admin-resize-handle::before {
+            content: "";
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 999px;
+            background: rgba(194, 157, 112, 0.36);
+            transition: background 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .pixel-admin-resize-handle:hover::before,
+        .pixel-admin.resizing .pixel-admin-resize-handle::before {
+            background: rgba(255, 142, 48, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 207, 129, 0.32);
         }
 
         .pixel-admin.open {
@@ -932,14 +961,18 @@
         }
 
         .pixel-admin-stage,
-        .pixel-admin-help,
-        .pixel-admin-note,
-        .pixel-admin-selection {
+        .pixel-admin-note {
             margin: 0;
             color: rgba(102, 67, 36, 0.86);
             font-size: 13px;
             line-height: 1.35;
             letter-spacing: -0.01em;
+        }
+
+        .pixel-admin-help,
+        .pixel-admin-selection,
+        .pixel-admin-color-editor {
+            display: none;
         }
 
         .pixel-admin-close,
@@ -963,19 +996,22 @@
 
         .pixel-admin-palette {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, 40px);
+            justify-content: flex-start;
+            gap: 6px;
         }
 
         .pixel-admin-palette-tools,
         .pixel-admin-color-editor {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(2, 40px);
+            justify-content: flex-start;
+            gap: 6px;
         }
 
         .pixel-admin-color-editor {
-            grid-template-columns: minmax(0, 1fr) 64px;
+            grid-template-columns: minmax(0, 1fr) 56px;
+            align-items: end;
         }
 
         .pixel-admin-field {
@@ -989,8 +1025,9 @@
             font-size: 11px;
             font-weight: 800;
             color: rgba(116, 86, 54, 0.78);
-            letter-spacing: 0.04em;
+            letter-spacing: 0.02em;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .pixel-admin-input,
@@ -1014,6 +1051,11 @@
             cursor: pointer;
         }
 
+        .pixel-admin-color-editor .pixel-admin-input,
+        .pixel-admin-color-editor .pixel-admin-color-input {
+            height: 44px;
+        }
+
         .pixel-admin-input:disabled,
         .pixel-admin-color-input:disabled {
             opacity: 0.45;
@@ -1022,41 +1064,53 @@
 
         .pixel-admin-swatch-card {
             position: relative;
+            width: 40px;
+            height: 40px;
         }
 
         .pixel-admin-swatch {
             appearance: none;
             -webkit-appearance: none;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-            min-height: 58px;
-            padding: 8px;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+            padding: 5px;
             border: 1px solid rgba(194, 157, 112, 0.52);
-            border-radius: 14px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.88);
             color: #6d4925;
-            text-align: left;
             cursor: pointer;
+        }
+
+        .pixel-admin-palette-tools .pixel-admin-action {
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+            padding: 0;
+            border-radius: 12px;
+            font-size: 11px;
+            letter-spacing: 0;
         }
 
         .pixel-admin-swatch-delete {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: -4px;
+            right: -4px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
+            width: 16px;
+            height: 16px;
             padding: 0;
             border: 0;
             border-radius: 999px;
             background: rgba(103, 68, 35, 0.82);
             color: #fff7eb;
             font: inherit;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 900;
             line-height: 1;
             cursor: pointer;
@@ -1091,8 +1145,8 @@
 
         .pixel-admin-swatch-chip {
             width: 100%;
-            height: 18px;
-            border-radius: 999px;
+            height: 100%;
+            border-radius: 8px;
             border: 1px solid rgba(85, 59, 29, 0.12);
             background: var(--swatch-color, #ffffff);
         }
@@ -1103,20 +1157,18 @@
         }
 
         .pixel-admin-swatch-label {
-            font-size: 12px;
-            font-weight: 800;
+            display: none;
         }
 
         .pixel-admin-swatch-hex {
-            font-size: 11px;
-            color: rgba(116, 86, 54, 0.72);
+            display: none;
         }
 
         .pixel-admin-grid-wrap {
             flex: 1;
             min-height: 220px;
-            overflow-x: hidden;
-            overflow-y: auto;
+            overflow: auto;
+            overscroll-behavior: contain;
             padding: 12px;
             border-radius: 20px;
             background: var(--app-bg);
@@ -1135,6 +1187,7 @@
             border-radius: 12px;
             background: rgba(179, 149, 113, 0.9);
             overflow: hidden;
+            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -1167,7 +1220,7 @@
 
         .pixel-admin-export {
             width: 100%;
-            min-height: 176px;
+            min-height: 128px;
             resize: vertical;
             padding: 12px;
             border-radius: 18px;
@@ -1276,7 +1329,12 @@
                 left: 10px;
                 bottom: 10px;
                 width: auto;
+                --pixel-admin-width: auto;
                 max-height: min(78vh, 760px);
+            }
+
+            .pixel-admin-resize-handle {
+                display: none;
             }
         }
     </style>
@@ -1327,6 +1385,7 @@
     </button>
 
     <aside class="pixel-admin" id="pixelAdmin" aria-hidden="true">
+        <div class="pixel-admin-resize-handle" id="pixelAdminResizeHandle" aria-hidden="true"></div>
         <div class="pixel-admin-header">
             <div>
                 <p class="pixel-admin-eyebrow">ADMIN</p>
@@ -1339,12 +1398,12 @@
         <p class="pixel-admin-help" id="pixelAdminHelp">20x20 canvas editor. Pick a color, paint cells, and use right click to erase. `#` is added automatically.</p>
         <p class="pixel-admin-selection" id="pixelAdminSelection">Selected color</p>
         <div class="pixel-admin-palette-tools">
-            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button">Add Color</button>
-            <button class="pixel-admin-action" id="pixelAdminErase" type="button">Eraser</button>
+            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" title="색상 추가" aria-label="색상 추가">+</button>
+            <button class="pixel-admin-action" id="pixelAdminErase" type="button" title="지우개" aria-label="지우개">E</button>
         </div>
         <div class="pixel-admin-color-editor">
             <label class="pixel-admin-field" for="pixelAdminColorHexText">
-                <span class="pixel-admin-field-label">HEX (# auto)</span>
+                <span class="pixel-admin-field-label">HEX</span>
                 <input class="pixel-admin-input" id="pixelAdminColorHexText" type="text" maxlength="6" placeholder="FFFFFF" inputmode="text" />
             </label>
             <label class="pixel-admin-field" for="pixelAdminColorHexPicker">
@@ -1354,7 +1413,7 @@
         </div>
         <div class="pixel-admin-palette" id="pixelAdminPalette"></div>
 
-        <div class="pixel-admin-grid-wrap">
+        <div class="pixel-admin-grid-wrap" id="pixelAdminGridWrap">
             <div class="pixel-admin-grid" id="pixelAdminGrid"></div>
         </div>
 
@@ -2133,12 +2192,14 @@
         const pixelAdminColorHexTextElement = document.getElementById("pixelAdminColorHexText");
         const pixelAdminColorHexPickerElement = document.getElementById("pixelAdminColorHexPicker");
         const pixelAdminPaletteElement = document.getElementById("pixelAdminPalette");
+        const pixelAdminGridWrapElement = document.getElementById("pixelAdminGridWrap");
         const pixelAdminGridElement = document.getElementById("pixelAdminGrid");
         const pixelAdminApplyElement = document.getElementById("pixelAdminApply");
         const pixelAdminReloadElement = document.getElementById("pixelAdminReload");
         const pixelAdminRestoreElement = document.getElementById("pixelAdminRestore");
         const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
         const pixelAdminNextLevelElement = document.getElementById("pixelAdminNextLevel");
+        const pixelAdminResizeHandleElement = document.getElementById("pixelAdminResizeHandle");
         const pixelAdminExportElement = document.getElementById("pixelAdminExport");
         const pixelAdminMessageElement = document.getElementById("pixelAdminMessage");
         let currentMapIndex = 0;
@@ -2178,6 +2239,8 @@
             draftMap: null,
             draftPalette: {},
             selectedColorId: 0,
+            canvasZoom: 1,
+            panelWidth: null,
             isDirty: false,
             exportIsDirty: false,
             message: "`Shift + A`로 언제든 열고 닫을 수 있습니다."
@@ -2188,6 +2251,11 @@
             lastPaintedCellKey: null,
             pendingMessage: "",
             didPaint: false
+        };
+        const pixelAdminResize = {
+            isActive: false,
+            startX: 0,
+            startWidth: 0
         };
         const boardInteraction = {
             scale: 1,
@@ -2569,22 +2637,155 @@
             renderPixelAdmin();
         }
 
-        function syncPixelAdminGridMetrics(columnCount) {
-            if (!pixelAdminGridElement || !pixelAdminGridElement.parentElement || !columnCount) {
+        function isCompactPixelAdminLayout() {
+            return window.matchMedia("(max-width: 540px)").matches;
+        }
+
+        function getPixelAdminWidthRange() {
+            const minWidth = 340;
+            const maxWidth = Math.max(minWidth, window.innerWidth - 24);
+            return { minWidth, maxWidth };
+        }
+
+        function applyPixelAdminPanelWidth() {
+            if (!pixelAdminElement) {
                 return;
             }
 
-            const gap = 1;
-            const gridPadding = 2;
-            const availableWidth = Math.max(0, pixelAdminGridElement.parentElement.clientWidth);
-            const cellSize = Math.max(
-                12,
-                Math.floor((availableWidth - gridPadding - gap * (columnCount - 1)) / columnCount)
+            if (isCompactPixelAdminLayout()) {
+                pixelAdminElement.style.removeProperty("--pixel-admin-width");
+                pixelAdminElement.classList.toggle("resizing", false);
+                return;
+            }
+
+            const { minWidth, maxWidth } = getPixelAdminWidthRange();
+            const fallbackWidth = Math.min(390, maxWidth);
+            const resolvedWidth = Math.max(
+                minWidth,
+                Math.min(maxWidth, pixelAdminState.panelWidth ?? fallbackWidth)
             );
-            const gridWidth = columnCount * cellSize + gap * (columnCount - 1) + gridPadding;
+
+            pixelAdminState.panelWidth = resolvedWidth;
+            pixelAdminElement.style.setProperty("--pixel-admin-width", `${resolvedWidth}px`);
+            pixelAdminElement.classList.toggle("resizing", pixelAdminResize.isActive);
+        }
+
+        function startPixelAdminResize(event) {
+            if (!pixelAdminElement || isCompactPixelAdminLayout()) {
+                return;
+            }
+
+            event.preventDefault();
+            pixelAdminResize.isActive = true;
+            pixelAdminResize.startX = event.clientX;
+            pixelAdminResize.startWidth = pixelAdminElement.getBoundingClientRect().width;
+            pixelAdminElement.classList.add("resizing");
+        }
+
+        function updatePixelAdminResize(event) {
+            if (!pixelAdminResize.isActive) {
+                return;
+            }
+
+            const dragOffset = pixelAdminResize.startX - event.clientX;
+            pixelAdminState.panelWidth = pixelAdminResize.startWidth + dragOffset;
+            applyPixelAdminPanelWidth();
+            if (pixelAdminState.isOpen && pixelAdminState.draftMap?.[0]?.length) {
+                syncPixelAdminGridMetrics(pixelAdminState.draftMap[0].length, pixelAdminState.draftMap.length);
+            }
+        }
+
+        function stopPixelAdminResize(event) {
+            if (!pixelAdminResize.isActive) {
+                return;
+            }
+
+            pixelAdminResize.isActive = false;
+            pixelAdminElement?.classList.remove("resizing");
+            applyPixelAdminPanelWidth();
+        }
+
+        function syncPixelAdminGridMetrics(columnCount, rowCount = pixelAdminState.draftMap?.length || 0) {
+            if (!pixelAdminGridElement || !pixelAdminGridWrapElement || !columnCount || !rowCount) {
+                return null;
+            }
+
+            const wrapStyles = window.getComputedStyle(pixelAdminGridWrapElement);
+            const horizontalPadding =
+                Number.parseFloat(wrapStyles.paddingLeft || "0") +
+                Number.parseFloat(wrapStyles.paddingRight || "0");
+            const availableWidth = Math.max(0, pixelAdminGridWrapElement.clientWidth - horizontalPadding);
+            const gap = 1;
+            const chrome = 4;
+            const baseCellSize = Math.max(
+                8,
+                (availableWidth - chrome - gap * (columnCount - 1)) / columnCount
+            );
+            const effectiveZoom = pixelAdminState.canvasZoom || 1;
+            const cellSize = Math.max(4, baseCellSize * effectiveZoom);
+            const gridWidth = columnCount * cellSize + gap * (columnCount - 1) + chrome;
+            const gridHeight = rowCount * cellSize + gap * (rowCount - 1) + chrome;
 
             pixelAdminGridElement.style.setProperty("--pixel-admin-cell-size", `${cellSize}px`);
             pixelAdminGridElement.style.width = `${gridWidth}px`;
+            pixelAdminGridElement.style.height = `${gridHeight}px`;
+            return { baseCellSize, cellSize, gridWidth, gridHeight };
+        }
+
+        function getPixelAdminWheelZoomIntent(event) {
+            if (event.ctrlKey) {
+                return true;
+            }
+
+            return Math.abs(event.deltaY) >= 30;
+        }
+
+        function setPixelAdminCanvasZoom(nextZoom, options = {}) {
+            if (!pixelAdminGridWrapElement || !pixelAdminState.draftMap?.[0]?.length) {
+                return;
+            }
+
+            const { anchorClientX = null, anchorClientY = null } = options;
+            const previousMetrics = syncPixelAdminGridMetrics(
+                pixelAdminState.draftMap[0].length,
+                pixelAdminState.draftMap.length
+            );
+            const wrapRect = pixelAdminGridWrapElement.getBoundingClientRect();
+            const anchorX = anchorClientX == null ? wrapRect.left + wrapRect.width / 2 : anchorClientX;
+            const anchorY = anchorClientY == null ? wrapRect.top + wrapRect.height / 2 : anchorClientY;
+            const localX = anchorX - wrapRect.left;
+            const localY = anchorY - wrapRect.top;
+            const previousGridWidth = previousMetrics?.gridWidth || pixelAdminGridElement.scrollWidth || 1;
+            const previousGridHeight = previousMetrics?.gridHeight || pixelAdminGridElement.scrollHeight || 1;
+            const anchorRatioX = (pixelAdminGridWrapElement.scrollLeft + localX) / previousGridWidth;
+            const anchorRatioY = (pixelAdminGridWrapElement.scrollTop + localY) / previousGridHeight;
+
+            pixelAdminState.canvasZoom = Math.max(1, Math.min(6, nextZoom));
+            const nextMetrics = syncPixelAdminGridMetrics(
+                pixelAdminState.draftMap[0].length,
+                pixelAdminState.draftMap.length
+            );
+
+            if (!nextMetrics) {
+                return;
+            }
+
+            pixelAdminGridWrapElement.scrollLeft = Math.max(0, anchorRatioX * nextMetrics.gridWidth - localX);
+            pixelAdminGridWrapElement.scrollTop = Math.max(0, anchorRatioY * nextMetrics.gridHeight - localY);
+        }
+
+        function zoomPixelAdminCanvasByWheel(event) {
+            if (!getPixelAdminWheelZoomIntent(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            const zoomDelta = event.ctrlKey ? event.deltaY * 0.0025 : event.deltaY * 0.0016;
+            const scaleFactor = Math.exp(-zoomDelta);
+            setPixelAdminCanvasZoom((pixelAdminState.canvasZoom || 1) * scaleFactor, {
+                anchorClientX: event.clientX,
+                anchorClientY: event.clientY
+            });
         }
 
         function togglePixelAdmin() {
@@ -2802,6 +3003,7 @@
             pixelAdminElement.classList.toggle("open", pixelAdminState.isOpen);
             pixelAdminElement.setAttribute("aria-hidden", String(!pixelAdminState.isOpen));
             pixelAdminToggleElement.setAttribute("aria-expanded", String(pixelAdminState.isOpen));
+            applyPixelAdminPanelWidth();
 
             if (!definition || !mapId || !sourceMap?.length) {
                 return;
@@ -2885,7 +3087,7 @@
             });
 
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
-            syncPixelAdminGridMetrics(cols);
+            syncPixelAdminGridMetrics(cols, rows);
             pixelAdminGridElement.innerHTML = "";
             sourceMap.forEach((row, rowIndex) => {
                 row.forEach((colorId, colIndex) => {
@@ -5862,19 +6064,38 @@
             goToNextLevelFromAdmin();
         });
 
+        pixelAdminResizeHandleElement?.addEventListener("mousedown", (event) => {
+            startPixelAdminResize(event);
+        });
+
+        pixelAdminGridWrapElement?.addEventListener(
+            "wheel",
+            (event) => {
+                zoomPixelAdminCanvasByWheel(event);
+            },
+            { passive: false }
+        );
+
         pixelAdminGridElement?.addEventListener("contextmenu", (event) => {
             event.preventDefault();
         });
 
+        window.addEventListener("mousemove", (event) => {
+            updatePixelAdminResize(event);
+        });
+
         window.addEventListener("mouseup", () => {
+            stopPixelAdminResize({});
             stopPixelAdminDrawing();
         });
 
         window.addEventListener("blur", () => {
+            stopPixelAdminResize({});
             stopPixelAdminDrawing();
         });
 
         window.addEventListener("resize", () => {
+            applyPixelAdminPanelWidth();
             updateResponsiveLayout();
             scheduleTutorialOverlayRender();
             if (pixelAdminState.isOpen) {
