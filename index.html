@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1164,9 +1164,65 @@
             display: none;
         }
 
-        .pixel-admin-grid-wrap {
+        .pixel-admin-grid-shell {
             flex: 1;
             min-height: 220px;
+            display: grid;
+            grid-template-columns: 24px minmax(0, 1fr) 24px;
+            grid-template-rows: 24px minmax(0, 1fr) 24px;
+            gap: 6px;
+            align-items: stretch;
+        }
+
+        .pixel-admin-axis-corner {
+            border-radius: 10px;
+            background: rgba(242, 230, 214, 0.9);
+            border: 1px solid rgba(204, 179, 146, 0.6);
+        }
+
+        .pixel-admin-axis {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            background: rgba(242, 230, 214, 0.9);
+            border: 1px solid rgba(204, 179, 146, 0.6);
+        }
+
+        .pixel-admin-axis-track {
+            position: relative;
+            display: grid;
+            gap: 1px;
+            width: max-content;
+            height: max-content;
+            will-change: transform;
+        }
+
+        .pixel-admin-axis-horizontal .pixel-admin-axis-track {
+            grid-template-columns: repeat(var(--pixel-admin-cols, 20), var(--pixel-admin-cell-size, 16px));
+            grid-auto-rows: 22px;
+        }
+
+        .pixel-admin-axis-vertical .pixel-admin-axis-track {
+            grid-template-rows: repeat(var(--pixel-admin-rows, 20), var(--pixel-admin-cell-size, 16px));
+            grid-auto-columns: 22px;
+        }
+
+        .pixel-admin-axis-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 0;
+            font-size: clamp(6px, calc(var(--pixel-admin-cell-size, 16px) * 0.44), 10px);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.04em;
+            color: rgba(123, 87, 48, 0.84);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .pixel-admin-grid-wrap {
             overflow: auto;
             overscroll-behavior: contain;
             padding: 12px;
@@ -1345,36 +1401,36 @@
             <div class="tutorial-layer" id="tutorialLayer" aria-hidden="true"></div>
             <div class="board-wrap">
                 <div class="board-panzoom" id="boardPanzoom">
-                    <div class="board" id="board" aria-label="20x20 퍼즐 보드"></div>
+                    <div class="board" id="board" aria-label="20x20 puzzle board"></div>
                 </div>
             </div>
 
             <div class="pocket-dock">
                 <div class="pocket-stack">
                     <div class="pocket-group">
-                        <div class="tray" id="topTray" aria-label="하단 포켓 1열"></div>
+                        <div class="tray" id="topTray" aria-label="bottom pocket row 1"></div>
                     </div>
 
                     <div class="pocket-group">
-                        <div class="tray" id="bottomTray" aria-label="하단 포켓 2열"></div>
+                        <div class="tray" id="bottomTray" aria-label="bottom pocket row 2"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="bottom-actions" aria-label="하단 액션 버튼">
-                <button class="pocket-action-button" type="button">버튼 1</button>
-                <button class="pocket-action-button" type="button">버튼 2</button>
-                <button class="pocket-action-button" type="button">버튼 3</button>
-                <button class="pocket-action-button" type="button">버튼 4</button>
+            <div class="bottom-actions" aria-label="bottom action buttons">
+                <button class="pocket-action-button" type="button">踰꾪듉 1</button>
+                <button class="pocket-action-button" type="button">踰꾪듉 2</button>
+                <button class="pocket-action-button" type="button">踰꾪듉 3</button>
+                <button class="pocket-action-button" type="button">踰꾪듉 4</button>
             </div>
 
-            <div class="bottom-ad-slot" aria-label="배너 광고 영역">배너 광고 영역</div>
+            <div class="bottom-ad-slot" aria-label="banner ad area">banner ad area</div>
 
             <div class="stage-clear-overlay" id="stageClearOverlay" aria-hidden="true">
                 <div class="fireworks-layer" id="fireworksLayer"></div>
                 <div class="stage-clear-panel">
                     <h2 class="stage-clear-title" id="stageClearTitle">STAGE CLEAR</h2>
-                    <p class="stage-clear-subtitle" id="stageClearSubtitle">다음 스테이지로 이동합니다</p>
+                    <p class="stage-clear-subtitle" id="stageClearSubtitle">Moving to the next stage.</p>
                 </div>
             </div>
         </section>
@@ -1390,16 +1446,16 @@
             <div>
                 <p class="pixel-admin-eyebrow">ADMIN</p>
                 <h2 class="pixel-admin-title">Pixel Map Editor</h2>
-                <p class="pixel-admin-stage" id="pixelAdminStage">현재 스테이지 픽셀 맵</p>
+                <p class="pixel-admin-stage" id="pixelAdminStage">Current stage pixel map</p>
             </div>
-            <button class="pixel-admin-close" id="pixelAdminClose" type="button" aria-label="픽셀 어드민 닫기">닫기</button>
+            <button class="pixel-admin-close" id="pixelAdminClose" type="button" aria-label="Close pixel admin">Close</button>
         </div>
 
         <p class="pixel-admin-help" id="pixelAdminHelp">20x20 canvas editor. Pick a color, paint cells, and use right click to erase. `#` is added automatically.</p>
         <p class="pixel-admin-selection" id="pixelAdminSelection">Selected color</p>
         <div class="pixel-admin-palette-tools">
-            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" title="색상 추가" aria-label="색상 추가">+</button>
-            <button class="pixel-admin-action" id="pixelAdminErase" type="button" title="지우개" aria-label="지우개">E</button>
+            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" title="Add color" aria-label="Add color">+</button>
+            <button class="pixel-admin-action" id="pixelAdminErase" type="button" title="Eraser" aria-label="Eraser">E</button>
         </div>
         <div class="pixel-admin-color-editor">
             <label class="pixel-admin-field" for="pixelAdminColorHexText">
@@ -1413,20 +1469,39 @@
         </div>
         <div class="pixel-admin-palette" id="pixelAdminPalette"></div>
 
-        <div class="pixel-admin-grid-wrap" id="pixelAdminGridWrap">
-            <div class="pixel-admin-grid" id="pixelAdminGrid"></div>
+        <div class="pixel-admin-grid-shell">
+            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+            <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
+                <div class="pixel-admin-axis-track" id="pixelAdminAxisTop"></div>
+            </div>
+            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+            <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
+                <div class="pixel-admin-axis-track" id="pixelAdminAxisLeft"></div>
+            </div>
+            <div class="pixel-admin-grid-wrap" id="pixelAdminGridWrap">
+                <div class="pixel-admin-grid" id="pixelAdminGrid"></div>
+            </div>
+            <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
+                <div class="pixel-admin-axis-track" id="pixelAdminAxisRight"></div>
+            </div>
+            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+            <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
+                <div class="pixel-admin-axis-track" id="pixelAdminAxisBottom"></div>
+            </div>
+            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
         </div>
 
         <div class="pixel-admin-actions">
-            <button class="pixel-admin-action" id="pixelAdminApply" type="button">스테이지 적용</button>
-            <button class="pixel-admin-action" id="pixelAdminReload" type="button">현재값 다시 불러오기</button>
-            <button class="pixel-admin-action" id="pixelAdminRestore" type="button">기본값 복원</button>
-            <button class="pixel-admin-action" id="pixelAdminCopy" type="button">매트릭스 복사</button>
+            <button class="pixel-admin-action" id="pixelAdminApply" type="button">Apply Stage</button>
+            <button class="pixel-admin-action" id="pixelAdminReload" type="button">Reload Current</button>
+            <button class="pixel-admin-action" id="pixelAdminRestore" type="button">Restore Default</button>
+            <button class="pixel-admin-action" id="pixelAdminCopy" type="button">Copy Matrix</button>
+            <button class="pixel-admin-action" id="pixelAdminPreviousLevel" type="button">Previous Level</button>
             <button class="pixel-admin-action" id="pixelAdminNextLevel" type="button">Next Level</button>
         </div>
 
         <textarea class="pixel-admin-export" id="pixelAdminExport" spellcheck="false"></textarea>
-        <p class="pixel-admin-note" id="pixelAdminMessage">`Shift + A`로 언제든 열고 닫을 수 있습니다.</p>
+        <p class="pixel-admin-note" id="pixelAdminMessage">Press `Shift + A` to open or close the admin.</p>
     </aside>
 
     <script>
@@ -1878,7 +1953,7 @@
                 trayCellSize: 42,
                 initialBoardState: TUTORIAL_BOARD_STATE,
                 initialTrayState: TUTORIAL_TRAY_STATE,
-                startMessage: "튜토리얼 맵이에요. 포켓은 비어 있어요. 보석을 빈 포켓을 거쳐 맞는 색 자리로 옮기면 됩니다.",
+                startMessage: "This is the tutorial map. Move gems through the empty pockets into the matching color slots.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1889,7 +1964,7 @@
                 id: "apple",
                 baseImageMap: APPLE_IMAGE_MAP,
                 scale: 1,
-                startMessage: "사과 스테이지예요. 같은 색 칸에 보석을 맞춰 보세요.",
+                startMessage: "This is the apple stage. Match each gem to the slot with the same color.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1900,7 +1975,7 @@
                 id: "bear",
                 baseImageMap: BEAR_IMAGE_MAP,
                 scale: 1,
-                startMessage: "곰돌이 스테이지예요. 색을 맞춰 얼굴을 완성해 보세요.",
+                startMessage: "This is the bear stage. Match the colors to complete the face.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1911,7 +1986,7 @@
                 id: "strawberry",
                 baseImageMap: STRAWBERRY_IMAGE_MAP,
                 scale: 1,
-                startMessage: "딸기 스테이지예요. 보석을 정리해 딸기 모양을 채워 보세요.",
+                startMessage: "This is the strawberry stage. Organize the gems and fill in the strawberry shape.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1922,7 +1997,7 @@
                 id: "puppy",
                 baseImageMap: PUPPY_IMAGE_MAP,
                 scale: 1,
-                startMessage: "강아지 스테이지예요. 칸 색을 맞춰 귀여운 얼굴을 완성해 보세요.",
+                startMessage: "This is the puppy stage. Match the colors to complete the cute face.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -1933,7 +2008,7 @@
                 id: "heart",
                 baseImageMap: HEART_IMAGE_MAP,
                 scale: 2,
-                startMessage: "하트 스테이지예요. 전체 모양을 완성해 보세요.",
+                startMessage: "This is the heart stage. Complete the full shape.",
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -2077,13 +2152,13 @@
         }
 
         const COLOR_PALETTE = {
-            1: { name: "루비", color: "#ff5c4d" },
-            2: { name: "허니", color: "#e6bf79" },
-            3: { name: "리프", color: "#59d77d" },
-            4: { name: "하늘", color: "#6cb8ff" },
-            5: { name: "로즈", color: "#ff96aa" },
-            6: { name: "코코아", color: "#a9744f" },
-            7: { name: "에스프레소", color: "#5a3728" }
+            1: { name: "Ruby", color: "#ff5c4d" },
+            2: { name: "Honey", color: "#e6bf79" },
+            3: { name: "Leaf", color: "#59d77d" },
+            4: { name: "Sky", color: "#6cb8ff" },
+            5: { name: "Rose", color: "#ff96aa" },
+            6: { name: "Cocoa", color: "#a9744f" },
+            7: { name: "Espresso", color: "#5a3728" }
         };
 
         Object.assign(COLOR_PALETTE, {
@@ -2193,11 +2268,16 @@
         const pixelAdminColorHexPickerElement = document.getElementById("pixelAdminColorHexPicker");
         const pixelAdminPaletteElement = document.getElementById("pixelAdminPalette");
         const pixelAdminGridWrapElement = document.getElementById("pixelAdminGridWrap");
+        const pixelAdminAxisTopElement = document.getElementById("pixelAdminAxisTop");
+        const pixelAdminAxisBottomElement = document.getElementById("pixelAdminAxisBottom");
+        const pixelAdminAxisLeftElement = document.getElementById("pixelAdminAxisLeft");
+        const pixelAdminAxisRightElement = document.getElementById("pixelAdminAxisRight");
         const pixelAdminGridElement = document.getElementById("pixelAdminGrid");
         const pixelAdminApplyElement = document.getElementById("pixelAdminApply");
         const pixelAdminReloadElement = document.getElementById("pixelAdminReload");
         const pixelAdminRestoreElement = document.getElementById("pixelAdminRestore");
         const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
+        const pixelAdminPreviousLevelElement = document.getElementById("pixelAdminPreviousLevel");
         const pixelAdminNextLevelElement = document.getElementById("pixelAdminNextLevel");
         const pixelAdminResizeHandleElement = document.getElementById("pixelAdminResizeHandle");
         const pixelAdminExportElement = document.getElementById("pixelAdminExport");
@@ -2240,10 +2320,11 @@
             draftPalette: {},
             selectedColorId: 0,
             canvasZoom: 1,
+            canvasMetrics: null,
             panelWidth: null,
             isDirty: false,
             exportIsDirty: false,
-            message: "`Shift + A`로 언제든 열고 닫을 수 있습니다."
+            message: "Press `Shift + A` to open or close the admin."
         };
         const pixelAdminInteraction = {
             isDrawing: false,
@@ -2429,14 +2510,14 @@
             const entryMatches = [...block.matchAll(/(\d+)\s*:\s*["']([^"']+)["']/g)];
 
             if (!entryMatches.length && block.trim()) {
-                throw new Error("팔레트 코드 형식을 이해하지 못했어요.");
+                throw new Error("?占쎈젅??肄붾뱶 ?占쎌떇???占쏀빐?占쏙옙? 紐삵뻽?占쎌슂.");
             }
 
             entryMatches.forEach((match) => {
                 const colorId = Number(match[1]);
                 const normalized = normalizeHexColor(match[2]);
                 if (!normalized) {
-                    throw new Error(`C${colorId} 색상은 6자리 HEX여야 해요.`);
+                    throw new Error(`C${colorId} ?占쎌긽?占?6?占쎈━ HEX?占쎌빞 ?占쎌슂.`);
                 }
                 palette[colorId] = { color: normalized };
             });
@@ -2448,7 +2529,7 @@
             const rowMatches = [...block.matchAll(/\[([^\[\]]*?)\]/g)];
 
             if (!rowMatches.length) {
-                throw new Error("매트릭스 행을 찾지 못했어요.");
+                throw new Error("留ㅽ듃占?占쏙옙 ?占쎌쓣 李억옙? 紐삵뻽?占쎌슂.");
             }
 
             const rows = rowMatches.map((match) => {
@@ -2458,13 +2539,13 @@
                     .filter(Boolean)
                     .map((value) => {
                         if (!/^-?\d+$/.test(value)) {
-                            throw new Error(`숫자 값이 아닌 셀이 있어요: ${value}`);
+                            throw new Error(`?占쎌옄 媛믪씠 ?占쎈땶 ?占???占쎌뼱?? ${value}`);
                         }
                         return Number(value);
                     });
 
                 if (!row.length) {
-                    throw new Error("비어 있는 행이 있어요.");
+                    throw new Error("鍮꾩뼱 ?占쎈뒗 ?占쎌씠 ?占쎌뼱??");
                 }
 
                 return row;
@@ -2472,11 +2553,11 @@
 
             const columnCount = rows[0].length;
             if (rows.some((row) => row.length !== columnCount)) {
-                throw new Error("모든 행의 칸 수가 같아야 해요.");
+                throw new Error("紐⑤뱺 ?占쎌쓽 占??占쏙옙? 媛숈븘???占쎌슂.");
             }
 
             if (rows.length > MAX_GRID_ROWS || columnCount > MAX_GRID_COLS) {
-                throw new Error(`매트릭스가 너무 커요. 최대 ${MAX_GRID_ROWS}x${MAX_GRID_COLS}까지 가능해요.`);
+                throw new Error(`留ㅽ듃占?占쏙옙媛 ?占쎈Т 而ㅼ슂. 理쒙옙? ${MAX_GRID_ROWS}x${MAX_GRID_COLS}源뚳옙? 媛?占쏀빐??`);
             }
 
             return rows;
@@ -2485,7 +2566,7 @@
         function parsePixelAdminExport(text, mapId) {
             const source = String(text || "").trim();
             if (!source) {
-                throw new Error("코드 창이 비어 있어요.");
+                throw new Error("肄붾뱶 李쎌씠 鍮꾩뼱 ?占쎌뼱??");
             }
 
             const paletteMatch = source.match(/const\s+[A-Z0-9_]+_PALETTE\s*=\s*\{([\s\S]*?)\};/);
@@ -2495,7 +2576,7 @@
                 source.match(/const\s+[A-Z0-9_]+\s*=\s*\[([\s\S]*?)\];/);
 
             if (!matrixMatch) {
-                throw new Error("매트릭스 const 블록을 찾지 못했어요.");
+                throw new Error("留ㅽ듃占?占쏙옙 const 釉붾줉??李억옙? 紐삵뻽?占쎌슂.");
             }
 
             const draftPalette = paletteMatch ? parsePixelAdminPaletteBlock(paletteMatch[1]) : {};
@@ -2595,8 +2676,8 @@
             );
             pixelAdminState.isDirty = true;
             pixelAdminState.message = erasedCellCount
-                ? `C${colorId} 색상을 삭제하고 ${erasedCellCount}개 셀을 비웠어요.`
-                : `C${colorId} 색상을 팔레트에서 삭제했어요.`;
+                ? `C${colorId} ?占쎌긽????占쏙옙?占쎄퀬 ${erasedCellCount}占??占??鍮꾩썱?占쎌슂.`
+                : `C${colorId} ?占쎌긽???占쎈젅?占쎌뿉????占쏙옙?占쎌뼱??`;
             renderPixelAdmin();
         }
 
@@ -2617,6 +2698,8 @@
             pixelAdminState.currentMapId = definition.id;
             pixelAdminState.draftMap = getStageEditorCanvasMap(definition);
             pixelAdminState.draftPalette = clonePaletteMeta(getStagePaletteMeta(definition, pixelAdminState.draftMap));
+            pixelAdminState.canvasZoom = 1;
+            pixelAdminState.canvasMetrics = null;
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 definition.id,
                 pixelAdminState.selectedColorId,
@@ -2625,7 +2708,7 @@
             );
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
-            pixelAdminState.message = "`Shift + A`로 언제든 열고 닫을 수 있습니다.";
+            pixelAdminState.message = "Press `Shift + A` to open or close the admin.";
             renderPixelAdmin();
         }
 
@@ -2714,22 +2797,104 @@
             const horizontalPadding =
                 Number.parseFloat(wrapStyles.paddingLeft || "0") +
                 Number.parseFloat(wrapStyles.paddingRight || "0");
+            const paddingLeft = Number.parseFloat(wrapStyles.paddingLeft || "0");
+            const paddingTop = Number.parseFloat(wrapStyles.paddingTop || "0");
             const availableWidth = Math.max(0, pixelAdminGridWrapElement.clientWidth - horizontalPadding);
             const gap = 1;
-            const chrome = 4;
-            const baseCellSize = Math.max(
-                8,
-                (availableWidth - chrome - gap * (columnCount - 1)) / columnCount
-            );
+            const gridChrome = 4;
+            const gridInset = 2;
+            const baseCellSize = Math.max(2, (availableWidth - gridChrome - gap * (columnCount - 1)) / columnCount);
             const effectiveZoom = pixelAdminState.canvasZoom || 1;
-            const cellSize = Math.max(4, baseCellSize * effectiveZoom);
-            const gridWidth = columnCount * cellSize + gap * (columnCount - 1) + chrome;
-            const gridHeight = rowCount * cellSize + gap * (rowCount - 1) + chrome;
+            const cellSize = Math.max(2, baseCellSize * effectiveZoom);
+            const contentWidth = columnCount * cellSize + gap * (columnCount - 1);
+            const contentHeight = rowCount * cellSize + gap * (rowCount - 1);
+            const gridWidth = contentWidth + gridChrome;
+            const gridHeight = contentHeight + gridChrome;
+            const centeredOffsetX = Math.max(0, (availableWidth - gridWidth) / 2);
+            const axisOffsetX = paddingLeft + centeredOffsetX + gridInset;
+            const axisOffsetY = paddingTop + gridInset;
 
+            pixelAdminGridElement.style.setProperty("--pixel-admin-cols", columnCount);
+            pixelAdminGridElement.style.setProperty("--pixel-admin-rows", rowCount);
             pixelAdminGridElement.style.setProperty("--pixel-admin-cell-size", `${cellSize}px`);
             pixelAdminGridElement.style.width = `${gridWidth}px`;
             pixelAdminGridElement.style.height = `${gridHeight}px`;
-            return { baseCellSize, cellSize, gridWidth, gridHeight };
+
+            [
+                pixelAdminAxisTopElement,
+                pixelAdminAxisBottomElement,
+                pixelAdminAxisLeftElement,
+                pixelAdminAxisRightElement
+            ].forEach((axisElement) => {
+                if (!axisElement) return;
+                axisElement.style.setProperty("--pixel-admin-cols", columnCount);
+                axisElement.style.setProperty("--pixel-admin-rows", rowCount);
+                axisElement.style.setProperty("--pixel-admin-cell-size", `${cellSize}px`);
+            });
+
+            if (pixelAdminAxisTopElement) pixelAdminAxisTopElement.style.width = `${contentWidth}px`;
+            if (pixelAdminAxisBottomElement) pixelAdminAxisBottomElement.style.width = `${contentWidth}px`;
+            if (pixelAdminAxisLeftElement) pixelAdminAxisLeftElement.style.height = `${contentHeight}px`;
+            if (pixelAdminAxisRightElement) pixelAdminAxisRightElement.style.height = `${contentHeight}px`;
+
+            pixelAdminState.canvasMetrics = {
+                baseCellSize,
+                cellSize,
+                gridWidth,
+                gridHeight,
+                contentWidth,
+                contentHeight,
+                axisOffsetX,
+                axisOffsetY
+            };
+            syncPixelAdminAxisScroll();
+            return pixelAdminState.canvasMetrics;
+        }
+
+        function renderPixelAdminAxes(rowCount, columnCount) {
+            if (
+                !pixelAdminAxisTopElement ||
+                !pixelAdminAxisBottomElement ||
+                !pixelAdminAxisLeftElement ||
+                !pixelAdminAxisRightElement
+            ) {
+                return;
+            }
+
+            const buildCells = (count) =>
+                Array.from({ length: count }, (_, index) => `<span class="pixel-admin-axis-cell">${index + 1}</span>`).join("");
+
+            const horizontalMarkup = buildCells(columnCount);
+            const verticalMarkup = buildCells(rowCount);
+
+            pixelAdminAxisTopElement.innerHTML = horizontalMarkup;
+            pixelAdminAxisBottomElement.innerHTML = horizontalMarkup;
+            pixelAdminAxisLeftElement.innerHTML = verticalMarkup;
+            pixelAdminAxisRightElement.innerHTML = verticalMarkup;
+            syncPixelAdminAxisScroll();
+        }
+
+        function syncPixelAdminAxisScroll() {
+            if (!pixelAdminGridWrapElement) {
+                return;
+            }
+
+            const canvasMetrics = pixelAdminState.canvasMetrics;
+            const offsetX = (canvasMetrics?.axisOffsetX || 0) - pixelAdminGridWrapElement.scrollLeft;
+            const offsetY = (canvasMetrics?.axisOffsetY || 0) - pixelAdminGridWrapElement.scrollTop;
+
+            if (pixelAdminAxisTopElement) {
+                pixelAdminAxisTopElement.style.transform = `translateX(${offsetX}px)`;
+            }
+            if (pixelAdminAxisBottomElement) {
+                pixelAdminAxisBottomElement.style.transform = `translateX(${offsetX}px)`;
+            }
+            if (pixelAdminAxisLeftElement) {
+                pixelAdminAxisLeftElement.style.transform = `translateY(${offsetY}px)`;
+            }
+            if (pixelAdminAxisRightElement) {
+                pixelAdminAxisRightElement.style.transform = `translateY(${offsetY}px)`;
+            }
         }
 
         function getPixelAdminWheelZoomIntent(event) {
@@ -2811,7 +2976,7 @@
                 "aria-label",
                 `${rowIndex + 1} row ${colIndex + 1} col ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} pixel`
             );
-            cell.title = `${rowIndex + 1}, ${colIndex + 1} · ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}`;
+            cell.title = `${rowIndex + 1}, ${colIndex + 1} 쨌 ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}`;
         }
 
         function paintPixelAdminCellWithOptions(rowIndex, colIndex, colorId, options = {}) {
@@ -2924,7 +3089,7 @@
             try {
                 syncPixelAdminDraftFromExportInput();
             } catch (error) {
-                pixelAdminState.message = error.message || "코드 창 내용을 적용하지 못했어요.";
+                pixelAdminState.message = error.message || "肄붾뱶 占??占쎌슜???占쎌슜?占쏙옙? 紐삵뻽?占쎌슂.";
                 renderPixelAdmin();
                 return;
             }
@@ -2941,7 +3106,7 @@
 
         function reloadPixelAdminDraft() {
             syncPixelAdminWithActiveMap(true);
-            pixelAdminState.message = "현재 스테이지에 적용된 픽셀 맵을 다시 불러왔어요.";
+            pixelAdminState.message = "Reloaded the current stage canvas and palette.";
             renderPixelAdmin();
         }
 
@@ -2957,7 +3122,7 @@
             resetGame();
             syncPixelAdminWithActiveMap(true);
             pixelAdminState.exportIsDirty = false;
-            pixelAdminState.message = "The default canvas and palette were restored.";
+            pixelAdminState.message = "Restored the default canvas and palette.";
             renderPixelAdmin();
         }
 
@@ -2968,7 +3133,18 @@
             selected = null;
             syncActiveMap(currentMapIndex + 1);
             resetGame();
-            pixelAdminState.message = `다음 스테이지로 이동했어요. 현재 ${getCurrentMapDefinition().id.toUpperCase()} 스테이지입니다.`;
+            pixelAdminState.message = `Moved to the next stage. Current stage: ${getCurrentMapDefinition().id.toUpperCase()}.`;
+            renderPixelAdmin();
+        }
+
+        function goToPreviousLevelFromAdmin() {
+            clearStageClearTimers();
+            clearCelebrationTimers();
+            isStageTransitioning = false;
+            selected = null;
+            syncActiveMap(currentMapIndex - 1);
+            resetGame();
+            pixelAdminState.message = `Moved to the previous stage. Current stage: ${getCurrentMapDefinition().id.toUpperCase()}.`;
             renderPixelAdmin();
         }
 
@@ -2979,12 +3155,12 @@
 
             try {
                 await navigator.clipboard.writeText(pixelAdminExportElement.value);
-                pixelAdminState.message = "매트릭스를 클립보드에 복사했어요.";
+                pixelAdminState.message = "Copied the matrix to the clipboard.";
             } catch (error) {
                 pixelAdminExportElement.focus();
                 pixelAdminExportElement.select();
                 document.execCommand("copy");
-                pixelAdminState.message = "복사 창을 선택해 두었어요. 바로 붙여넣을 수 있습니다.";
+                pixelAdminState.message = "Selected the export text so you can copy it manually.";
             }
 
             renderPixelAdmin();
@@ -3016,9 +3192,9 @@
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
 
-            pixelAdminStageElement.textContent = `${mapId.toUpperCase()} · ${rows} x ${cols}`;
+            pixelAdminStageElement.textContent = `${mapId.toUpperCase()} - ${rows} x ${cols}`;
             pixelAdminHelpElement.textContent = "Edit the canvas or the code below. Add colors, enter 6-digit HEX without #, drag to paint, right drag to erase, then apply.";
-            pixelAdminSelectionElement.textContent = `Selected: ${selectedColorLabel}${selectedColorMeta ? ` · ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " · Unsaved changes" : ""}`;
+            pixelAdminSelectionElement.textContent = `Selected: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - Unsaved changes" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             if (!pixelAdminState.exportIsDirty) {
                 pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta);
@@ -3073,8 +3249,8 @@
                     deleteButton.type = "button";
                     deleteButton.className = "pixel-admin-swatch-delete";
                     deleteButton.textContent = "x";
-                    deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 삭제`);
-                    deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 삭제`;
+                    deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} ?占쎌긽 ??占쏙옙`);
+                    deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} ??占쏙옙`;
                     deleteButton.addEventListener("click", (event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -3086,6 +3262,7 @@
                 pixelAdminPaletteElement.appendChild(swatchCard);
             });
 
+            renderPixelAdminAxes(rows, cols);
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
             syncPixelAdminGridMetrics(cols, rows);
             pixelAdminGridElement.innerHTML = "";
@@ -4150,13 +4327,13 @@
             selected = null;
 
             if (stageClearTitleElement) {
-                stageClearTitleElement.textContent = "스테이지 클리어";
+                stageClearTitleElement.textContent = "Stage Clear";
             }
 
             if (stageClearSubtitleElement) {
                 stageClearSubtitleElement.textContent = isLastStage
-                    ? "모든 스테이지를 클리어했어요. 처음 스테이지로 돌아갑니다."
-                    : `${nextStageNumber} 스테이지로 이동합니다.`;
+                    ? "All stages cleared. Returning to the first stage."
+                    : `${nextStageNumber} stage is starting.`;
             }
 
             if (stageClearOverlayElement) {
@@ -4452,9 +4629,9 @@
         function getColorMismatchMessage(colorId, row, col) {
             const targetColorId = TARGET_MAP[row][col];
             if (!targetColorId) {
-                return "이 칸에는 보석을 놓을 수 없어요.";
+                return "??移몄뿉??蹂댁꽍???占쎌쓣 ???占쎌뼱??";
             }
-            return `${COLOR_PALETTE[colorId].name} 보석은 ${COLOR_PALETTE[targetColorId].name} 칸에 둘 수 없어요. 같은 색 칸으로 옮겨 주세요.`;
+            return `${COLOR_PALETTE[colorId].name} 蹂댁꽍?占?${COLOR_PALETTE[targetColorId].name} 移몄뿉 ?????占쎌뼱?? 媛숋옙? ??移몄쑝占???占쏙옙 二쇱꽭??`;
         }
 
         function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId) {
@@ -4798,7 +4975,7 @@
                     button.style.setProperty("--tile-light", shadeColor(COLOR_PALETTE[target].color, 12));
                     button.dataset.row = String(row);
                     button.dataset.col = String(col);
-                    button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
+                    button.setAttribute("aria-label", `${row + 1}??${col + 1}??${COLOR_PALETTE[target].name} ?占쎈━`);
 
                     if (gem === 0) button.classList.add("empty-target");
                     const isCorrectGem = Boolean(gem) && gem === target;
@@ -4836,7 +5013,7 @@
                 button.dataset.index = String(index);
                 button.setAttribute(
                     "aria-label",
-                    `${labelPrefix} 포켓 ${index - startIndex + 1} ${isOpenedPocket ? "열림" : "잠김"}`
+                    `${labelPrefix} ?占쎌폆 ${index - startIndex + 1} ${isOpenedPocket ? "?占쎈┝" : "?占쏙옙?"}`
                 );
 
                 if (!isOpenedPocket) {
@@ -4856,8 +5033,8 @@
         }
 
         function renderTrays() {
-            renderTrayRange(topTrayElement, 0, TOP_POCKET_COUNT, "하단 1열");
-            renderTrayRange(bottomTrayElement, TOP_POCKET_COUNT, POCKET_SIZE, "하단 2열");
+            renderTrayRange(topTrayElement, 0, TOP_POCKET_COUNT, "Pocket 1");
+            renderTrayRange(bottomTrayElement, TOP_POCKET_COUNT, POCKET_SIZE, "Pocket 2");
         }
 
         function getBoardInteractionMetrics() {
@@ -5542,7 +5719,7 @@
             const newlyCompletedColorIds = [...completedColorIds]
                 .filter((colorId) => !previousCompleted.has(colorId))
                 .sort((left, right) => left - right);
-            setStatus(justSolved ? "정답 배경과 모든 보석이 맞아떨어졌어요." : message);
+            setStatus(justSolved ? "?占쎈떟 諛곌꼍占?紐⑤뱺 蹂댁꽍??留욎븘?占쎌뼱議뚯뼱??" : message);
             if (shouldPlaySound) {
                 void playPlaceSound(clusterSize);
             }
@@ -5571,8 +5748,8 @@
             selected = { source: "board", cells: cluster, color: gem, anchor: { row, col } };
             setStatus(
                 cluster.length > 1
-                    ? `인접한 ${COLOR_PALETTE[gem].name} 보석 ${cluster.length}개를 한 번에 잡았어요. 보드의 빈 공간이나 하단 포켓으로 함께 옮길 수 있어요.`
-                    : "보드의 보석을 선택했어요. 다른 칸이나 하단 포켓을 눌러 이동하세요."
+                    ? `?占쎌젒??${COLOR_PALETTE[gem].name} 蹂댁꽍 ${cluster.length}媛쒙옙? ??踰덉뿉 ?占쎌븯?占쎌슂. 蹂대뱶??占?怨듦컙?占쎈굹 ?占쎈떒 ?占쎌폆?占쎈줈 ?占쎄퍡 ??占쏙옙 ???占쎌뼱??`
+                    : "蹂대뱶??蹂댁꽍???占쏀깮?占쎌뼱?? ?占쎈Ⅸ 移몄씠???占쎈떒 ?占쎌폆???占쎈윭 ?占쎈룞?占쎌꽭??"
             );
             void playPickupSound(cluster.length);
             render();
@@ -5583,8 +5760,8 @@
             selected = { source: "tray", indices: cluster, color: gem, anchor: index };
             setStatus(
                 cluster.length > 1
-                    ? `포켓에서 이어진 ${COLOR_PALETTE[gem].name} 보석 ${cluster.length}개를 함께 잡았어요.`
-                    : "포켓의 보석을 선택했어요. 보드나 다른 포켓으로 옮길 수 있어요."
+                    ? `?占쎌폆?占쎌꽌 ?占쎌뼱占?${COLOR_PALETTE[gem].name} 蹂댁꽍 ${cluster.length}媛쒙옙? ?占쎄퍡 ?占쎌븯?占쎌슂.`
+                    : "?占쎌폆??蹂댁꽍???占쏀깮?占쎌뼱?? 蹂대뱶???占쎈Ⅸ ?占쎌폆?占쎈줈 ??占쏙옙 ???占쎌뼱??"
             );
             void playPickupSound(cluster.length);
             render();
@@ -5592,7 +5769,7 @@
 
         async function handleBoardClick(row, col) {
             if (selected?.source === "board" && isSelected("board", row, col)) {
-                clearSelection("선택을 해제했어요.");
+                clearSelection("?占쏀깮???占쎌젣?占쎌뼱??");
                 return;
             }
 
@@ -5603,7 +5780,7 @@
 
             if (!selected) {
                 if (!gem) {
-                    setStatus("이 칸은 비어 있어요. 다른 보석을 먼저 선택해 주세요.");
+                    setStatus("??移몌옙? 鍮꾩뼱 ?占쎌뼱?? ?占쎈Ⅸ 蹂댁꽍??癒쇽옙? ?占쏀깮??二쇱꽭??");
                     return;
                 }
 
@@ -5625,7 +5802,7 @@
                         const nextSelection = createBoardSelection(translatedCells, { row, col }, activeSelection.color, true);
                         await animateBoardClusterMove(activeSelection.cells, activeSelection.anchor, row, col, nextSelection);
                         commitMove(
-                            "인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.",
+                            "?占쎌젒??媛숋옙? ??蹂댁꽍 臾띠쓬???占쎄볼踰덉뿉 ??占쏙옙?占쎌슂.",
                             activeSelection.cells.length,
                             false,
                             nextSelection
@@ -5662,7 +5839,7 @@
                                 nextSelection
                             );
                             commitMove(
-                                "가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.",
+                                "媛??媛源뚯슫 占??占쎈━占?臾띠쓬 蹂댁꽍??留욎떠 ??占쏙옙?占쎌슂.",
                                 activeSelection.cells.length,
                                 false,
                                 nextSelection
@@ -5680,7 +5857,7 @@
                             );
                             await animateBoardClusterToBoardSlots(activeSelection.cells, nearestSlots, nextSelection);
                             commitMove(
-                                "같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.",
+                                "媛숋옙? ??鍮덉뭏??媛源뚯슫 ?占쎌꽌?占쏙옙?梨꾩슦占?臾띠쓬 蹂댁꽍????占쏙옙?占쎌슂.",
                                 activeSelection.cells.length,
                                 false,
                                 nextSelection
@@ -5708,7 +5885,7 @@
                             );
                             await animateBoardClusterToBoardSlots(movableCells, partialSlots, nextSelection);
                             commitMove(
-                                `묶음에서 보석 ${movableCells.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
+                                `臾띠쓬?占쎌꽌 蹂댁꽍 ${movableCells.length}媛쒙옙? 媛숋옙? ??鍮덉뭏??癒쇽옙? 梨꾩썱?占쎌슂.`,
                                 movableCells.length,
                                 false,
                                 nextSelection
@@ -5727,7 +5904,7 @@
                             }
                             moveBoardCluster([anchorCell], anchorCell, row, col);
                             commitMove(
-                                "묶음에서 보석 1개를 꺼내 빈 칸으로 옮겼어요.",
+                                "臾띠쓬?占쎌꽌 蹂댁꽍 1媛쒙옙? 爰쇰궡 占?移몄쑝占???占쏙옙?占쎌슂.",
                                 1,
                                 true,
                                 createBoardSelection(
@@ -5741,11 +5918,11 @@
                             return;
                         }
 
-                        setStatus("이 위치 근처에도 묶음이 들어갈 자리가 없어요.");
+                        setStatus("???占쎌튂 洹쇱쿂?占쎈룄 臾띠쓬???占쎌뼱占??占쎈━媛 ?占쎌뼱??");
                         return;
                     }
 
-                    setStatus("여러 개가 함께 잡혀 있어요. 이 묶음은 빈 공간이나 하단 포켓으로 한 번에 옮길 수 있어요.");
+                    setStatus("?占쎈윭 媛쒙옙? ?占쎄퍡 ?占쏙옙? ?占쎌뼱?? ??臾띠쓬?占?占?怨듦컙?占쎈굹 ?占쎈떒 ?占쎌폆?占쎈줈 ??踰덉뿉 ??占쏙옙 ???占쎌뼱??");
                     return;
                 }
 
@@ -5763,7 +5940,7 @@
                 moveBoardCluster(activeSelection.cells, activeSelection.anchor, row, col);
                 const nextSelection = createBoardSelection(translatedCells, { row, col }, activeSelection.color);
                 commitMove(
-                    "보드의 보석을 빈 칸으로 옮겼어요.",
+                    "蹂대뱶??蹂댁꽍??占?移몄쑝占???占쏙옙?占쎌슂.",
                     activeSelection.cells.length,
                     true,
                     nextSelection
@@ -5798,7 +5975,7 @@
                     );
                     await animateTrayClusterToBoardSlots(trayIndices, nearestSlots, nextSelection);
                     commitMove(
-                        "포켓의 같은 색 보석 묶음을 보드에 옮겼어요.",
+                        "?占쎌폆??媛숋옙? ??蹂댁꽍 臾띠쓬??蹂대뱶????占쏙옙?占쎌슂.",
                         trayIndices.length,
                         false,
                         nextSelection
@@ -5815,7 +5992,7 @@
                     const nextSelection = createTraySelection(remainingTrayIndices, activeSelection.anchor, trayGem);
                     await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots, nextSelection);
                     commitMove(
-                        `포켓의 보석 ${movableTrayIndices.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
+                        `?占쎌폆??蹂댁꽍 ${movableTrayIndices.length}媛쒙옙? 媛숋옙? ??鍮덉뭏??癒쇽옙? 梨꾩썱?占쎌슂.`,
                         movableTrayIndices.length,
                         false,
                         nextSelection
@@ -5827,7 +6004,7 @@
             moveTrayToBoard(trayIndices[0], row, col);
             void playPlaceSound();
             commitMove(
-                "포켓의 보석을 빈 칸으로 옮겼어요.",
+                "?占쎌폆??蹂댁꽍??占?移몄쑝占???占쏙옙?占쎌슂.",
                 1,
                 false,
                 createBoardSelection([{ row, col }], { row, col }, trayGem)
@@ -5836,7 +6013,7 @@
 
         async function handleTrayClick(index) {
             if (selected?.source === "tray" && isSelected("tray", index)) {
-                clearSelection("선택을 해제했어요.");
+                clearSelection("?占쏀깮???占쎌젣?占쎌뼱??");
                 return;
             }
 
@@ -5849,10 +6026,10 @@
             if (!selected) {
                 if (!gem) {
                     if (!isOpenedPocket) {
-                        setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
+                        setStatus("???占쎌폆?占??占쎌쭅 ?占쏙옙? ?占쎌뼱?? ???占쎌긽???占쎌꽦???占쎈쭏????移몄뵫 ?占쎈젮??");
                         return;
                     }
-                    setStatus("이 포켓은 비어 있어요.");
+                    setStatus("???占쎌폆?占?鍮꾩뼱 ?占쎌뼱??");
                     return;
                 }
 
@@ -5871,7 +6048,7 @@
                 }
 
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
+                    setStatus("???占쎌폆?占??占쎌쭅 ?占쏙옙? ?占쎌뼱?? ???占쎌긽???占쎌꽦???占쎈쭏????移몄뵫 ?占쎈젮??");
                     return;
                 }
 
@@ -5910,7 +6087,7 @@
                 }
 
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
+                    setStatus("???占쎌폆?占??占쎌쭅 ?占쏙옙? ?占쎌뼱?? ???占쎌긽???占쎌꽦???占쎈쭏????移몄뵫 ?占쎈젮??");
                     return;
                 }
 
@@ -5937,7 +6114,7 @@
                     );
                     await animateBoardClusterToTray(movableCells, orderedSlots, nextSelection);
                     commitMove(
-                        `묶음에서 보석 ${movableCells.length}개를 포켓으로 옮겼어요.`,
+                        `臾띠쓬?占쎌꽌 蹂댁꽍 ${movableCells.length}媛쒙옙? ?占쎌폆?占쎈줈 ??占쏙옙?占쎌슂.`,
                         movableCells.length,
                         false,
                         nextSelection
@@ -5953,7 +6130,7 @@
                 );
                 await animateBoardClusterToTray(prioritizedCells, orderedSlots, nextSelection);
                 commitMove(
-                    `인접한 보석 ${activeSelection.cells.length}개를 포켓으로 한 번에 옮겼어요.`,
+                    `?占쎌젒??蹂댁꽍 ${activeSelection.cells.length}媛쒙옙? ?占쎌폆?占쎈줈 ??踰덉뿉 ??占쏙옙?占쎌슂.`,
                     activeSelection.cells.length,
                     false,
                     nextSelection
@@ -5963,13 +6140,13 @@
 
             if (!gem) {
                 if (!isOpenedPocket) {
-                    setStatus("이 포켓은 아직 닫혀 있어요. 한 색상을 완성할 때마다 한 칸씩 열려요.");
+                    setStatus("???占쎌폆?占??占쎌쭅 ?占쏙옙? ?占쎌뼱?? ???占쎌긽???占쎌꽦???占쎈쭏????移몄뵫 ?占쎈젮??");
                     return;
                 }
                 moveBoardToTray(activeSelection.cells[0].row, activeSelection.cells[0].col, index);
                 void playPlaceSound(activeSelection.cells.length);
                 commitMove(
-                    "보드의 보석을 포켓으로 잠시 옮겼어요.",
+                    "蹂대뱶??蹂댁꽍???占쎌폆?占쎈줈 ?占쎌떆 ??占쏙옙?占쎌슂.",
                     activeSelection.cells.length,
                     false,
                     createTraySelection([index], index, activeSelection.color)
@@ -5992,7 +6169,7 @@
             solved = false;
             isStageTransitioning = false;
             completedColorIds = getCompletedColorIds();
-            setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
+            setStatus(ACTIVE_MAP.startMessage || "諛곌꼍?占쎌쓣 蹂대㈃??蹂댁꽍???占쎌옄由щ줈 ?占쎈━??蹂댁꽭??");
             render();
         }
 
@@ -6040,7 +6217,7 @@
         pixelAdminExportElement?.addEventListener("input", () => {
             pixelAdminState.exportIsDirty = true;
             pixelAdminState.isDirty = true;
-            pixelAdminState.message = "코드 창을 수정했어요. 스테이지 적용을 누르면 반영됩니다.";
+            pixelAdminState.message = "Edited the export code. Click Apply Stage to use it.";
             renderPixelAdmin();
         });
 
@@ -6060,6 +6237,10 @@
             void copyPixelAdminExport();
         });
 
+        pixelAdminPreviousLevelElement?.addEventListener("click", () => {
+            goToPreviousLevelFromAdmin();
+        });
+
         pixelAdminNextLevelElement?.addEventListener("click", () => {
             goToNextLevelFromAdmin();
         });
@@ -6075,6 +6256,10 @@
             },
             { passive: false }
         );
+
+        pixelAdminGridWrapElement?.addEventListener("scroll", () => {
+            syncPixelAdminAxisScroll();
+        });
 
         pixelAdminGridElement?.addEventListener("contextmenu", (event) => {
             event.preventDefault();
@@ -6109,3 +6294,7 @@
     </script>
 </body>
 </html>
+
+
+
+
