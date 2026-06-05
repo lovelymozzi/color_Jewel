@@ -1,0 +1,629 @@
+{
+  "contractVersion": 1,
+  "sceneId": "color-jewel",
+  "sceneName": "Color_Jewel",
+  "canvas": {
+    "width": 360,
+    "height": 640
+  },
+  "viewport": {
+    "width": 360,
+    "height": 640
+  },
+  "background": {
+    "type": "image-stretch",
+    "color": "#16213e",
+    "color2": "#0e4a8c",
+    "gradientAngle": 180,
+    "imagePath": "assets/16_9.png",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [
+    {
+      "name": "Group",
+      "layerStableIds": [
+        "level-node-4",
+        "magic-png-10"
+      ]
+    }
+  ],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "level-node-4",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 17,
+      "y": 510,
+      "scale": 1.1,
+      "zIndex": 1,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f0f0f0",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#d6d6d6"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 20
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "magic-png-10",
+      "layerType": "image",
+      "displayName": "magic.png",
+      "x": 26,
+      "y": 518,
+      "zIndex": 2,
+      "visual": {
+        "exportPath": "assets/magic.png",
+        "width": 37,
+        "height": 37,
+        "style": {
+          "shadow": {
+            "enabled": true,
+            "x": 0,
+            "y": 4,
+            "blur": 0,
+            "color": "#000000",
+            "opacity": 17
+          }
+        }
+      }
+    },
+    {
+      "stableId": "buy-btn-9",
+      "layerType": "component",
+      "displayName": "Buy Button",
+      "x": 54,
+      "y": 546,
+      "zIndex": 3,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 24,
+            "height": 20,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
+            "color2": "#1a9e3a",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#a8f5be"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 3,
+              "color": "#0e6b27"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 3,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 3,
+              "color": "#ffffff",
+              "opacity": 25
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "5",
+          "bindingKey": "",
+          "fontSize": 18,
+          "fontWeight": "bold",
+          "fontFamily": "\"Lilita One\", cursive",
+          "color": "#ffffff",
+          "offsetX": 0,
+          "offsetY": 0,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#ffffff"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "#000000",
+              "opacity": 40
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "level-node-14",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 111,
+      "y": 510,
+      "scale": 1.1,
+      "zIndex": 4,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f0f0f0",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#d6d6d6"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 20
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "clean-png-17",
+      "layerType": "image",
+      "displayName": "clean.png",
+      "x": 114,
+      "y": 517,
+      "zIndex": 5,
+      "visual": {
+        "exportPath": "assets/clean.png",
+        "width": 46,
+        "height": 44,
+        "style": {
+          "shadow": {
+            "enabled": true,
+            "x": 0,
+            "y": 4,
+            "blur": 0,
+            "color": "#000000",
+            "opacity": 17
+          }
+        }
+      }
+    },
+    {
+      "stableId": "buy-btn-16",
+      "layerType": "component",
+      "displayName": "Buy Button",
+      "x": 148,
+      "y": 545,
+      "zIndex": 6,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 24,
+            "height": 20,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
+            "color2": "#1a9e3a",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#a8f5be"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 3,
+              "color": "#0e6b27"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 3,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 3,
+              "color": "#ffffff",
+              "opacity": 25
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "5",
+          "bindingKey": "",
+          "fontSize": 18,
+          "fontWeight": "bold",
+          "fontFamily": "\"Lilita One\", cursive",
+          "color": "#ffffff",
+          "offsetX": 0,
+          "offsetY": 0,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#ffffff"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "#000000",
+              "opacity": 40
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "level-node-18",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 196,
+      "y": 510,
+      "scale": 1.1,
+      "zIndex": 7,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f0f0f0",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#d6d6d6"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 20
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "level-node-19",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 283,
+      "y": 510,
+      "scale": 1.1,
+      "zIndex": 8,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f0f0f0",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#d6d6d6"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 20
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "rock-png-20",
+      "layerType": "image",
+      "displayName": "rock.png",
+      "x": 207,
+      "y": 523,
+      "zIndex": 9,
+      "visual": {
+        "exportPath": "assets/rock.png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "set-png-21",
+      "layerType": "image",
+      "displayName": "set.png",
+      "x": 295,
+      "y": 525,
+      "zIndex": 10,
+      "visual": {
+        "exportPath": "assets/set.png",
+        "width": 29,
+        "height": 29
+      }
+    }
+  ]
+}

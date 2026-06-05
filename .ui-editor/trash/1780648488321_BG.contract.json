@@ -1,0 +1,28 @@
+{
+  "contractVersion": 1,
+  "sceneId": "bg",
+  "sceneName": "BG",
+  "canvas": {
+    "width": 360,
+    "height": 640
+  },
+  "viewport": {
+    "width": 360,
+    "height": 640
+  },
+  "background": {
+    "type": "image-stretch",
+    "color": "#16213e",
+    "color2": "#0e4a8c",
+    "gradientAngle": 180,
+    "imagePath": "assets/16_9.png",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [],
+  "sceneAnimations": [],
+  "layers": []
+}

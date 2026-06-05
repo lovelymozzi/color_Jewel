@@ -1,0 +1,50 @@
+{
+  "contractVersion": 1,
+  "sceneId": "nav-new",
+  "sceneName": "nav_New",
+  "sceneType": "navigation",
+  "viewport": {
+    "width": 360,
+    "height": 640
+  },
+  "navAnchor": "bottom",
+  "navOffsetX": 0,
+  "navOffsetY": 0,
+  "navBarWidth": 390,
+  "navBarHeight": 80,
+  "navBgColor": "rgba(22,33,62,0.95)",
+  "transitionType": "slide",
+  "transitionDuration": 300,
+  "defaultTabId": "t1",
+  "tabs": [
+    {
+      "id": "t0",
+      "icon": "🏠",
+      "label": "Home",
+      "sceneName": ""
+    },
+    {
+      "id": "t1",
+      "icon": "🛒",
+      "label": "Shop",
+      "sceneName": ""
+    }
+  ],
+  "groups": [],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "16-9-png-1",
+      "layerType": "image",
+      "displayName": "16_9.png",
+      "x": -136,
+      "y": 2,
+      "zIndex": 1,
+      "visual": {
+        "exportPath": "assets/16_9.png",
+        "width": 637,
+        "height": 637
+      }
+    }
+  ]
+}

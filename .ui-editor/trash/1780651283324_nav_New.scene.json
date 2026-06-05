@@ -1,0 +1,56 @@
+{
+  "name": "nav_New",
+  "sceneType": "navigation",
+  "viewportWidth": 360,
+  "viewportHeight": 640,
+  "navAnchor": "bottom",
+  "navOffsetX": 0,
+  "navOffsetY": 0,
+  "navBarWidth": 390,
+  "navBarHeight": 80,
+  "navBgColor": "rgba(22,33,62,0.95)",
+  "transitionType": "slide",
+  "transitionDuration": 300,
+  "defaultTabId": "t1",
+  "tabs": [
+    {
+      "id": "t0",
+      "icon": "🏠",
+      "label": "Home",
+      "sceneName": ""
+    },
+    {
+      "id": "t1",
+      "icon": "🛒",
+      "label": "Shop",
+      "sceneName": ""
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "stableId": "16-9-png-1",
+      "type": "image",
+      "name": "16_9.png",
+      "exportPath": "assets/16_9.png",
+      "x": -136,
+      "y": 2,
+      "scale": 1,
+      "scaleX": 1,
+      "scaleY": 1,
+      "rotation": 0,
+      "zIndex": 1,
+      "visible": true,
+      "width": 637,
+      "height": 637,
+      "pressEnabled": false,
+      "pressTransition": 100,
+      "pressBrightness": 95,
+      "pressScale": 100,
+      "texts": [],
+      "selectedTextIndex": -1
+    }
+  ],
+  "groups": [],
+  "sceneAnimations": []
+}

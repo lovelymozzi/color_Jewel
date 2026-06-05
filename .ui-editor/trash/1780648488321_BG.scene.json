@@ -1,0 +1,20 @@
+{
+  "name": "BG",
+  "sceneType": "scene",
+  "canvasWidth": 360,
+  "canvasHeight": 640,
+  "viewportHeight": 640,
+  "bgType": "image-stretch",
+  "bgColor": "#16213e",
+  "bgColor2": "#0e4a8c",
+  "bgGradientAngle": 180,
+  "bgImagePath": "assets/16_9.png",
+  "bgTileSize": 64,
+  "bgStretchMode": "cover",
+  "bgScrollEnabled": false,
+  "bgScrollDirection": "right",
+  "bgScrollDuration": 4,
+  "layers": [],
+  "groups": [],
+  "sceneAnimations": []
+}
