@@ -226,15 +226,15 @@
         }
 
         .tray-slot.hidden-slot {
-            background:
-                linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06)) top / 100% 1px no-repeat,
-                linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06)) left / 1px 100% no-repeat,
-                rgba(184, 166, 144, 0.05);
+            background: rgba(184, 166, 144, 0.05);
             cursor: default;
         }
 
         .tray-slot.next-open-slot {
-            border: 1px dashed rgba(188, 170, 149, 0.42);
+            border: 0;
+            box-shadow:
+                inset 0 0 0 0.6px rgba(255, 255, 255, 0.12),
+                inset 0 0 0 1.4px rgba(188, 170, 149, 0.42);
         }
 
         .tray-slot.hidden-slot::before {
@@ -808,18 +808,22 @@
             cursor: pointer;
             transition: transform 0.12s ease, filter 0.12s ease, background-image 0.12s ease;
             transform: translateY(0) scale(1);
+            transform-origin: center center;
             filter: none;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            --button-icon-size: 64%;
+            --button-icon-offset-x: 0px;
+            --button-icon-offset-y: 0px;
         }
 
         .pocket-action-button.has-icon::before {
             content: "";
             position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 64%;
-            aspect-ratio: 1.9 / 1;
+            left: calc(50% + var(--button-icon-offset-x));
+            top: calc(50% + var(--button-icon-offset-y));
+            width: var(--button-icon-size);
+            height: var(--button-icon-size);
             transform: translate(-50%, -50%);
             background: var(--button-icon-image) center / contain no-repeat;
             pointer-events: none;
@@ -827,30 +831,26 @@
 
         .pocket-action-button.icon-magic {
             --button-icon-image: transparent url("magic.png?v=20260605-1");
-        }
-
-        .pocket-action-button.icon-magic::before {
-            width: 96%;
+            --button-icon-size: 56%;
+            --button-icon-offset-x: -1px;
         }
 
         .pocket-action-button.icon-set {
             --button-icon-image: transparent url("set.png?v=20260605-1");
+            --button-icon-size: 40%;
         }
 
         .pocket-action-button.icon-clean {
             --button-icon-image: transparent url("clean.png?v=20260605-1");
-        }
-
-        .pocket-action-button.icon-clean::before {
-            width: 96%;
+            --button-icon-size: 62%;
+            --button-icon-offset-x: 1px;
+            --button-icon-offset-y: -1px;
         }
 
         .pocket-action-button.icon-rock {
             --button-icon-image: transparent url("rock.png?v=20260605-1");
-        }
-
-        .pocket-action-button.icon-rock::before {
-            width: 96%;
+            --button-icon-size: 56%;
+            --button-icon-offset-x: 1px;
         }
 
         .pocket-action-button:hover {
@@ -860,7 +860,7 @@
         .pocket-action-button:active,
         .pocket-action-button.is-pressed {
             background-image: url("button_on.png?v=20260605-1");
-            transform: translateY(2px) scale(0.985);
+            transform: translateY(2px);
             filter: none;
         }
 
