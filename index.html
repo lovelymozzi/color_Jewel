@@ -315,7 +315,7 @@
             transform: none;
             clip-path: none;
             border-radius: 0;
-            background: var(--flat-gem-color, #D22D2D);
+            background: var(--flat-gem-color, #D24A4A);
             filter: none;
             box-shadow: none;
             overflow: hidden;
@@ -1092,7 +1092,7 @@
             border: 1px solid rgba(194, 157, 112, 0.52);
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.88);
-            color: #6d4925;
+            color: #6D4A26;
             cursor: pointer;
         }
 
@@ -1320,7 +1320,7 @@
             border-radius: 18px;
             border: 1px solid rgba(204, 179, 146, 0.92);
             background: rgba(255, 255, 255, 0.96);
-            color: #5b3a1b;
+            color: #5B3D20;
             font: 12px/1.5 "Cascadia Mono", "Consolas", monospace;
             box-sizing: border-box;
         }
@@ -1669,6 +1669,41 @@
             };
         }
 
+        function rgbToHsv({ r, g, b }) {
+            const red = clampNumber(r, 0, 255) / 255;
+            const green = clampNumber(g, 0, 255) / 255;
+            const blue = clampNumber(b, 0, 255) / 255;
+            const max = Math.max(red, green, blue);
+            const min = Math.min(red, green, blue);
+            const delta = max - min;
+            let hue = 0;
+
+            if (delta !== 0) {
+                switch (max) {
+                    case red:
+                        hue = ((green - blue) / delta) % 6;
+                        break;
+                    case green:
+                        hue = (blue - red) / delta + 2;
+                        break;
+                    default:
+                        hue = (red - green) / delta + 4;
+                        break;
+                }
+
+                hue *= 60;
+                if (hue < 0) {
+                    hue += 360;
+                }
+            }
+
+            return {
+                h: hue,
+                s: max === 0 ? 0 : (delta / max) * 100,
+                v: max * 100
+            };
+        }
+
         function hslToRgb({ h, s, l }) {
             const hue = ((h % 360) + 360) % 360;
             const saturation = clampNumber(s, 0, 100) / 100;
@@ -1708,9 +1743,48 @@
             };
         }
 
+        function hsvToRgb({ h, s, v }) {
+            const hue = ((h % 360) + 360) % 360;
+            const saturation = clampNumber(s, 0, 100) / 100;
+            const value = clampNumber(v, 0, 100) / 100;
+            const chroma = value * saturation;
+            const huePrime = hue / 60;
+            const secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+            let red = 0;
+            let green = 0;
+            let blue = 0;
+
+            if (huePrime >= 0 && huePrime < 1) {
+                red = chroma;
+                green = secondComponent;
+            } else if (huePrime < 2) {
+                red = secondComponent;
+                green = chroma;
+            } else if (huePrime < 3) {
+                green = chroma;
+                blue = secondComponent;
+            } else if (huePrime < 4) {
+                green = secondComponent;
+                blue = chroma;
+            } else if (huePrime < 5) {
+                red = secondComponent;
+                blue = chroma;
+            } else {
+                red = chroma;
+                blue = secondComponent;
+            }
+
+            const match = value - chroma;
+            return {
+                r: Math.round((red + match) * 255),
+                g: Math.round((green + match) * 255),
+                b: Math.round((blue + match) * 255)
+            };
+        }
+
         function clampRgbSaturation(rgb, maxSaturation = MAX_COLOR_SATURATION) {
-            const hsl = rgbToHsl(rgb);
-            if (hsl.s <= maxSaturation) {
+            const hsv = rgbToHsv(rgb);
+            if (hsv.s <= maxSaturation) {
                 return {
                     r: clampNumber(rgb.r, 0, 255),
                     g: clampNumber(rgb.g, 0, 255),
@@ -1719,21 +1793,21 @@
             }
 
             let targetSaturation = maxSaturation;
-            let adjusted = hslToRgb({
-                h: hsl.h,
+            let adjusted = hsvToRgb({
+                h: hsv.h,
                 s: targetSaturation,
-                l: hsl.l
+                v: hsv.v
             });
-            let adjustedHsl = rgbToHsl(adjusted);
+            let adjustedHsv = rgbToHsv(adjusted);
 
-            while (adjustedHsl.s > maxSaturation && targetSaturation > 0) {
+            while (adjustedHsv.s > maxSaturation && targetSaturation > 0) {
                 targetSaturation = Math.max(0, targetSaturation - 0.25);
-                adjusted = hslToRgb({
-                    h: hsl.h,
+                adjusted = hsvToRgb({
+                    h: hsv.h,
                     s: targetSaturation,
-                    l: hsl.l
+                    v: hsv.v
                 });
-                adjustedHsl = rgbToHsl(adjusted);
+                adjustedHsv = rgbToHsv(adjusted);
             }
 
             return adjusted;
@@ -2712,7 +2786,7 @@
         };
 
         Object.assign(COLOR_PALETTE, {
-            8: { name: "사과 기본색", color: "#D8534B" },
+            8: { name: "사과 기본색", color: "#D8544C" },
             9: { name: "사과 광택", color: "#DC675C" },
             10: { name: "사과 반짝임", color: "#E6E08D" }
         });
@@ -2733,14 +2807,14 @@
         const MAP_THEME_OVERRIDES = {
             apple: {
                 palette: {
-                    1: "#8EC62A",
-                    2: "#59A824",
-                    3: "#1B7D22",
-                    4: "#7E5129",
-                    5: "#593618",
-                    6: "#611515",
-                    7: "#7E1B1B",
-                    8: "#AC2525",
+                    1: "#98C646",
+                    2: "#67A83B",
+                    3: "#2C7D32",
+                    4: "#7E532D",
+                    5: "#593A20",
+                    6: "#612222",
+                    7: "#7E2D2D",
+                    8: "#AC3D3D",
                     9: "#DC665D",
                     10: "#E5E089"
                 }
@@ -2750,8 +2824,8 @@
                     0: "#FFFFFF",
                     1: "#DF766D",
                     2: "#E2CC79",
-                    5: "#42260F",
-                    6: "#85542B",
+                    5: "#422A18",
+                    6: "#85562F",
                     7: "#1F1E1E"
                 }
             },
@@ -2761,7 +2835,7 @@
                     2: "#E3BE7C",
                     3: "#2F6F42",
                     5: "#E1ECEF",
-                    7: "#7E491B"
+                    7: "#7E522D"
                 },
                 cssVars: {
                     "--app-bg": "#FFFFFF",
@@ -2774,22 +2848,22 @@
                     1: "#272121",
                     2: "#DC7D5E",
                     3: "#5B352A",
-                    4: "#9A6034",
+                    4: "#9A6136",
                     5: "#AFCDED",
                     6: "#5A94DB",
-                    7: "#225C8C",
+                    7: "#31638C",
                     8: "#F8EFDE"
                 }
             },
             heart: {
                 palette: {
-                    1: "#711B19",
+                    1: "#712928",
                     2: "#DAEDF7",
                     3: "#DDAA64",
                     4: "#2F5D33",
                     5: "#F9F7E5",
-                    6: "#A6243B",
-                    7: "#C48842"
+                    6: "#A63B4D",
+                    7: "#C48945"
                 }
             }
         };
@@ -3279,7 +3353,7 @@
         }
 
         function getSuggestedPixelAdminHex(nextColorId) {
-            const presets = ["#E58585", "#E4C681", "#27B690", "#66A8DE", "#B9A7EC", "#E793B0", "#DFA86D", "#8ABDE6"];
+            const presets = ["#E58585", "#E4C681", "#40B697", "#66A8DE", "#B9A7EC", "#E793B0", "#DFA86D", "#8ABDE6"];
             return normalizeHexColor(presets[(nextColorId - 1) % presets.length]) || "#CCCCCC";
         }
 
@@ -4443,19 +4517,19 @@
 
         function tintRgb(rgb, amount) {
             const clamp = (channel) => Math.max(0, Math.min(255, channel));
-            return {
+            return clampRgbSaturation({
                 r: clamp(rgb.r + amount),
                 g: clamp(rgb.g + amount),
                 b: clamp(rgb.b + amount)
-            };
+            });
         }
 
         function mixRgb(start, end, factor) {
-            return {
+            return clampRgbSaturation({
                 r: Math.round(start.r + (end.r - start.r) * factor),
                 g: Math.round(start.g + (end.g - start.g) * factor),
                 b: Math.round(start.b + (end.b - start.b) * factor)
-            };
+            });
         }
 
         function sampleGemTone(tone, base, light, deep, shadow, highlight) {
@@ -4997,8 +5071,8 @@
 
             const palette = [
                 { color: "#DC685D", glow: "rgba(220, 104, 93, 0.88)" },
-                { color: "#D2C22D", glow: "rgba(210, 194, 45, 0.88)" },
-                { color: "#2DBAD2", glow: "rgba(45, 186, 210, 0.9)" },
+                { color: "#D2C54A", glow: "rgba(210, 197, 74, 0.88)" },
+                { color: "#4ABED2", glow: "rgba(74, 190, 210, 0.9)" },
                 { color: "#8271E0", glow: "rgba(130, 113, 224, 0.9)" },
                 { color: "#5CDC81", glow: "rgba(92, 220, 129, 0.88)" },
                 { color: "#E06EC7", glow: "rgba(224, 110, 199, 0.9)" }
