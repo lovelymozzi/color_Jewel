@@ -795,20 +795,91 @@
         }
 
         .pocket-action-button {
+            position: relative;
             appearance: none;
             -webkit-appearance: none;
             width: var(--action-button-size);
             aspect-ratio: 1;
-            border: 1px solid rgba(203, 213, 225, 0.92);
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.98);
-            color: #1f2937;
-            font: inherit;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+            border: 0;
+            border-radius: 0;
+            padding: 0;
+            background: transparent url("button_off.png?v=20260605-1") center / 100% 100% no-repeat;
+            box-shadow: none;
             cursor: pointer;
+            transition: transform 0.12s ease, filter 0.12s ease, background-image 0.12s ease;
+            transform: translateY(0) scale(1);
+            filter: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pocket-action-button.has-icon::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 64%;
+            aspect-ratio: 1.9 / 1;
+            transform: translate(-50%, -50%);
+            background: var(--button-icon-image) center / contain no-repeat;
+            pointer-events: none;
+        }
+
+        .pocket-action-button.icon-magic {
+            --button-icon-image: transparent url("magic.png?v=20260605-1");
+        }
+
+        .pocket-action-button.icon-magic::before {
+            width: 96%;
+        }
+
+        .pocket-action-button.icon-set {
+            --button-icon-image: transparent url("set.png?v=20260605-1");
+        }
+
+        .pocket-action-button.icon-clean {
+            --button-icon-image: transparent url("clean.png?v=20260605-1");
+        }
+
+        .pocket-action-button.icon-clean::before {
+            width: 96%;
+        }
+
+        .pocket-action-button.icon-rock {
+            --button-icon-image: transparent url("rock.png?v=20260605-1");
+        }
+
+        .pocket-action-button.icon-rock::before {
+            width: 96%;
+        }
+
+        .pocket-action-button:hover {
+            filter: none;
+        }
+
+        .pocket-action-button:active,
+        .pocket-action-button.is-pressed {
+            background-image: url("button_on.png?v=20260605-1");
+            transform: translateY(2px) scale(0.985);
+            filter: none;
+        }
+
+        .pocket-action-button:focus-visible {
+            outline: 2px solid rgba(96, 128, 168, 0.72);
+            outline-offset: 3px;
+            border-radius: 18px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
         .pocket-group {
@@ -1481,10 +1552,18 @@
             </div>
 
             <div class="bottom-actions" aria-label="하단 액션 버튼">
-                <button class="pocket-action-button" type="button">버튼 1</button>
-                <button class="pocket-action-button" type="button">버튼 2</button>
-                <button class="pocket-action-button" type="button">버튼 3</button>
-                <button class="pocket-action-button" type="button">버튼 4</button>
+                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="액션 버튼 1" title="액션 버튼 1">
+                    <span class="sr-only">액션 버튼 1</span>
+                </button>
+                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="액션 버튼 2" title="액션 버튼 2">
+                    <span class="sr-only">액션 버튼 2</span>
+                </button>
+                <button class="pocket-action-button has-icon icon-rock" id="bottomActionButton3" type="button" aria-label="액션 버튼 3" title="액션 버튼 3">
+                    <span class="sr-only">액션 버튼 3</span>
+                </button>
+                <button class="pocket-action-button has-icon icon-set" id="bottomActionButton4" type="button" aria-label="액션 버튼 4" title="액션 버튼 4">
+                    <span class="sr-only">액션 버튼 4</span>
+                </button>
             </div>
 
             <div class="bottom-ad-slot" aria-label="배너 광고 영역">배너 광고 영역</div>
@@ -2932,6 +3011,7 @@
         const bottomTrayElement = document.getElementById("bottomTray");
         const pocketDockElement = document.querySelector(".pocket-dock");
         const bottomActionsElement = document.querySelector(".bottom-actions");
+        const bottomActionButtonElements = Array.from(document.querySelectorAll(".pocket-action-button"));
         const bottomAdSlotElement = document.querySelector(".bottom-ad-slot");
         const boardStageElement = document.querySelector(".board-stage");
         const tutorialLayerElement = document.getElementById("tutorialLayer");
@@ -5757,6 +5837,32 @@
             });
         }
 
+        function bindActionButtonPressState(button) {
+            if (!button) {
+                return;
+            }
+
+            const activatePressed = () => {
+                button.classList.add("is-pressed");
+            };
+            const deactivatePressed = () => {
+                button.classList.remove("is-pressed");
+            };
+
+            button.addEventListener("pointerdown", activatePressed);
+            button.addEventListener("pointerup", deactivatePressed);
+            button.addEventListener("pointerleave", deactivatePressed);
+            button.addEventListener("pointercancel", deactivatePressed);
+            button.addEventListener("blur", deactivatePressed);
+            button.addEventListener("keyup", deactivatePressed);
+        }
+
+        function initializeBottomActionButtons() {
+            bottomActionButtonElements.forEach((button) => {
+                bindActionButtonPressState(button);
+            });
+        }
+
         function renderBoard() {
             boardElement.innerHTML = "";
             const now = performance.now();
@@ -7154,6 +7260,7 @@
         loadPersistedPixelAdminStageOverrides();
         syncActiveMap(0);
         initializeBoardGestures();
+        initializeBottomActionButtons();
         resetGame();
     </script>
 </body>
