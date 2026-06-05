@@ -6,16 +6,16 @@
     <title>Jewel Pocket Puzzle</title>
     <style>
         :root {
-            --bg-1: #f7efe4;
-            --bg-2: #efd6bb;
-            --panel: rgba(255, 251, 245, 0.86);
-            --ink: #3f3127;
-            --line: rgba(76, 56, 35, 0.16);
-            --shadow: 0 26px 60px rgba(83, 54, 27, 0.16);
+            --bg-1: #ffffff;
+            --bg-2: #ffffff;
+            --panel: rgba(255, 255, 255, 0.96);
+            --ink: #1f2937;
+            --line: rgba(148, 163, 184, 0.32);
+            --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
             --body-bg: #000000;
-            --app-bg: #f7efe4;
-            --grid-bg: rgba(113, 86, 58, 0.05);
-            --grid-line: transparent;
+            --app-bg: #ffffff;
+            --grid-bg: rgba(148, 163, 184, 0.08);
+            --grid-line: rgba(226, 232, 240, 0.9);
             --app-shell-width: min(100vw, 430px);
             --viewport-gap: 20px;
             --pocket-bottom-offset: 20px;
@@ -218,7 +218,7 @@
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
                 url("jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: brightness(1.02) saturate(1.06);
+            filter: brightness(1.02) saturate(1);
             opacity: 0.42;
             pointer-events: none;
         }
@@ -266,7 +266,7 @@
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
                 url("jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: brightness(1.02) saturate(1.06);
+            filter: brightness(1.02) saturate(1);
             opacity: 0.42;
             pointer-events: none;
         }
@@ -301,7 +301,7 @@
             clip-path: var(--socket-shape);
             overflow: hidden;
             box-shadow: none;
-            filter: saturate(1.22) brightness(0.97) contrast(1.08);
+            filter: saturate(1) brightness(0.97) contrast(1.08);
             z-index: 2;
         }
 
@@ -315,7 +315,7 @@
             transform: none;
             clip-path: none;
             border-radius: 0;
-            background: var(--flat-gem-color, #ff0000);
+            background: var(--flat-gem-color, #D22D2D);
             filter: none;
             box-shadow: none;
             overflow: hidden;
@@ -396,7 +396,7 @@
         .cell.selected .gem {
             transform: translate(-50%, -78%);
             box-shadow: 0 8px 12px rgba(78, 38, 8, 0.16);
-            filter: saturate(1.14) brightness(0.98) contrast(1.06);
+            filter: saturate(1) brightness(0.98) contrast(1.06);
         }
 
         .board-cell.selected::after {
@@ -412,7 +412,7 @@
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
                 url("jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: brightness(1) saturate(1.08);
+            filter: brightness(1) saturate(1);
             opacity: 0.5;
             pointer-events: none;
             z-index: 1;
@@ -435,7 +435,7 @@
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
                 url("jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: brightness(1) saturate(1.08);
+            filter: brightness(1) saturate(1);
             opacity: 0.5;
             pointer-events: none;
             z-index: 1;
@@ -448,18 +448,18 @@
         @keyframes correct-gem-pulse {
             0% {
                 transform: translate(-50%, -50%) scale(1);
-                filter: saturate(1.22) brightness(0.97) contrast(1.08);
+                filter: saturate(1) brightness(0.97) contrast(1.08);
             }
 
             32% {
                 transform: translate(-50%, -57%) scale(1.08);
-                filter: saturate(1.5) brightness(1.2) contrast(1.14)
+                filter: saturate(1) brightness(1.2) contrast(1.14)
                     drop-shadow(0 0 12px rgba(255, 246, 170, 0.72));
             }
 
             100% {
                 transform: translate(-50%, -50%) scale(1);
-                filter: saturate(1.22) brightness(0.97) contrast(1.08);
+                filter: saturate(1) brightness(0.97) contrast(1.08);
             }
         }
 
@@ -520,8 +520,9 @@
             max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
             padding: 16px 18px 18px;
             border-radius: 22px;
-            background: rgba(255, 251, 245, 0.52);
-            border: 1px solid rgba(214, 186, 152, 0.78);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(203, 213, 225, 0.92);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
             z-index: 18;
         }
 
@@ -560,9 +561,9 @@
             max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
             height: var(--ad-banner-height);
             border-radius: 18px;
-            border: 1px dashed rgba(194, 157, 112, 0.72);
-            background: rgba(255, 250, 241, 0.62);
-            color: rgba(123, 87, 48, 0.72);
+            border: 1px dashed rgba(148, 163, 184, 0.72);
+            background: rgba(255, 255, 255, 0.94);
+            color: rgba(71, 85, 105, 0.82);
             font-size: 13px;
             font-weight: 700;
             letter-spacing: -0.01em;
@@ -576,9 +577,9 @@
             align-items: center;
             justify-content: center;
             background:
-                radial-gradient(circle at 50% 42%, rgba(255, 206, 65, 0.2), transparent 26%),
-                radial-gradient(circle at 50% 50%, rgba(255, 83, 40, 0.12), transparent 44%),
-                rgba(10, 6, 1, 0.44);
+                radial-gradient(circle at 50% 42%, rgba(255, 206, 65, 0.12), transparent 26%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08), transparent 44%),
+                rgba(255, 255, 255, 0.72);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.24s ease;
@@ -598,12 +599,11 @@
             min-width: 250px;
             padding: 28px 30px;
             border-radius: 30px;
-            background:
-                linear-gradient(180deg, rgba(255, 253, 246, 0.98), rgba(255, 238, 210, 0.98));
-            border: 2px solid rgba(255, 175, 57, 0.9);
+            background: rgba(255, 255, 255, 0.98);
+            border: 2px solid rgba(226, 232, 240, 0.98);
             box-shadow:
-                0 0 0 8px rgba(255, 214, 122, 0.16),
-                0 24px 54px rgba(68, 24, 2, 0.34);
+                0 0 0 8px rgba(255, 255, 255, 0.42),
+                0 24px 54px rgba(15, 23, 42, 0.12);
             transform: translateY(24px) scale(0.86);
             transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.28, 1);
         }
@@ -615,14 +615,14 @@
 
         .stage-clear-title {
             margin: 0;
-            color: #ff5a1f;
+            color: #111827;
             font-size: 34px;
             font-weight: 900;
             line-height: 1;
             letter-spacing: -0.03em;
             text-shadow:
-                0 2px 0 rgba(255, 241, 214, 0.9),
-                0 10px 20px rgba(255, 116, 37, 0.24);
+                0 1px 0 rgba(255, 255, 255, 0.96),
+                0 10px 20px rgba(148, 163, 184, 0.18);
         }
 
         .stage-clear-subtitle {
@@ -662,7 +662,7 @@
             height: 24px;
             border-radius: 50%;
             background:
-                radial-gradient(circle, rgba(255,255,255,0.98) 0 24%, var(--burst-color, #ffd54e) 24% 58%, rgba(255,255,255,0) 72%);
+                radial-gradient(circle, rgba(255,255,255,0.98) 0 24%, var(--burst-color, #E0C56D) 24% 58%, rgba(255,255,255,0) 72%);
             transform: translate(-50%, -50%);
             box-shadow:
                 0 0 18px rgba(255, 255, 255, 0.8),
@@ -677,7 +677,7 @@
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            border: 4px solid var(--burst-color, #ffd54e);
+            border: 4px solid var(--burst-color, #E0C56D);
             transform: translate(-50%, -50%) scale(0.3);
             opacity: 0;
             animation: firework-ring 1.18s ease-out forwards;
@@ -691,7 +691,7 @@
             height: 42px;
             border-radius: 999px;
             background:
-                linear-gradient(180deg, rgba(255,255,255,1), var(--spark-color, #ffcf6b) 40%, rgba(255,255,255,0) 100%);
+                linear-gradient(180deg, rgba(255,255,255,1), var(--spark-color, #E5C685) 40%, rgba(255,255,255,0) 100%);
             transform:
                 translate(-50%, -50%)
                 rotate(var(--spark-rotation, 0deg))
@@ -797,15 +797,15 @@
             -webkit-appearance: none;
             width: var(--action-button-size);
             aspect-ratio: 1;
-            border: 1px solid rgba(194, 157, 112, 0.72);
+            border: 1px solid rgba(203, 213, 225, 0.92);
             border-radius: 16px;
-            background: rgba(255, 250, 241, 0.94);
-            color: #7b5730;
+            background: rgba(255, 255, 255, 0.98);
+            color: #1f2937;
             font: inherit;
             font-size: 14px;
             font-weight: 700;
             letter-spacing: -0.01em;
-            box-shadow: 0 8px 16px rgba(129, 88, 40, 0.08);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
             cursor: pointer;
         }
 
@@ -871,16 +871,16 @@
             z-index: 80;
             appearance: none;
             -webkit-appearance: none;
-            border: 1px solid rgba(194, 157, 112, 0.8);
+            border: 1px solid rgba(203, 213, 225, 0.92);
             border-radius: 999px;
-            background: rgba(255, 250, 241, 0.96);
-            color: #7b5730;
+            background: rgba(255, 255, 255, 0.98);
+            color: #111827;
             padding: 10px 14px;
             font: inherit;
             font-size: 13px;
             font-weight: 800;
             letter-spacing: -0.01em;
-            box-shadow: 0 12px 28px rgba(80, 51, 23, 0.16);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
             cursor: pointer;
         }
 
@@ -895,9 +895,9 @@
             gap: 12px;
             padding: 18px;
             border-radius: 26px;
-            background: rgba(255, 252, 247, 0.98);
-            border: 1px solid rgba(214, 186, 152, 0.92);
-            box-shadow: 0 22px 60px rgba(63, 37, 13, 0.24);
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(226, 232, 240, 0.98);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14);
             transform: translateX(calc(100% + 24px));
             opacity: 0;
             pointer-events: none;
@@ -924,14 +924,14 @@
             bottom: 0;
             width: 4px;
             border-radius: 999px;
-            background: rgba(194, 157, 112, 0.36);
+            background: rgba(148, 163, 184, 0.42);
             transition: background 0.18s ease, box-shadow 0.18s ease;
         }
 
         .pixel-admin-resize-handle:hover::before,
         .pixel-admin.resizing .pixel-admin-resize-handle::before {
-            background: rgba(255, 142, 48, 0.8);
-            box-shadow: 0 0 0 4px rgba(255, 207, 129, 0.32);
+            background: rgba(59, 130, 246, 0.72);
+            box-shadow: 0 0 0 4px rgba(191, 219, 254, 0.56);
         }
 
         .pixel-admin.open {
@@ -949,7 +949,7 @@
 
         .pixel-admin-eyebrow {
             margin: 0 0 4px;
-            color: rgba(141, 95, 42, 0.78);
+            color: rgba(71, 85, 105, 0.78);
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 0.12em;
@@ -957,7 +957,7 @@
 
         .pixel-admin-title {
             margin: 0;
-            color: #5f3c1c;
+            color: #111827;
             font-size: 22px;
             font-weight: 900;
             line-height: 1.05;
@@ -967,7 +967,7 @@
         .pixel-admin-stage,
         .pixel-admin-note {
             margin: 0;
-            color: rgba(102, 67, 36, 0.86);
+            color: rgba(71, 85, 105, 0.9);
             font-size: 13px;
             line-height: 1.35;
             letter-spacing: -0.01em;
@@ -989,10 +989,10 @@
         .pixel-admin-action {
             appearance: none;
             -webkit-appearance: none;
-            border: 1px solid rgba(194, 157, 112, 0.78);
+            border: 1px solid rgba(203, 213, 225, 0.92);
             border-radius: 14px;
-            background: rgba(255, 250, 241, 0.98);
-            color: #7b5730;
+            background: rgba(255, 255, 255, 0.98);
+            color: #1f2937;
             font: inherit;
             font-size: 13px;
             font-weight: 800;
@@ -1034,7 +1034,7 @@
         .pixel-admin-field-label {
             font-size: 11px;
             font-weight: 800;
-            color: rgba(116, 86, 54, 0.78);
+            color: rgba(71, 85, 105, 0.78);
             letter-spacing: 0.02em;
             text-transform: uppercase;
             white-space: nowrap;
@@ -1046,10 +1046,10 @@
             min-width: 0;
             height: 40px;
             padding: 0 10px;
-            border: 1px solid rgba(194, 157, 112, 0.62);
+            border: 1px solid rgba(203, 213, 225, 0.92);
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.96);
-            color: #5b3a1b;
+            color: #111827;
             font: inherit;
             font-size: 13px;
             font-weight: 700;
@@ -1120,7 +1120,7 @@
             border: 0;
             border-radius: 999px;
             background: rgba(103, 68, 35, 0.88);
-            color: #fff7eb;
+            color: #FBF6EF;
             font: inherit;
             font-size: 10px;
             font-weight: 900;
@@ -1277,8 +1277,8 @@
         }
 
         .pixel-admin-cell:hover {
-            filter: brightness(0.98) saturate(1.06);
-            box-shadow: inset 0 0 0 2px rgba(255, 140, 49, 0.88);
+            filter: brightness(0.98) saturate(1);
+            box-shadow: inset 0 0 0 2px rgba(96, 128, 168, 0.68);
         }
 
         .pixel-admin-actions {
@@ -1619,21 +1619,142 @@
             );
         }
 
+        const MAX_COLOR_SATURATION = 65;
+
+        function clampNumber(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function rgbToHex({ r, g, b }) {
+            const toHex = (channel) => clampNumber(Math.round(channel), 0, 255).toString(16).padStart(2, "0").toUpperCase();
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        function rgbToHsl({ r, g, b }) {
+            const red = clampNumber(r, 0, 255) / 255;
+            const green = clampNumber(g, 0, 255) / 255;
+            const blue = clampNumber(b, 0, 255) / 255;
+            const max = Math.max(red, green, blue);
+            const min = Math.min(red, green, blue);
+            const lightness = (max + min) / 2;
+            const delta = max - min;
+            let hue = 0;
+            let saturation = 0;
+
+            if (delta !== 0) {
+                saturation = delta / (1 - Math.abs(2 * lightness - 1));
+
+                switch (max) {
+                    case red:
+                        hue = ((green - blue) / delta) % 6;
+                        break;
+                    case green:
+                        hue = (blue - red) / delta + 2;
+                        break;
+                    default:
+                        hue = (red - green) / delta + 4;
+                        break;
+                }
+
+                hue *= 60;
+                if (hue < 0) {
+                    hue += 360;
+                }
+            }
+
+            return {
+                h: hue,
+                s: saturation * 100,
+                l: lightness * 100
+            };
+        }
+
+        function hslToRgb({ h, s, l }) {
+            const hue = ((h % 360) + 360) % 360;
+            const saturation = clampNumber(s, 0, 100) / 100;
+            const lightness = clampNumber(l, 0, 100) / 100;
+            const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+            const huePrime = hue / 60;
+            const secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+            let red = 0;
+            let green = 0;
+            let blue = 0;
+
+            if (huePrime >= 0 && huePrime < 1) {
+                red = chroma;
+                green = secondComponent;
+            } else if (huePrime < 2) {
+                red = secondComponent;
+                green = chroma;
+            } else if (huePrime < 3) {
+                green = chroma;
+                blue = secondComponent;
+            } else if (huePrime < 4) {
+                green = secondComponent;
+                blue = chroma;
+            } else if (huePrime < 5) {
+                red = secondComponent;
+                blue = chroma;
+            } else {
+                red = chroma;
+                blue = secondComponent;
+            }
+
+            const match = lightness - chroma / 2;
+            return {
+                r: Math.round((red + match) * 255),
+                g: Math.round((green + match) * 255),
+                b: Math.round((blue + match) * 255)
+            };
+        }
+
+        function clampRgbSaturation(rgb, maxSaturation = MAX_COLOR_SATURATION) {
+            const hsl = rgbToHsl(rgb);
+            if (hsl.s <= maxSaturation) {
+                return {
+                    r: clampNumber(rgb.r, 0, 255),
+                    g: clampNumber(rgb.g, 0, 255),
+                    b: clampNumber(rgb.b, 0, 255)
+                };
+            }
+
+            let targetSaturation = maxSaturation;
+            let adjusted = hslToRgb({
+                h: hsl.h,
+                s: targetSaturation,
+                l: hsl.l
+            });
+            let adjustedHsl = rgbToHsl(adjusted);
+
+            while (adjustedHsl.s > maxSaturation && targetSaturation > 0) {
+                targetSaturation = Math.max(0, targetSaturation - 0.25);
+                adjusted = hslToRgb({
+                    h: hsl.h,
+                    s: targetSaturation,
+                    l: hsl.l
+                });
+                adjustedHsl = rgbToHsl(adjusted);
+            }
+
+            return adjusted;
+        }
+
         function normalizeHexColor(value) {
             if (!value) return null;
             const trimmed = String(value).trim();
             const expanded = trimmed.match(/^#?([0-9a-f]{3})$/i);
             if (expanded) {
-                return `#${expanded[1]
+                const expandedHex = `#${expanded[1]
                     .split("")
                     .map((char) => `${char}${char}`)
                     .join("")
                     .toUpperCase()}`;
+                return rgbToHex(clampRgbSaturation(hexToRgb(expandedHex)));
             }
 
             const full = trimmed.match(/^#?([0-9a-f]{6})$/i);
             if (!full) return null;
-            return `#${full[1].toUpperCase()}`;
+            return rgbToHex(clampRgbSaturation(hexToRgb(`#${full[1].toUpperCase()}`)));
         }
 
         function escapeJsString(value) {
@@ -1734,23 +1855,23 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 5, 1, 0, 0],
-            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 7, 2, 2, 2, 2, 7, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 7, 2, 2, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 7, 2, 2, 2, 2, 7, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 2, 7, 2, 2, 7, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 7, 2, 7, 2, 2, 7, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 2, 2, 7, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 2, 7, 2, 2, 7, 2, 2, 2, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 7, 2, 7, 2, 2, 2, 2, 7, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 2, 2, 2, 7, 2, 2, 7, 2, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 2, 7, 2, 7, 2, 2, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
         ];
 
         const PUPPY_IMAGE_MAP = [
@@ -2082,7 +2203,7 @@
             {
                 id: "strawberry",
                 displayName: "버블티",
-                overrideVersion: 3,
+                overrideVersion: 4,
                 baseImageMap: BUBBLE_TEA_IMAGE_MAP,
                 scale: 1,
                 startMessageTemplate: "{title} 스테이지예요. 보석을 정리해 컵 안을 채워 보세요.",
@@ -2581,19 +2702,23 @@
         }
 
         const COLOR_PALETTE = {
-            1: { name: "루비", color: "#ff5c4d" },
-            2: { name: "허니", color: "#e6bf79" },
+            1: { name: "루비", color: "#DF766D" },
+            2: { name: "허니", color: "#E3BE7C" },
             3: { name: "리프", color: "#59d77d" },
-            4: { name: "하늘", color: "#6cb8ff" },
-            5: { name: "로즈", color: "#ff96aa" },
+            4: { name: "하늘", color: "#86B7E5" },
+            5: { name: "로즈", color: "#ECA9B5" },
             6: { name: "코코아", color: "#a9744f" },
             7: { name: "에스프레소", color: "#5a3728" }
         };
 
         Object.assign(COLOR_PALETTE, {
-            8: { name: "사과 기본색", color: "#EE4035" },
-            9: { name: "사과 광택", color: "#FA4F3E" },
-            10: { name: "사과 반짝임", color: "#FCF277" }
+            8: { name: "사과 기본색", color: "#D8534B" },
+            9: { name: "사과 광택", color: "#DC675C" },
+            10: { name: "사과 반짝임", color: "#E6E08D" }
+        });
+
+        Object.values(COLOR_PALETTE).forEach((colorMeta) => {
+            colorMeta.color = normalizeHexColor(colorMeta.color) || colorMeta.color;
         });
 
         const DEFAULT_COLOR_PALETTE = Object.fromEntries(
@@ -2601,31 +2726,31 @@
         );
         const DEFAULT_THEME_VARS = {
             "--body-bg": "#000000",
-            "--app-bg": "#f7efe4",
-            "--grid-bg": "rgba(113, 86, 58, 0.05)",
-            "--grid-line": "transparent"
+            "--app-bg": "#FFFFFF",
+            "--grid-bg": "rgba(148, 163, 184, 0.08)",
+            "--grid-line": "rgba(226, 232, 240, 0.9)"
         };
         const MAP_THEME_OVERRIDES = {
             apple: {
                 palette: {
-                    1: "#97E808",
-                    2: "#54BF0D",
-                    3: "#059310",
+                    1: "#8EC62A",
+                    2: "#59A824",
+                    3: "#1B7D22",
                     4: "#7E5129",
                     5: "#593618",
-                    6: "#740202",
-                    7: "#990001",
-                    8: "#CF0202",
-                    9: "#FD4A3C",
-                    10: "#FCF372"
+                    6: "#611515",
+                    7: "#7E1B1B",
+                    8: "#AC2525",
+                    9: "#DC665D",
+                    10: "#E5E089"
                 }
             },
             bear: {
                 palette: {
                     0: "#FFFFFF",
-                    1: "#FF5C4D",
-                    2: "#EAD071",
-                    5: "#44260D",
+                    1: "#DF766D",
+                    2: "#E2CC79",
+                    5: "#42260F",
                     6: "#85542B",
                     7: "#1F1E1E"
                 }
@@ -2633,36 +2758,37 @@
             strawberry: {
                 palette: {
                     1: "#4D3A2E",
-                    2: "#E6BF79",
+                    2: "#E3BE7C",
                     3: "#2F6F42",
                     5: "#E1ECEF",
-                    7: "#332111"
+                    7: "#7E491B"
                 },
                 cssVars: {
-                    "--app-bg": "#fff4ea",
-                    "--grid-bg": "rgba(182, 124, 72, 0.08)"
+                    "--app-bg": "#FFFFFF",
+                    "--grid-bg": "rgba(148, 163, 184, 0.08)",
+                    "--grid-line": "rgba(226, 232, 240, 0.9)"
                 }
             },
             puppy: {
                 palette: {
                     1: "#272121",
-                    2: "#FC6D3E",
+                    2: "#DC7D5E",
                     3: "#5B352A",
                     4: "#9A6034",
-                    5: "#A2CDFA",
-                    6: "#4B92EA",
+                    5: "#AFCDED",
+                    6: "#5A94DB",
                     7: "#225C8C",
                     8: "#F8EFDE"
                 }
             },
             heart: {
                 palette: {
-                    1: "#7B130F",
-                    2: "#D9EDF8",
-                    3: "#E4AB5D",
+                    1: "#711B19",
+                    2: "#DAEDF7",
+                    3: "#DDAA64",
                     4: "#2F5D33",
-                    5: "#FFFCDF",
-                    6: "#A7233B",
+                    5: "#F9F7E5",
+                    6: "#A6243B",
                     7: "#C48842"
                 }
             }
@@ -3153,8 +3279,8 @@
         }
 
         function getSuggestedPixelAdminHex(nextColorId) {
-            const presets = ["#FF6B6B", "#FFD166", "#06D6A0", "#4DABF7", "#B197FC", "#F783AC", "#FFA94D", "#74C0FC"];
-            return presets[(nextColorId - 1) % presets.length];
+            const presets = ["#E58585", "#E4C681", "#27B690", "#66A8DE", "#B9A7EC", "#E793B0", "#DFA86D", "#8ABDE6"];
+            return normalizeHexColor(presets[(nextColorId - 1) % presets.length]) || "#CCCCCC";
         }
 
         function getNextPixelAdminColorId(sourceMap, paletteMeta = {}) {
@@ -3774,7 +3900,7 @@
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
 
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
-            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 색상은 추가할 수 있고, HEX는 `#` 없이 6자리만 입력하면 됩니다.";
+            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. HEX는 `#` 없이 6자리만 입력하면 되고, 채도는 자동으로 65 이하로 맞춰집니다.";
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             if (!pixelAdminState.exportIsDirty) {
@@ -4287,12 +4413,16 @@
         }
 
         function shadeColor(hex, amount) {
-            const value = hex.replace("#", "");
-            const number = Number.parseInt(value, 16);
             const clamp = (channel) => Math.max(0, Math.min(255, channel + amount));
-            const r = clamp((number >> 16) & 255);
-            const g = clamp((number >> 8) & 255);
-            const b = clamp(number & 255);
+            const base = hexToRgb(normalizeHexColor(hex) || hex);
+            const shaded = clampRgbSaturation({
+                r: clamp(base.r),
+                g: clamp(base.g),
+                b: clamp(base.b)
+            });
+            const r = shaded.r;
+            const g = shaded.g;
+            const b = shaded.b;
             return `rgb(${r}, ${g}, ${b})`;
         }
 
@@ -4866,12 +4996,12 @@
             burst.style.top = `${topPercent}%`;
 
             const palette = [
-                { color: "#ff4b3a", glow: "rgba(255, 75, 58, 0.88)" },
-                { color: "#ffe600", glow: "rgba(255, 230, 0, 0.88)" },
-                { color: "#00d9ff", glow: "rgba(0, 217, 255, 0.9)" },
-                { color: "#6d52ff", glow: "rgba(109, 82, 255, 0.9)" },
-                { color: "#39ff73", glow: "rgba(57, 255, 115, 0.88)" },
-                { color: "#ff4fd8", glow: "rgba(255, 79, 216, 0.9)" }
+                { color: "#DC685D", glow: "rgba(220, 104, 93, 0.88)" },
+                { color: "#D2C22D", glow: "rgba(210, 194, 45, 0.88)" },
+                { color: "#2DBAD2", glow: "rgba(45, 186, 210, 0.9)" },
+                { color: "#8271E0", glow: "rgba(130, 113, 224, 0.9)" },
+                { color: "#5CDC81", glow: "rgba(92, 220, 129, 0.88)" },
+                { color: "#E06EC7", glow: "rgba(224, 110, 199, 0.9)" }
             ];
             const baseColor = palette[Math.floor(Math.random() * palette.length)];
             const sparkCount = 18;
