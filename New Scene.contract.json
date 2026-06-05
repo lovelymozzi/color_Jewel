@@ -24,5 +24,32 @@
   },
   "groups": [],
   "sceneAnimations": [],
-  "layers": []
+  "layers": [
+    {
+      "stableId": "rock-png-1",
+      "layerType": "image",
+      "displayName": "rock.png",
+      "x": 163,
+      "y": 390,
+      "zIndex": 1,
+      "visual": {
+        "exportPath": "assets/rock.png",
+        "width": 64,
+        "height": 64
+      }
+    },
+    {
+      "stableId": "rock-png-2",
+      "layerType": "image",
+      "displayName": "rock.png",
+      "x": 163,
+      "y": 390,
+      "zIndex": 2,
+      "visual": {
+        "exportPath": "assets/rock.png",
+        "width": 64,
+        "height": 64
+      }
+    }
+  ]
 }

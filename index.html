@@ -220,7 +220,7 @@
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
-                url("jewel.png") center / contain no-repeat;
+                url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1.02) saturate(1);
             opacity: 0.42;
@@ -250,7 +250,7 @@
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(188, 170, 149, 0.09), rgba(188, 170, 149, 0.14)),
-                url("jewel.png") center / contain no-repeat;
+                url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: grayscale(1) brightness(1.02) saturate(0.06);
             opacity: 0.2;
@@ -268,7 +268,7 @@
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
-                url("jewel.png") center / contain no-repeat;
+                url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1.02) saturate(1);
             opacity: 0.42;
@@ -414,7 +414,7 @@
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
-                url("jewel.png") center / contain no-repeat;
+                url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1) saturate(1);
             opacity: 0.5;
@@ -437,7 +437,7 @@
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
-                url("jewel.png") center / contain no-repeat;
+                url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1) saturate(1);
             opacity: 0.5;
@@ -805,7 +805,7 @@
             border: 0;
             border-radius: 0;
             padding: 0;
-            background: transparent url("button_off.png?v=20260605-1") center / 100% 100% no-repeat;
+            background: transparent url("src/assets/button_off.png?v=20260605-1") center / 100% 100% no-repeat;
             box-shadow: none;
             cursor: pointer;
             transition: transform 0.12s ease, filter 0.12s ease, background-image 0.12s ease;
@@ -840,7 +840,7 @@
             bottom: 2%;
             width: 36%;
             height: 36%;
-            background: transparent url("circle1.png?v=20260605-1") center / contain no-repeat;
+            background: transparent url("src/assets/circle1.png?v=20260605-1") center / contain no-repeat;
             z-index: 2;
             pointer-events: none;
         }
@@ -873,26 +873,31 @@
             opacity: 0.8;
         }
 
+        .pocket-action-button.is-armed {
+            background-image: url("src/assets/button_on.png?v=20260605-1");
+            transform: translateY(1px);
+        }
+
         .pocket-action-button.icon-magic {
-            --button-icon-image: transparent url("magic.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/magic.png?v=20260605-1");
             --button-icon-size: 56%;
             --button-icon-offset-x: -1px;
         }
 
         .pocket-action-button.icon-set {
-            --button-icon-image: transparent url("set.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/set.png?v=20260605-1");
             --button-icon-size: 40%;
         }
 
         .pocket-action-button.icon-clean {
-            --button-icon-image: transparent url("clean.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/clean.png?v=20260605-1");
             --button-icon-size: 62%;
             --button-icon-offset-x: 1px;
             --button-icon-offset-y: -1px;
         }
 
         .pocket-action-button.icon-rock {
-            --button-icon-image: transparent url("rock.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/rock.png?v=20260605-1");
             --button-icon-size: 56%;
             --button-icon-offset-x: 1px;
         }
@@ -903,7 +908,7 @@
 
         .pocket-action-button:active,
         .pocket-action-button.is-pressed {
-            background-image: url("button_on.png?v=20260605-1");
+            background-image: url("src/assets/button_on.png?v=20260605-1");
             transform: translateY(2px);
             filter: none;
         }
@@ -4674,23 +4679,26 @@
                     button: bottomActionButton1Element,
                     badge: bottomActionButton1BadgeElement,
                     count: actionCharges.magic,
-                    label: "자동 맞춤"
+                    label: "자동 맞춤",
+                    armed: actionOverlayState?.type === "magic-targeting"
                 },
                 {
                     button: bottomActionButton2Element,
                     badge: bottomActionButton2BadgeElement,
                     count: actionCharges.clean,
-                    label: "소켓 정리"
+                    label: "소켓 정리",
+                    armed: false
                 }
             ];
 
-            buttonStates.forEach(({ button, badge, count, label }) => {
+            buttonStates.forEach(({ button, badge, count, label, armed }) => {
                 if (!button || !badge) {
                     return;
                 }
 
                 badge.textContent = String(Math.max(0, count));
                 button.classList.toggle("is-empty", count <= 0);
+                button.classList.toggle("is-armed", Boolean(armed));
                 button.setAttribute("title", `${label} ${Math.max(0, count)}회`);
             });
         }
@@ -6037,6 +6045,7 @@
             const now = performance.now();
             cleanupExpiredSparkles(now);
             const shouldRenderGems = shouldRenderGemLayer();
+            const magicTargeting = isMagicTargetingMode();
 
             for (let row = 0; row < ROWS; row += 1) {
                 for (let col = 0; col < COLS; col += 1) {
@@ -6070,7 +6079,7 @@
                     const sparkleColorId = gem || target;
                     if (isCorrectGem) {
                         button.classList.add("correct", "locked");
-                        button.disabled = true;
+                        button.disabled = !magicTargeting;
                     }
                     if (shouldSparkle) button.classList.add("sparkle");
                     if (isSelected("board", row, col)) button.classList.add("selected");
@@ -6660,7 +6669,10 @@
         }
 
         function renderActionOverlay() {
-            if (!actionOverlayState || actionOverlayState.type !== "magic") {
+            if (
+                !actionOverlayState ||
+                (actionOverlayState.type !== "magic" && actionOverlayState.type !== "magic-targeting")
+            ) {
                 return false;
             }
 
@@ -6880,6 +6892,10 @@
             return createTraySelection(nextSelection.indices, nextSelection.anchor, nextSelection.color, includeEmpty);
         }
 
+        function isMagicTargetingMode() {
+            return actionOverlayState?.type === "magic-targeting";
+        }
+
         function getMagicBounds(startRow, startCol) {
             const maxRowStart = Math.max(0, ROWS - MAGIC_AREA_SIZE);
             const maxColStart = Math.max(0, COLS - MAGIC_AREA_SIZE);
@@ -6892,6 +6908,11 @@
                 startCol: resolvedColStart,
                 endCol: Math.min(COLS - 1, resolvedColStart + MAGIC_AREA_SIZE - 1)
             };
+        }
+
+        function getMagicBoundsFromCenter(centerRow, centerCol) {
+            const offset = Math.floor(MAGIC_AREA_SIZE / 2);
+            return getMagicBounds(centerRow - offset, centerCol - offset);
         }
 
         function getMagicTargetCells(bounds, includeCompleted = false) {
@@ -7055,30 +7076,15 @@
             markCorrectPlacementSparkle(targetCell.row, targetCell.col);
         }
 
-        async function useMagicAction() {
-            if (solved || isAnimating || isStageTransitioning) {
-                return;
-            }
-
-            if (actionCharges.magic <= 0) {
-                setStatus("매직 사용 횟수를 모두 썼어요.");
-                return;
-            }
-
-            const bestRegion = findBestMagicRegion();
-            if (!bestRegion) {
-                setStatus("매직으로 자동 정렬할 영역을 찾지 못했어요.");
-                return;
-            }
-
-            const targetCells = getMagicTargetCells(bestRegion);
+        async function applyMagicToBounds(bounds) {
+            const targetCells = getMagicTargetCells(bounds);
             let fixedCount = 0;
 
             selected = null;
             isAnimating = true;
             setActionOverlay({
                 type: "magic",
-                bounds: bestRegion
+                bounds
             });
             render();
             await sleep(120);
@@ -7095,7 +7101,7 @@
                 fixedCount += 1;
                 setActionOverlay({
                     type: "magic",
-                    bounds: bestRegion,
+                    bounds,
                     sparkRow: targetCell.row,
                     sparkCol: targetCell.col
                 });
@@ -7112,14 +7118,57 @@
             if (!fixedCount) {
                 setActionOverlay(null);
                 render();
-                setStatus("매직으로 바로 맞출 수 있는 보석이 없어요.");
+                setStatus("선택한 영역에서 매직으로 바로 맞출 수 있는 보석이 없어요.");
                 return;
             }
 
             actionCharges.magic = Math.max(0, actionCharges.magic - 1);
             await sleep(120);
             setActionOverlay(null);
-            commitMove(`매직으로 선택된 영역의 보석 ${fixedCount}개를 자동으로 맞췄어요.`, fixedCount, false, null);
+            commitMove(`선택한 영역의 보석 ${fixedCount}개를 매직으로 자동 정렬했어요.`, fixedCount, false, null);
+        }
+
+        function startMagicTargeting(bounds = null) {
+            const nextBounds = bounds || getMagicBoundsFromCenter(Math.floor(ROWS / 2), Math.floor(COLS / 2));
+            selected = null;
+            setActionOverlay({
+                type: "magic-targeting",
+                bounds: nextBounds
+            });
+            render();
+            setStatus("매직을 적용할 영역을 보드에서 눌러 주세요.");
+        }
+
+        function cancelMagicTargeting(message = "매직 영역 선택을 취소했어요.") {
+            if (!isMagicTargetingMode()) {
+                return;
+            }
+
+            setActionOverlay(null);
+            render();
+            setStatus(message);
+        }
+
+        async function useMagicAction() {
+            if (solved || isAnimating || isStageTransitioning) {
+                return;
+            }
+
+            if (actionCharges.magic <= 0) {
+                setStatus("매직 사용 횟수를 모두 썼어요.");
+                return;
+            }
+
+            if (isMagicTargetingMode()) {
+                cancelMagicTargeting();
+                return;
+            }
+
+            const selectedAnchor = selected?.source === "board" ? selected.anchor : null;
+            const initialBounds = selectedAnchor
+                ? getMagicBoundsFromCenter(selectedAnchor.row, selectedAnchor.col)
+                : getMagicBoundsFromCenter(Math.floor(ROWS / 2), Math.floor(COLS / 2));
+            startMagicTargeting(initialBounds);
         }
 
         function getCleanableSocketCells() {
@@ -7136,6 +7185,10 @@
         async function useCleanAction() {
             if (solved || isAnimating || isStageTransitioning) {
                 return;
+            }
+
+            if (isMagicTargetingMode()) {
+                cancelMagicTargeting();
             }
 
             if (actionCharges.clean <= 0) {
@@ -7252,6 +7305,12 @@
         }
 
         async function handleBoardClick(row, col) {
+            if (isMagicTargetingMode()) {
+                const selectedBounds = getMagicBoundsFromCenter(row, col);
+                await applyMagicToBounds(selectedBounds);
+                return;
+            }
+
             if (selected?.source === "board" && isSelected("board", row, col)) {
                 clearSelection("선택을 해제했어요.");
                 return;
@@ -7496,6 +7555,11 @@
         }
 
         async function handleTrayClick(index) {
+            if (isMagicTargetingMode()) {
+                setStatus("매직은 보드에서 영역을 선택해 사용해 주세요.");
+                return;
+            }
+
             if (selected?.source === "tray" && isSelected("tray", index)) {
                 clearSelection("선택을 해제했어요.");
                 return;
