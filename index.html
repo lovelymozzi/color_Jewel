@@ -203,6 +203,8 @@
 
         .cell.board-cell {
             border-radius: 0;
+            border: 0;
+            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.10);
         }
 
         .board-cell.empty-target::before {
@@ -830,6 +832,12 @@
         .tray-slot {
             min-height: var(--tray-cell-size);
             background: transparent;
+            border: 0;
+            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.10);
+        }
+
+        .tray-slot.hidden-slot {
+            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.07);
         }
 
         .tutorial-layer {
@@ -5771,13 +5779,7 @@
                     }
 
                     button.classList.add("board-cell");
-                    button.style.background = gem
-                        ? COLOR_PALETTE[target].color
-                        : `
-                            linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) top / 100% 1px no-repeat,
-                            linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)) left / 1px 100% no-repeat,
-                            ${COLOR_PALETTE[target].color}
-                        `;
+                    button.style.background = COLOR_PALETTE[target].color;
                     button.style.setProperty("--tile-base", COLOR_PALETTE[target].color);
                     button.style.setProperty("--tile-dark", shadeColor(COLOR_PALETTE[target].color, -18));
                     button.style.setProperty("--tile-shadow", shadeColor(COLOR_PALETTE[target].color, -34));
