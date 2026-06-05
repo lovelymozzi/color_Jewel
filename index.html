@@ -826,7 +826,41 @@
             height: var(--button-icon-size);
             transform: translate(-50%, -50%);
             background: var(--button-icon-image) center / contain no-repeat;
+            z-index: 1;
             pointer-events: none;
+        }
+
+        .pocket-action-button.icon-magic::after,
+        .pocket-action-button.icon-clean::after {
+            content: "";
+            position: absolute;
+            right: 1%;
+            bottom: 2%;
+            width: 36%;
+            height: 36%;
+            background: transparent url("circle1.png?v=20260605-1") center / contain no-repeat;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .pocket-action-button .button-badge {
+            position: absolute;
+            right: 1%;
+            bottom: 2%;
+            width: 36%;
+            height: 36%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+            font-size: clamp(11px, 1.35vw, 16px);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            z-index: 3;
+            pointer-events: none;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
         }
 
         .pocket-action-button.icon-magic {
@@ -1553,9 +1587,11 @@
 
             <div class="bottom-actions" aria-label="하단 액션 버튼">
                 <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="액션 버튼 1" title="액션 버튼 1">
+                    <span class="button-badge" aria-hidden="true">5</span>
                     <span class="sr-only">액션 버튼 1</span>
                 </button>
                 <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="액션 버튼 2" title="액션 버튼 2">
+                    <span class="button-badge" aria-hidden="true">5</span>
                     <span class="sr-only">액션 버튼 2</span>
                 </button>
                 <button class="pocket-action-button has-icon icon-rock" id="bottomActionButton3" type="button" aria-label="액션 버튼 3" title="액션 버튼 3">
