@@ -1,0 +1,36 @@
+{
+  "contractVersion": 1,
+  "sceneId": "nav-new",
+  "sceneName": "nav_New",
+  "sceneType": "navigation",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "navAnchor": "bottom",
+  "navOffsetX": 0,
+  "navOffsetY": 0,
+  "navBarWidth": 390,
+  "navBarHeight": 80,
+  "navBgColor": "rgba(22,33,62,0.95)",
+  "transitionType": "slide",
+  "transitionDuration": 300,
+  "defaultTabId": "t0",
+  "tabs": [
+    {
+      "id": "t0",
+      "icon": "🏠",
+      "label": "Home",
+      "sceneName": ""
+    },
+    {
+      "id": "t1",
+      "icon": "🛒",
+      "label": "Shop",
+      "sceneName": ""
+    }
+  ],
+  "groups": [],
+  "sceneAnimations": [],
+  "layers": []
+}

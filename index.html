@@ -17,6 +17,7 @@
             --grid-bg: rgba(148, 163, 184, 0.08);
             --grid-line: rgba(226, 232, 240, 0.9);
             --app-shell-width: min(100vw, 430px);
+            --app-shell-height: min(100dvh, calc(var(--app-shell-width) * 16 / 9));
             --viewport-gap: 20px;
             --pocket-bottom-offset: 20px;
             --ad-banner-height: 56px;
@@ -80,6 +81,7 @@
         body {
             margin: 0;
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -87,7 +89,7 @@
             background: var(--body-bg);
             color: var(--ink);
             font-family: "Trebuchet MS", "Avenir Next", sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .app {
@@ -97,8 +99,8 @@
             justify-content: center;
             width: var(--app-shell-width);
             max-width: var(--app-shell-width);
-            height: 100dvh;
-            min-height: 100dvh;
+            height: var(--app-shell-height);
+            max-height: var(--app-shell-height);
             margin: 0 auto;
             padding: 0;
             border-radius: 0;
@@ -863,6 +865,14 @@
             text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
         }
 
+        .pocket-action-button.is-empty {
+            opacity: 0.62;
+        }
+
+        .pocket-action-button.is-empty .button-badge {
+            opacity: 0.8;
+        }
+
         .pocket-action-button.icon-magic {
             --button-icon-image: transparent url("magic.png?v=20260605-1");
             --button-icon-size: 56%;
@@ -961,6 +971,39 @@
                 0 0 0 2px rgba(255, 246, 214, 0.72),
                 0 10px 22px rgba(164, 100, 22, 0.18);
             animation: tutorial-focus-pulse 1.08s ease-in-out infinite;
+        }
+
+        .magic-area-focus {
+            position: absolute;
+            border: 2px solid rgba(255, 246, 220, 0.96);
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(255, 229, 181, 0.22), rgba(255, 229, 181, 0.12)),
+                rgba(255, 255, 255, 0.12);
+            box-shadow:
+                inset 0 0 0 2px rgba(245, 210, 138, 0.55),
+                inset 0 0 28px rgba(255, 255, 255, 0.18),
+                0 10px 24px rgba(156, 104, 42, 0.2);
+            backdrop-filter: blur(1px);
+            animation: tutorial-focus-pulse 0.58s ease-in-out infinite;
+        }
+
+        .magic-area-spark {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffe16e;
+            font-size: 22px;
+            font-weight: 900;
+            text-shadow:
+                0 0 10px rgba(255, 231, 133, 0.96),
+                0 0 18px rgba(255, 193, 59, 0.58);
+            transform: translate(-50%, -50%);
+            animation: magic-spark-pop 0.32s ease-out both;
         }
 
         .tutorial-hint {
@@ -1464,6 +1507,23 @@
             }
         }
 
+        @keyframes magic-spark-pop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.4) rotate(-12deg);
+            }
+
+            55% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.18) rotate(6deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
         @media (max-width: 980px) {
             :root {
                 --app-shell-width: min(100vw, 430px);
@@ -1586,13 +1646,13 @@
             </div>
 
             <div class="bottom-actions" aria-label="하단 액션 버튼">
-                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="액션 버튼 1" title="액션 버튼 1">
+                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="자동 맞춤" title="자동 맞춤">
                     <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">액션 버튼 1</span>
+                    <span class="sr-only">자동 맞춤</span>
                 </button>
-                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="액션 버튼 2" title="액션 버튼 2">
+                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="소켓 정리" title="소켓 정리">
                     <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">액션 버튼 2</span>
+                    <span class="sr-only">소켓 정리</span>
                 </button>
                 <button class="pocket-action-button has-icon icon-rock" id="bottomActionButton3" type="button" aria-label="액션 버튼 3" title="액션 버튼 3">
                     <span class="sr-only">액션 버튼 3</span>
@@ -3037,6 +3097,11 @@
         const TRAY_ROW_COUNT = POCKET_SIZE / TOP_POCKET_COUNT;
         const INITIAL_MAX_CLUSTER_SIZE = 12;
         const CLUSTER_STEP_MS = 46;
+        const MAGIC_AREA_SIZE = 5;
+        const DEFAULT_ACTION_CHARGES = Object.freeze({
+            magic: 3,
+            clean: 2
+        });
         const SOUND_VOLUME_MULTIPLIER = 2.3;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const appElement = document.querySelector(".app");
@@ -3048,6 +3113,12 @@
         const pocketDockElement = document.querySelector(".pocket-dock");
         const bottomActionsElement = document.querySelector(".bottom-actions");
         const bottomActionButtonElements = Array.from(document.querySelectorAll(".pocket-action-button"));
+        const bottomActionButton1Element = document.getElementById("bottomActionButton1");
+        const bottomActionButton2Element = document.getElementById("bottomActionButton2");
+        const bottomActionButton3Element = document.getElementById("bottomActionButton3");
+        const bottomActionButton4Element = document.getElementById("bottomActionButton4");
+        const bottomActionButton1BadgeElement = bottomActionButton1Element?.querySelector(".button-badge") || null;
+        const bottomActionButton2BadgeElement = bottomActionButton2Element?.querySelector(".button-badge") || null;
         const bottomAdSlotElement = document.querySelector(".bottom-ad-slot");
         const boardStageElement = document.querySelector(".board-stage");
         const tutorialLayerElement = document.getElementById("tutorialLayer");
@@ -3109,6 +3180,9 @@
         let sparkleCells = new Map();
         let sparkleCleanupTimer = null;
         let completedColorIds = new Set();
+        let cleanedSocketCells = new Set();
+        let actionCharges = { ...DEFAULT_ACTION_CHARGES };
+        let actionOverlayState = null;
         let celebrationTimers = [];
         let stageClearTimers = [];
         let tutorialOverlayFrame = null;
@@ -4594,12 +4668,63 @@
             return message;
         }
 
+        function updateActionButtonState() {
+            const buttonStates = [
+                {
+                    button: bottomActionButton1Element,
+                    badge: bottomActionButton1BadgeElement,
+                    count: actionCharges.magic,
+                    label: "자동 맞춤"
+                },
+                {
+                    button: bottomActionButton2Element,
+                    badge: bottomActionButton2BadgeElement,
+                    count: actionCharges.clean,
+                    label: "소켓 정리"
+                }
+            ];
+
+            buttonStates.forEach(({ button, badge, count, label }) => {
+                if (!button || !badge) {
+                    return;
+                }
+
+                badge.textContent = String(Math.max(0, count));
+                button.classList.toggle("is-empty", count <= 0);
+                button.setAttribute("title", `${label} ${Math.max(0, count)}회`);
+            });
+        }
+
+        function setActionOverlay(nextOverlay) {
+            actionOverlayState = nextOverlay ? { ...nextOverlay } : null;
+            scheduleTutorialOverlayRender();
+        }
+
         function sleep(ms) {
             return new Promise((resolve) => window.setTimeout(resolve, ms));
         }
 
+        function isCleanedSocketCell(row, col) {
+            return cleanedSocketCells.has(toCellKey(row, col));
+        }
+
+        function isCompletedTargetCell(row, col) {
+            return Boolean(TARGET_MAP[row][col]) && (
+                isCleanedSocketCell(row, col) ||
+                (boardState[row][col] !== 0 && boardState[row][col] === TARGET_MAP[row][col])
+            );
+        }
+
+        function isAvailableTargetCell(row, col, colorId = null) {
+            if (!TARGET_MAP[row][col] || isCleanedSocketCell(row, col) || boardState[row][col] !== 0) {
+                return false;
+            }
+
+            return colorId == null || TARGET_MAP[row][col] === colorId;
+        }
+
         function isLockedCorrectGem(row, col) {
-            return TARGET_MAP[row][col] && boardState[row][col] !== 0 && boardState[row][col] === TARGET_MAP[row][col];
+            return isCompletedTargetCell(row, col);
         }
 
         function isSelected(source, rowOrIndex, col) {
@@ -5355,7 +5480,7 @@
 
                 for (let row = 0; row < ROWS; row += 1) {
                     for (let col = 0; col < COLS; col += 1) {
-                        if (TARGET_MAP[row][col] === Number(colorId) && boardState[row][col] === Number(colorId)) {
+                        if (TARGET_MAP[row][col] === Number(colorId) && isCompletedTargetCell(row, col)) {
                             matchedCount += 1;
                         }
                     }
@@ -5389,7 +5514,7 @@
 
         function scheduleFullBoardCelebration(startDelayMs = 0) {
             const completedCells = TARGET_POSITIONS
-                .filter((position) => boardState[position.row][position.col] === TARGET_MAP[position.row][position.col])
+                .filter((position) => isCompletedTargetCell(position.row, position.col))
                 .sort((left, right) => left.row - right.row || left.col - right.col);
             const sparkleStepMs = completedCells.length
                 ? Math.max(8, Math.min(COLOR_COMPLETE_STEP_MS, Math.floor(FULL_BOARD_CELEBRATION_MAX_MS / completedCells.length)))
@@ -5468,7 +5593,7 @@
 
                 destinationKeys.add(key);
 
-                if (!sourceKeys.has(key) && boardState[cell.row][cell.col] !== 0) {
+                if (!sourceKeys.has(key) && (boardState[cell.row][cell.col] !== 0 || isCleanedSocketCell(cell.row, cell.col))) {
                     return false;
                 }
             }
@@ -5568,7 +5693,7 @@
         function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId) {
             const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
             const availableCells = regionCells
-                .filter((cell) => boardState[cell.row][cell.col] === 0)
+                .filter((cell) => isAvailableTargetCell(cell.row, cell.col, colorId))
                 .map((cell) => ({
                     row: cell.row,
                     col: cell.col,
@@ -5588,7 +5713,7 @@
         function findPartialColorSlotPlacement(count, targetRow, targetCol, colorId) {
             const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
             const availableCells = regionCells
-                .filter((cell) => boardState[cell.row][cell.col] === 0)
+                .filter((cell) => isAvailableTargetCell(cell.row, cell.col, colorId))
                 .map((cell) => ({
                     row: cell.row,
                     col: cell.col,
@@ -5756,7 +5881,7 @@
             let count = 0;
             for (let row = 0; row < ROWS; row += 1) {
                 for (let col = 0; col < COLS; col += 1) {
-                    if (TARGET_MAP[row][col] && boardState[row][col] === TARGET_MAP[row][col]) {
+                    if (isCompletedTargetCell(row, col)) {
                         count += 1;
                     }
                 }
@@ -5897,6 +6022,14 @@
             bottomActionButtonElements.forEach((button) => {
                 bindActionButtonPressState(button);
             });
+
+            bindTapActivation(bottomActionButton1Element, () => {
+                void useMagicAction();
+            });
+
+            bindTapActivation(bottomActionButton2Element, () => {
+                void useCleanAction();
+            });
         }
 
         function renderBoard() {
@@ -5930,17 +6063,18 @@
                     button.dataset.col = String(col);
                     button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
 
-                    if (gem === 0) button.classList.add("empty-target");
-                    const isCorrectGem = Boolean(gem) && gem === target;
+                    if (gem === 0 && !isCleanedSocketCell(row, col)) button.classList.add("empty-target");
+                    const isCorrectGem = isCompletedTargetCell(row, col);
                     const sparkleElapsedMs = isCorrectGem ? getCellSparkleElapsed(row, col, now) : null;
                     const shouldSparkle = sparkleElapsedMs != null;
+                    const sparkleColorId = gem || target;
                     if (isCorrectGem) {
                         button.classList.add("correct", "locked");
                         button.disabled = true;
                     }
                     if (shouldSparkle) button.classList.add("sparkle");
                     if (isSelected("board", row, col)) button.classList.add("selected");
-                    if (shouldRenderGems && shouldSparkle) button.appendChild(createSparkleBurst(gem, sparkleElapsedMs));
+                    if (shouldRenderGems && shouldSparkle) button.appendChild(createSparkleBurst(sparkleColorId, sparkleElapsedMs));
                     if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs));
 
                     if (!button.disabled) {
@@ -6298,6 +6432,18 @@
             const rootStyles = getComputedStyle(root);
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
+            const aspectWidth = 9;
+            const aspectHeight = 16;
+            const maxShellWidth = 430;
+            const maxWidthFromHeight = Math.floor((viewportHeight * aspectWidth) / aspectHeight);
+            let appShellWidth = Math.min(viewportWidth, maxShellWidth, maxWidthFromHeight);
+            let appShellHeight = Math.floor((appShellWidth * aspectHeight) / aspectWidth);
+
+            if (appShellHeight > viewportHeight) {
+                appShellHeight = viewportHeight;
+                appShellWidth = Math.floor((appShellHeight * aspectWidth) / aspectHeight);
+            }
+
             const compactLayout = viewportWidth <= 540;
             const viewportGap = parseFloat(rootStyles.getPropertyValue("--viewport-gap")) || 12;
             const trayGap = parseFloat(rootStyles.getPropertyValue("--tray-gap")) || 6;
@@ -6307,7 +6453,6 @@
             const actionBarGap = parseFloat(rootStyles.getPropertyValue("--action-bar-gap")) || 12;
             const actionButtonSize = parseFloat(rootStyles.getPropertyValue("--action-button-size")) || 56;
             const actionButtonGap = parseFloat(rootStyles.getPropertyValue("--action-button-gap")) || 16;
-            const appShellWidth = Math.min(viewportWidth, 430);
             const trayColumns = TOP_POCKET_COUNT;
             const totalTrayRows = TRAY_ROW_COUNT;
             const actionColumns = 4;
@@ -6341,7 +6486,7 @@
                 pocketDockHeight +
                 16
             );
-            const availableBoardHeight = Math.max(120, viewportHeight - viewportGap * 2 - pocketReservedHeight);
+            const availableBoardHeight = Math.max(120, appShellHeight - viewportGap * 2 - pocketReservedHeight);
             const availableBoardWidth = Math.max(120, appShellWidth - viewportGap * 2);
             const nextBoardCellSize = Math.max(
                 compactLayout ? 17 : 16,
@@ -6357,6 +6502,7 @@
             boardInteraction.maxScale = compactLayout ? 4.8 : 4.2;
 
             root.style.setProperty("--app-shell-width", `${appShellWidth}px`);
+            root.style.setProperty("--app-shell-height", `${appShellHeight}px`);
             root.style.setProperty("--board-cell-size", `${nextBoardCellSize}px`);
             root.style.setProperty("--tray-cell-size", `${nextTrayCellSize}px`);
             root.style.setProperty("--action-bar-height", `${nextActionBarHeight}px`);
@@ -6365,6 +6511,8 @@
             if (appElement) {
                 appElement.style.width = `${appShellWidth}px`;
                 appElement.style.maxWidth = `${appShellWidth}px`;
+                appElement.style.height = `${appShellHeight}px`;
+                appElement.style.maxHeight = `${appShellHeight}px`;
             }
 
             if (pocketDockElement) {
@@ -6439,7 +6587,7 @@
                 TARGET_POSITIONS.find(
                     (position) =>
                         TARGET_MAP[position.row][position.col] === colorId &&
-                        boardState[position.row][position.col] === 0
+                        isAvailableTargetCell(position.row, position.col, colorId)
                 ) || null
             );
         }
@@ -6511,8 +6659,57 @@
             return tutorialLayerElement.parentElement.querySelector(`.tray-slot[data-index="${hintState.index}"]`);
         }
 
+        function renderActionOverlay() {
+            if (!actionOverlayState || actionOverlayState.type !== "magic") {
+                return false;
+            }
+
+            const { bounds, sparkRow, sparkCol } = actionOverlayState;
+            const regionCells = getMagicTargetCells(bounds, true)
+                .map((cell) => boardElement.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`))
+                .filter(Boolean);
+
+            if (!regionCells.length) {
+                return false;
+            }
+
+            const stageRect = boardStageElement.getBoundingClientRect();
+            const rects = regionCells.map((cell) => cell.getBoundingClientRect());
+            const minLeft = Math.min(...rects.map((rect) => rect.left));
+            const minTop = Math.min(...rects.map((rect) => rect.top));
+            const maxRight = Math.max(...rects.map((rect) => rect.right));
+            const maxBottom = Math.max(...rects.map((rect) => rect.bottom));
+
+            const focus = document.createElement("div");
+            focus.className = "magic-area-focus";
+            focus.style.left = `${minLeft - stageRect.left - 7}px`;
+            focus.style.top = `${minTop - stageRect.top - 7}px`;
+            focus.style.width = `${maxRight - minLeft + 14}px`;
+            focus.style.height = `${maxBottom - minTop + 14}px`;
+            tutorialLayerElement.append(focus);
+
+            if (sparkRow != null && sparkCol != null) {
+                const sparkTarget = boardElement.querySelector(`[data-row="${sparkRow}"][data-col="${sparkCol}"]`);
+                if (sparkTarget) {
+                    const sparkRect = sparkTarget.getBoundingClientRect();
+                    const spark = document.createElement("div");
+                    spark.className = "magic-area-spark";
+                    spark.textContent = "✦";
+                    spark.style.left = `${sparkRect.right - stageRect.left - 2}px`;
+                    spark.style.top = `${sparkRect.bottom - stageRect.top + 2}px`;
+                    tutorialLayerElement.append(spark);
+                }
+            }
+
+            return true;
+        }
+
         function renderTutorialOverlay() {
             tutorialLayerElement.innerHTML = "";
+
+            if (renderActionOverlay()) {
+                return;
+            }
 
             const hintState = getTutorialHintState();
             if (!hintState) {
@@ -6545,7 +6742,7 @@
         }
 
         function scheduleTutorialOverlayRender() {
-            if (!isTutorialMap()) {
+            if (!isTutorialMap() && !actionOverlayState) {
                 clearTutorialOverlay();
                 return;
             }
@@ -6565,6 +6762,7 @@
             updateResponsiveLayout();
             renderBoard();
             renderTrays();
+            updateActionButtonState();
             scheduleTutorialOverlayRender();
         }
 
@@ -6680,6 +6878,296 @@
                 return createBoardSelection(nextSelection.cells, nextSelection.anchor, nextSelection.color, includeEmpty);
             }
             return createTraySelection(nextSelection.indices, nextSelection.anchor, nextSelection.color, includeEmpty);
+        }
+
+        function getMagicBounds(startRow, startCol) {
+            const maxRowStart = Math.max(0, ROWS - MAGIC_AREA_SIZE);
+            const maxColStart = Math.max(0, COLS - MAGIC_AREA_SIZE);
+            const resolvedRowStart = Math.max(0, Math.min(startRow, maxRowStart));
+            const resolvedColStart = Math.max(0, Math.min(startCol, maxColStart));
+
+            return {
+                startRow: resolvedRowStart,
+                endRow: Math.min(ROWS - 1, resolvedRowStart + MAGIC_AREA_SIZE - 1),
+                startCol: resolvedColStart,
+                endCol: Math.min(COLS - 1, resolvedColStart + MAGIC_AREA_SIZE - 1)
+            };
+        }
+
+        function getMagicTargetCells(bounds, includeCompleted = false) {
+            const centerRow = (bounds.startRow + bounds.endRow) / 2;
+            const centerCol = (bounds.startCol + bounds.endCol) / 2;
+
+            return TARGET_POSITIONS
+                .filter((position) => {
+                    if (
+                        position.row < bounds.startRow ||
+                        position.row > bounds.endRow ||
+                        position.col < bounds.startCol ||
+                        position.col > bounds.endCol
+                    ) {
+                        return false;
+                    }
+
+                    return includeCompleted || !isCompletedTargetCell(position.row, position.col);
+                })
+                .map((position) => ({
+                    row: position.row,
+                    col: position.col,
+                    color: TARGET_MAP[position.row][position.col],
+                    distance: Math.abs(centerRow - position.row) + Math.abs(centerCol - position.col)
+                }))
+                .sort((left, right) => left.distance - right.distance || left.row - right.row || left.col - right.col);
+        }
+
+        function getMovableGemCounts() {
+            const counts = new Map();
+
+            const addCount = (colorId) => {
+                if (!colorId) {
+                    return;
+                }
+
+                counts.set(colorId, (counts.get(colorId) || 0) + 1);
+            };
+
+            trayState.forEach((gem) => {
+                addCount(gem);
+            });
+
+            TARGET_POSITIONS.forEach((position) => {
+                const gem = boardState[position.row][position.col];
+                if (!gem || isLockedCorrectGem(position.row, position.col)) {
+                    return;
+                }
+
+                addCount(gem);
+            });
+
+            return counts;
+        }
+
+        function scoreMagicRegion(bounds, movableCounts) {
+            const neededByColor = new Map();
+            const targetCells = getMagicTargetCells(bounds);
+
+            targetCells.forEach((cell) => {
+                neededByColor.set(cell.color, (neededByColor.get(cell.color) || 0) + 1);
+            });
+
+            const fixableCount = [...neededByColor.entries()].reduce((total, [colorId, count]) => {
+                return total + Math.min(count, movableCounts.get(colorId) || 0);
+            }, 0);
+
+            return {
+                unresolvedCount: targetCells.length,
+                fixableCount
+            };
+        }
+
+        function findBestMagicRegion() {
+            const movableCounts = getMovableGemCounts();
+            const boardCenterRow = (ROWS - 1) / 2;
+            const boardCenterCol = (COLS - 1) / 2;
+            const maxRowStart = Math.max(0, ROWS - MAGIC_AREA_SIZE);
+            const maxColStart = Math.max(0, COLS - MAGIC_AREA_SIZE);
+            let bestRegion = null;
+
+            for (let startRow = 0; startRow <= maxRowStart; startRow += 1) {
+                for (let startCol = 0; startCol <= maxColStart; startCol += 1) {
+                    const bounds = getMagicBounds(startRow, startCol);
+                    const score = scoreMagicRegion(bounds, movableCounts);
+
+                    if (score.fixableCount <= 0 || score.unresolvedCount <= 0) {
+                        continue;
+                    }
+
+                    const centerDistance =
+                        Math.abs((bounds.startRow + bounds.endRow) / 2 - boardCenterRow) +
+                        Math.abs((bounds.startCol + bounds.endCol) / 2 - boardCenterCol);
+
+                    const shouldReplace =
+                        !bestRegion ||
+                        score.fixableCount > bestRegion.fixableCount ||
+                        (score.fixableCount === bestRegion.fixableCount &&
+                            score.unresolvedCount > bestRegion.unresolvedCount) ||
+                        (score.fixableCount === bestRegion.fixableCount &&
+                            score.unresolvedCount === bestRegion.unresolvedCount &&
+                            centerDistance < bestRegion.centerDistance);
+
+                    if (shouldReplace) {
+                        bestRegion = {
+                            ...bounds,
+                            ...score,
+                            centerDistance
+                        };
+                    }
+                }
+            }
+
+            return bestRegion;
+        }
+
+        function findMagicSourceForCell(colorId, targetRow, targetCol) {
+            const trayIndex = trayState.findIndex((gem) => gem === colorId);
+            if (trayIndex !== -1) {
+                return {
+                    type: "tray",
+                    index: trayIndex
+                };
+            }
+
+            let bestBoardSource = null;
+
+            TARGET_POSITIONS.forEach((position) => {
+                if (
+                    boardState[position.row][position.col] !== colorId ||
+                    isLockedCorrectGem(position.row, position.col) ||
+                    (position.row === targetRow && position.col === targetCol)
+                ) {
+                    return;
+                }
+
+                const distance = Math.abs(position.row - targetRow) + Math.abs(position.col - targetCol);
+                if (!bestBoardSource || distance < bestBoardSource.distance) {
+                    bestBoardSource = {
+                        type: "board",
+                        row: position.row,
+                        col: position.col,
+                        distance
+                    };
+                }
+            });
+
+            return bestBoardSource;
+        }
+
+        function applyMagicPlacement(source, targetCell) {
+            const displacedGem = boardState[targetCell.row][targetCell.col];
+
+            if (source.type === "tray") {
+                trayState[source.index] = displacedGem || 0;
+            } else {
+                boardState[source.row][source.col] = displacedGem || 0;
+            }
+
+            boardState[targetCell.row][targetCell.col] = targetCell.color;
+            markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+        }
+
+        async function useMagicAction() {
+            if (solved || isAnimating || isStageTransitioning) {
+                return;
+            }
+
+            if (actionCharges.magic <= 0) {
+                setStatus("매직 사용 횟수를 모두 썼어요.");
+                return;
+            }
+
+            const bestRegion = findBestMagicRegion();
+            if (!bestRegion) {
+                setStatus("매직으로 자동 정렬할 영역을 찾지 못했어요.");
+                return;
+            }
+
+            const targetCells = getMagicTargetCells(bestRegion);
+            let fixedCount = 0;
+
+            selected = null;
+            isAnimating = true;
+            setActionOverlay({
+                type: "magic",
+                bounds: bestRegion
+            });
+            render();
+            await sleep(120);
+
+            for (let index = 0; index < targetCells.length; index += 1) {
+                const targetCell = targetCells[index];
+                const source = findMagicSourceForCell(targetCell.color, targetCell.row, targetCell.col);
+
+                if (!source) {
+                    continue;
+                }
+
+                applyMagicPlacement(source, targetCell);
+                fixedCount += 1;
+                setActionOverlay({
+                    type: "magic",
+                    bounds: bestRegion,
+                    sparkRow: targetCell.row,
+                    sparkCol: targetCell.col
+                });
+                render();
+                void playPlaceSound();
+
+                if (index < targetCells.length - 1) {
+                    await sleep(34);
+                }
+            }
+
+            isAnimating = false;
+
+            if (!fixedCount) {
+                setActionOverlay(null);
+                render();
+                setStatus("매직으로 바로 맞출 수 있는 보석이 없어요.");
+                return;
+            }
+
+            actionCharges.magic = Math.max(0, actionCharges.magic - 1);
+            await sleep(120);
+            setActionOverlay(null);
+            commitMove(`매직으로 선택된 영역의 보석 ${fixedCount}개를 자동으로 맞췄어요.`, fixedCount, false, null);
+        }
+
+        function getCleanableSocketCells() {
+            return TARGET_POSITIONS
+                .filter(
+                    (position) =>
+                        !isCleanedSocketCell(position.row, position.col) &&
+                        boardState[position.row][position.col] !== 0 &&
+                        boardState[position.row][position.col] === TARGET_MAP[position.row][position.col]
+                )
+                .sort((left, right) => left.row - right.row || left.col - right.col);
+        }
+
+        async function useCleanAction() {
+            if (solved || isAnimating || isStageTransitioning) {
+                return;
+            }
+
+            if (actionCharges.clean <= 0) {
+                setStatus("클린 사용 횟수를 모두 썼어요.");
+                return;
+            }
+
+            const cleanableCells = getCleanableSocketCells();
+            if (!cleanableCells.length) {
+                setStatus("정리할 소켓 보석이 아직 없어요.");
+                return;
+            }
+
+            actionCharges.clean = Math.max(0, actionCharges.clean - 1);
+            isAnimating = true;
+            selected = null;
+
+            for (let index = 0; index < cleanableCells.length; index += 1) {
+                const cell = cleanableCells[index];
+                cleanedSocketCells.add(toCellKey(cell.row, cell.col));
+                boardState[cell.row][cell.col] = 0;
+                markCorrectPlacementSparkle(cell.row, cell.col);
+                render();
+                void playPlaceSound();
+
+                if (index < cleanableCells.length - 1) {
+                    await sleep(14);
+                }
+            }
+
+            isAnimating = false;
+            commitMove(`소켓에 맞춘 보석 ${cleanableCells.length}개를 한 번에 정리했어요.`, cleanableCells.length, false, null);
         }
 
         function findTrayClusterPlacement(indices, targetIndex) {
@@ -7157,6 +7645,9 @@
             clearStageClearTimers();
             boardState = createBoardState();
             trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
+            cleanedSocketCells = new Set();
+            actionCharges = { ...DEFAULT_ACTION_CHARGES };
+            actionOverlayState = null;
             clearSparkles();
             clearCelebrationTimers();
             resetBoardTransform();
