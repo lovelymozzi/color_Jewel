@@ -3538,7 +3538,7 @@
         });
         const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
         const TOUCH_TAP_GUARD_MS = 520;
-        const SOUND_VOLUME_MULTIPLIER = 2.3;
+        const SOUND_VOLUME_MULTIPLIER = 5.4;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const appElement = document.querySelector(".app");
         const boardWrapElement = document.querySelector(".board-wrap");
@@ -5386,9 +5386,24 @@
 
         function getAudioContext() {
             if (!AudioContextClass) return null;
-            if (!audioContext) {
+            if (!audioContext || audioContext.state === "closed") {
                 audioContext = new AudioContextClass();
+                audioNoiseBuffer = null;
             }
+            return audioContext;
+        }
+
+        function recreateAudioContext() {
+            if (!AudioContextClass) {
+                return null;
+            }
+
+            try {
+                audioContext?.close?.();
+            } catch (error) {}
+
+            audioContext = new AudioContextClass();
+            audioNoiseBuffer = null;
             return audioContext;
         }
 
@@ -5408,16 +5423,60 @@
         }
 
         async function ensureAudioContext() {
-            const context = getAudioContext();
+            let context = getAudioContext();
             if (!context) return null;
 
-            if (context.state === "suspended") {
+            if (context.state !== "running") {
+                try {
+                    await context.resume();
+                } catch (error) {}
+            }
+
+            if (context.state !== "running") {
+                context = recreateAudioContext();
+                if (!context) {
+                    return null;
+                }
+
                 try {
                     await context.resume();
                 } catch (error) {
                     return null;
                 }
             }
+
+            return context.state === "running" ? context : null;
+        }
+
+        function primeAudioContextSync() {
+            const context = getAudioContext();
+            if (!context) {
+                return null;
+            }
+
+            if (context.state !== "running") {
+                try {
+                    const resumeResult = context.resume?.();
+                    resumeResult?.catch?.(() => {});
+                } catch (error) {}
+            }
+
+            try {
+                const gain = context.createGain();
+                const oscillator = context.createOscillator();
+                const startTime = Math.max(context.currentTime, 0) + 0.001;
+                gain.gain.value = 0.00001;
+                oscillator.type = "sine";
+                oscillator.frequency.value = 440;
+                oscillator.connect(gain);
+                gain.connect(context.destination);
+                oscillator.onended = () => {
+                    oscillator.disconnect();
+                    gain.disconnect();
+                };
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.006);
+            } catch (error) {}
 
             return context;
         }
@@ -5456,6 +5515,11 @@
             filter.connect(gain);
             gain.connect(context.destination);
 
+            oscillator.onended = () => {
+                oscillator.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            };
             oscillator.start(startTime);
             oscillator.stop(endTime + 0.02);
         }
@@ -5488,11 +5552,22 @@
             filter.connect(gain);
             gain.connect(context.destination);
 
+            source.onended = () => {
+                source.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            };
             source.start(startTime);
             source.stop(endTime + 0.01);
         }
 
+        function queueAudioContextWarmup() {
+            primeAudioContextSync();
+            void ensureAudioContext();
+        }
+
         async function playPickupSound(clusterSize = 1) {
+            primeAudioContextSync();
             const context = await ensureAudioContext();
             if (!context) return;
 
@@ -5522,6 +5597,7 @@
         }
 
         async function playPlaceSound(clusterSize = 1) {
+            primeAudioContextSync();
             const context = await ensureAudioContext();
             if (!context) return;
 
@@ -5601,12 +5677,12 @@
         }
 
         function triggerButtonPressSound() {
-            const context = getAudioContext();
+            const context = primeAudioContextSync();
             if (!context) {
                 return;
             }
 
-            if (context.state === "suspended") {
+            if (context.state !== "running") {
                 context.resume()
                     .then(() => {
                         if (context.state === "running") {
@@ -5621,6 +5697,7 @@
         }
 
         async function playColorCompleteSound(startDelayMs = 0) {
+            primeAudioContextSync();
             const context = await ensureAudioContext();
             if (!context) return;
 
@@ -5661,6 +5738,7 @@
         }
 
         async function playFireworkBurstSound(startDelayMs = 0, accent = 0) {
+            primeAudioContextSync();
             const context = await ensureAudioContext();
             if (!context) return;
 
@@ -6272,8 +6350,21 @@
             return region;
         }
 
-        function getConnectedEmptyTargetRegion(startRow, startCol, colorId) {
-            if (!isAvailableTargetCell(startRow, startCol, colorId)) {
+        function isAvailableTargetCellForRegion(row, col, colorId, extraAvailableKeys = null) {
+            const key = toCellKey(row, col);
+            if (!TARGET_MAP[row]?.[col] || TARGET_MAP[row][col] !== colorId || isCleanedSocketCell(row, col)) {
+                return false;
+            }
+
+            if (extraAvailableKeys?.has(key)) {
+                return true;
+            }
+
+            return isAvailableTargetCell(row, col, colorId);
+        }
+
+        function getConnectedEmptyTargetRegion(startRow, startCol, colorId, extraAvailableKeys = null) {
+            if (!isAvailableTargetCellForRegion(startRow, startCol, colorId, extraAvailableKeys)) {
                 return [];
             }
 
@@ -6298,7 +6389,7 @@
                         nextCol < 0 ||
                         nextCol >= COLS ||
                         visited.has(key) ||
-                        !isAvailableTargetCell(nextRow, nextCol, colorId)
+                        !isAvailableTargetCellForRegion(nextRow, nextCol, colorId, extraAvailableKeys)
                     ) {
                         return;
                     }
@@ -6332,8 +6423,8 @@
             return translatedCells.every((cell) => regionKeySet.has(toCellKey(cell.row, cell.col)));
         }
 
-        function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId) {
-            const connectedEmptyRegion = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
+        function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId, extraAvailableKeys = null) {
+            const connectedEmptyRegion = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId, extraAvailableKeys);
             const regionKeySet = new Set(
                 connectedEmptyRegion.map((cell) => toCellKey(cell.row, cell.col))
             );
@@ -6381,8 +6472,8 @@
             return bestPlacement;
         }
 
-        function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId) {
-            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
+        function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId, extraAvailableKeys = null) {
+            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId, extraAvailableKeys);
             if (regionCells.length < cells.length) {
                 return null;
             }
@@ -6392,8 +6483,8 @@
                 .map(({ row, col }) => ({ row, col }));
         }
 
-        function findPartialColorSlotPlacement(count, targetRow, targetCol, colorId) {
-            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
+        function findPartialColorSlotPlacement(count, targetRow, targetCol, colorId, extraAvailableKeys = null) {
+            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId, extraAvailableKeys);
             const availableCells = regionCells
                 .slice(0, count)
                 .map(({ row, col }) => ({ row, col }));
@@ -6615,15 +6706,17 @@
 
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
+            cells.forEach((cell) => {
+                boardState[cell.row][cell.col] = 0;
+            });
+            render();
 
             for (let index = 0; index < cells.length; index += 1) {
                 if (!isCurrentGameSession(sessionVersion)) {
                     return;
                 }
 
-                const sourceCell = cells[index];
                 const targetCell = targetCells[index];
-                boardState[sourceCell.row][sourceCell.col] = 0;
                 boardState[targetCell.row][targetCell.col] = gems[index];
                 markCorrectPlacementSparkle(targetCell.row, targetCell.col);
                 render();
@@ -7466,6 +7559,8 @@
         }
 
         window.addEventListener("keydown", (event) => {
+            queueAudioContextWarmup();
+
             if (event.repeat) {
                 return;
             }
@@ -7496,6 +7591,24 @@
             if (event.shiftKey && event.code === "KeyA") {
                 event.preventDefault();
                 togglePixelAdmin();
+            }
+        });
+
+        window.addEventListener("pointerdown", () => {
+            queueAudioContextWarmup();
+        }, { passive: true });
+
+        window.addEventListener("touchstart", () => {
+            queueAudioContextWarmup();
+        }, { passive: true });
+
+        window.addEventListener("pageshow", () => {
+            queueAudioContextWarmup();
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                queueAudioContextWarmup();
             }
         });
 
@@ -8488,20 +8601,129 @@
                         return;
                     }
 
-                    if (!gem && canPlaceBoardCluster(activeSelection.cells, activeSelection.anchor, row, col, activeSelection.color)) {
-                        const translatedCells = getTranslatedCells(activeSelection.cells, activeSelection.anchor, row, col);
-                        const nextSelection = createBoardSelection(translatedCells, { row, col }, activeSelection.color, true);
-                        await animateBoardClusterMove(activeSelection.cells, activeSelection.anchor, row, col, nextSelection);
-                        commitMove(
-                            "인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.",
-                            activeSelection.cells.length,
-                            false,
-                            nextSelection
-                        );
-                        return;
-                    }
-
                     if (!gem) {
+                        const sourceCellKeys = new Set(
+                            activeSelection.cells.map((cell) => toCellKey(cell.row, cell.col))
+                        );
+                        const nearestSlots = findNearestColorSlotPlacement(
+                            activeSelection.cells,
+                            row,
+                            col,
+                            activeSelection.color,
+                            sourceCellKeys
+                        );
+                        if (nearestSlots) {
+                            const nextSelection = createBoardSelection(
+                                nearestSlots,
+                                mapBoardAnchor(activeSelection.cells, nearestSlots, activeSelection.anchor),
+                                activeSelection.color,
+                                true
+                            );
+                            await animateBoardClusterToBoardSlots(activeSelection.cells, nearestSlots, nextSelection);
+                            commitMove(
+                                "클릭한 칸부터 연결된 빈칸 순서로 묶음 보석을 채웠어요.",
+                                activeSelection.cells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
+                        const partialSlots = findPartialColorSlotPlacement(
+                            activeSelection.cells.length,
+                            row,
+                            col,
+                            activeSelection.color,
+                            sourceCellKeys
+                        );
+                        if (partialSlots) {
+                            const prioritizedCells = prioritizeBoardCells(activeSelection.cells, activeSelection.anchor);
+                            const movableCells = prioritizedCells.slice(0, partialSlots.length);
+                            const movedCellKeys = new Set(movableCells.map((cell) => toCellKey(cell.row, cell.col)));
+                            const remainingCells = activeSelection.cells.filter(
+                                (cell) => !movedCellKeys.has(toCellKey(cell.row, cell.col))
+                            );
+                            const nextSelection = createBoardSelection(
+                                remainingCells,
+                                activeSelection.anchor,
+                                activeSelection.color
+                            );
+                            await animateBoardClusterToBoardSlots(movableCells, partialSlots, nextSelection);
+                            commitMove(
+                                `연결된 빈칸에 보석 ${movableCells.length}개를 먼저 이어서 채웠어요.`,
+                                movableCells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
+                        if (canPlaceBoardCluster(activeSelection.cells, activeSelection.anchor, row, col, activeSelection.color)) {
+                            const translatedCells = getTranslatedCells(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                row,
+                                col
+                            );
+                            const nextSelection = createBoardSelection(
+                                translatedCells,
+                                { row, col },
+                                activeSelection.color,
+                                true
+                            );
+                            await animateBoardClusterMove(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                row,
+                                col,
+                                nextSelection
+                            );
+                            commitMove(
+                                "인접한 같은 색 보석 묶음을 한꺼번에 옮겼어요.",
+                                activeSelection.cells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
+                        const nearestPlacement = findNearestBoardClusterPlacement(
+                            activeSelection.cells,
+                            activeSelection.anchor,
+                            row,
+                            col,
+                            activeSelection.color,
+                            sourceCellKeys
+                        );
+                        if (nearestPlacement) {
+                            const translatedCells = getTranslatedCells(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                nearestPlacement.row,
+                                nearestPlacement.col
+                            );
+                            const nextSelection = createBoardSelection(
+                                translatedCells,
+                                { row: nearestPlacement.row, col: nearestPlacement.col },
+                                activeSelection.color,
+                                true
+                            );
+                            await animateBoardClusterMove(
+                                activeSelection.cells,
+                                activeSelection.anchor,
+                                nearestPlacement.row,
+                                nearestPlacement.col,
+                                nextSelection
+                            );
+                            commitMove(
+                                "클릭한 연결 영역 안으로 묶음 보석을 이어서 옮겼어요.",
+                                activeSelection.cells.length,
+                                false,
+                                nextSelection
+                            );
+                            return;
+                        }
+
                         const anchorCell =
                             activeSelection.cells.find(
                                 (cell) => cell.row === activeSelection.anchor.row && cell.col === activeSelection.anchor.col
@@ -8570,6 +8792,45 @@
             }
 
             if (trayIndices.length > 1) {
+                const nearestSlots = findNearestColorSlotPlacement(trayIndices, row, col, trayGem);
+                if (nearestSlots) {
+                    const nextSelection = createBoardSelection(
+                        nearestSlots,
+                        mapBoardAnchor(
+                            trayIndices.map((index) => ({ row: 0, col: index })),
+                            nearestSlots,
+                            { row: 0, col: activeSelection.anchor }
+                        ),
+                        trayGem,
+                        true
+                    );
+                    await animateTrayClusterToBoardSlots(trayIndices, nearestSlots, nextSelection);
+                    commitMove(
+                        "포켓 묶음을 클릭한 칸부터 연결된 빈칸 순서로 채웠어요.",
+                        trayIndices.length,
+                        false,
+                        nextSelection
+                    );
+                    return;
+                }
+
+                const partialSlots = findPartialColorSlotPlacement(trayIndices.length, row, col, trayGem);
+                if (partialSlots) {
+                    const prioritizedTrayIndices = prioritizeTrayIndices(trayIndices, activeSelection.anchor);
+                    const movableTrayIndices = prioritizedTrayIndices.slice(0, partialSlots.length);
+                    const movedTrayIndexSet = new Set(movableTrayIndices);
+                    const remainingTrayIndices = trayIndices.filter((index) => !movedTrayIndexSet.has(index));
+                    const nextSelection = createTraySelection(remainingTrayIndices, activeSelection.anchor, trayGem);
+                    await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots, nextSelection);
+                    commitMove(
+                        `포켓의 보석 ${movableTrayIndices.length}개를 연결된 빈칸에 먼저 채웠어요.`,
+                        movableTrayIndices.length,
+                        false,
+                        nextSelection
+                    );
+                    return;
+                }
+
                 const anchorTrayIndex =
                     trayIndices.find((index) => index === activeSelection.anchor) ?? trayIndices[0] ?? null;
                 if (anchorTrayIndex != null) {
