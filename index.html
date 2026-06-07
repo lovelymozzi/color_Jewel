@@ -5090,6 +5090,13 @@
             );
         }
 
+        function isCompletedTargetCellInBoard(boardSnapshot, row, col) {
+            return Boolean(TARGET_MAP[row][col]) && (
+                isCleanedSocketCell(row, col) ||
+                (boardSnapshot[row][col] !== 0 && boardSnapshot[row][col] === TARGET_MAP[row][col])
+            );
+        }
+
         function isAvailableTargetCell(row, col, colorId = null) {
             if (!TARGET_MAP[row][col] || isCleanedSocketCell(row, col) || boardState[row][col] !== 0) {
                 return false;
@@ -7354,39 +7361,6 @@
                 .sort((left, right) => left.distance - right.distance || left.row - right.row || left.col - right.col);
         }
 
-        function addMagicPoolCount(pool, colorId) {
-            pool.set(colorId, (pool.get(colorId) || 0) + 1);
-        }
-
-        function consumeMagicPoolCount(pool, colorId) {
-            const nextCount = pool.get(colorId) || 0;
-            if (nextCount <= 0) {
-                return false;
-            }
-
-            if (nextCount === 1) {
-                pool.delete(colorId);
-            } else {
-                pool.set(colorId, nextCount - 1);
-            }
-
-            return true;
-        }
-
-        function takeMagicPoolColor(pool, preferredColor = null) {
-            if (preferredColor != null && consumeMagicPoolCount(pool, preferredColor)) {
-                return preferredColor;
-            }
-
-            for (const [colorId] of pool.entries()) {
-                if (consumeMagicPoolCount(pool, colorId)) {
-                    return colorId;
-                }
-            }
-
-            return null;
-        }
-
         function getTraySlotElement(index) {
             return document.querySelector(`.tray-slot[data-index="${index}"]`);
         }
@@ -7457,21 +7431,20 @@
             }
         }
 
-        function findCurrentMagicSourceForCell(colorId, targetRow, targetCol, targetKeySet, resolvedTargetKeys) {
-            const trayIndex = trayState.findIndex((gem) => gem === colorId);
-            if (trayIndex !== -1) {
-                return {
-                    type: "tray",
-                    index: trayIndex,
-                    priority: 0,
-                    distance: 0
-                };
-            }
-
+        function findMagicSourceForCellInState(
+            boardSnapshot,
+            traySnapshot,
+            colorId,
+            targetRow,
+            targetCol,
+            targetKeySet,
+            resolvedTargetKeys
+        ) {
             let bestBoardSource = null;
+            const trayIndex = traySnapshot.findIndex((gem) => gem === colorId);
 
             TARGET_POSITIONS.forEach((position) => {
-                if (boardState[position.row][position.col] !== colorId) {
+                if (boardSnapshot[position.row][position.col] !== colorId) {
                     return;
                 }
 
@@ -7482,16 +7455,21 @@
                 const sourceKey = toCellKey(position.row, position.col);
                 const isTargetCell = targetKeySet.has(sourceKey);
                 const isResolvedTarget = resolvedTargetKeys.has(sourceKey);
-                const sourceIsCompleted = isCompletedTargetCell(position.row, position.col);
+                const sourceIsCompleted = isCompletedTargetCellInBoard(boardSnapshot, position.row, position.col);
+                if (isTargetCell && isResolvedTarget) {
+                    return;
+                }
+
                 if (sourceIsCompleted && !isTargetCell) {
                     return;
                 }
+
                 const distance = Math.abs(position.row - targetRow) + Math.abs(position.col - targetCol);
                 const priority =
                     !isTargetCell ? 0 :
-                    !isResolvedTarget ? 1 :
-                    sourceIsCompleted ? 3 :
-                    2;
+                    !isResolvedTarget ? 3 :
+                    sourceIsCompleted ? 5 :
+                    4;
 
                 if (
                     !bestBoardSource ||
@@ -7508,68 +7486,128 @@
                 }
             });
 
-            return bestBoardSource;
+            if (bestBoardSource) {
+                return bestBoardSource;
+            }
+
+            if (trayIndex !== -1) {
+                return {
+                    type: "tray",
+                    index: trayIndex,
+                    priority: 2,
+                    distance: 0
+                };
+            }
+
+            return null;
+        }
+
+        function findCurrentMagicSourceForCell(colorId, targetRow, targetCol, targetKeySet, resolvedTargetKeys) {
+            return findMagicSourceForCellInState(
+                boardState,
+                trayState,
+                colorId,
+                targetRow,
+                targetCol,
+                targetKeySet,
+                resolvedTargetKeys
+            );
+        }
+
+        function applyMagicPlacementToState(boardSnapshot, traySnapshot, source, targetCell, colorId) {
+            const displacedGem = boardSnapshot[targetCell.row][targetCell.col];
+
+            if (source.type === "tray") {
+                traySnapshot[source.index] = displacedGem || 0;
+            } else {
+                boardSnapshot[source.row][source.col] = displacedGem || 0;
+            }
+
+            boardSnapshot[targetCell.row][targetCell.col] = colorId;
         }
 
         function applyCurrentMagicPlacement(source, targetCell, colorId) {
-            const displacedGem = boardState[targetCell.row][targetCell.col];
+            applyMagicPlacementToState(boardState, trayState, source, targetCell, colorId);
+        }
 
-            if (source.type === "tray") {
-                trayState[source.index] = displacedGem || 0;
-            } else {
-                boardState[source.row][source.col] = displacedGem || 0;
+        function refillMagicUsedTraySlots(boardSnapshot, traySnapshot, targetKeySet, consumedTrayIndices) {
+            if (!consumedTrayIndices.size) {
+                return;
             }
 
-            boardState[targetCell.row][targetCell.col] = colorId;
+            const refillCandidates = TARGET_POSITIONS.filter((position) => {
+                if (targetKeySet.has(toCellKey(position.row, position.col))) {
+                    return false;
+                }
+
+                if (isCleanedSocketCell(position.row, position.col)) {
+                    return false;
+                }
+
+                if ((boardSnapshot[position.row][position.col] || 0) === 0) {
+                    return false;
+                }
+
+                return !isCompletedTargetCellInBoard(boardSnapshot, position.row, position.col);
+            });
+
+            consumedTrayIndices.forEach((trayIndex) => {
+                if ((traySnapshot[trayIndex] || 0) !== 0) {
+                    return;
+                }
+
+                const source = refillCandidates.find(
+                    (position) => (boardSnapshot[position.row][position.col] || 0) !== 0
+                );
+                if (!source) {
+                    return;
+                }
+
+                traySnapshot[trayIndex] = boardSnapshot[source.row][source.col] || 0;
+                boardSnapshot[source.row][source.col] = 0;
+            });
         }
 
         function computeMagicArrangement(bounds) {
             const targetCells = getMagicTargetCells(bounds, true)
                 .filter((cell) => !isCleanedSocketCell(cell.row, cell.col));
             const selectedKeySet = new Set(targetCells.map((cell) => toCellKey(cell.row, cell.col)));
-            const mutableBoardCells = TARGET_POSITIONS.filter(
-                (position) => {
-                    if (isCleanedSocketCell(position.row, position.col)) {
-                        return false;
-                    }
-
-                    const cellKey = toCellKey(position.row, position.col);
-                    return selectedKeySet.has(cellKey) || !isCompletedTargetCell(position.row, position.col);
-                }
-            );
-            const otherBoardCells = mutableBoardCells.filter(
-                (position) => !selectedKeySet.has(toCellKey(position.row, position.col))
-            );
-            const colorPool = new Map();
-
-            mutableBoardCells.forEach((position) => {
-                addMagicPoolCount(colorPool, boardState[position.row][position.col] || 0);
-            });
-            trayState.forEach((gem) => {
-                addMagicPoolCount(colorPool, gem || 0);
-            });
-
-            for (const cell of targetCells) {
-                if (!consumeMagicPoolCount(colorPool, cell.color)) {
-                    return null;
-                }
-            }
-
             const nextBoardState = boardState.map((row) => [...row]);
             const nextTrayState = [...trayState];
+            const resolvedTargetKeys = new Set(
+                targetCells
+                    .filter((cell) => nextBoardState[cell.row][cell.col] === cell.color)
+                    .map((cell) => toCellKey(cell.row, cell.col))
+            );
+            const consumedTrayIndices = new Set();
 
-            targetCells.forEach((cell) => {
-                nextBoardState[cell.row][cell.col] = cell.color;
-            });
+            for (const cell of targetCells) {
+                const cellKey = toCellKey(cell.row, cell.col);
+                if (resolvedTargetKeys.has(cellKey)) {
+                    continue;
+                }
 
-            otherBoardCells.forEach((position) => {
-                const currentColor = boardState[position.row][position.col] || 0;
-                nextBoardState[position.row][position.col] = takeMagicPoolColor(colorPool, currentColor) ?? 0;
-            });
+                const source = findMagicSourceForCellInState(
+                    nextBoardState,
+                    nextTrayState,
+                    cell.color,
+                    cell.row,
+                    cell.col,
+                    selectedKeySet,
+                    resolvedTargetKeys
+                );
+                if (!source) {
+                    return null;
+                }
 
-            trayState.forEach((gem, index) => {
-                nextTrayState[index] = takeMagicPoolColor(colorPool, gem || 0) ?? 0;
-            });
+                if (source.type === "tray") {
+                    consumedTrayIndices.add(source.index);
+                }
+                applyMagicPlacementToState(nextBoardState, nextTrayState, source, cell, cell.color);
+                resolvedTargetKeys.add(cellKey);
+            }
+
+            refillMagicUsedTraySlots(nextBoardState, nextTrayState, selectedKeySet, consumedTrayIndices);
 
             return {
                 targetCells,
@@ -7593,7 +7631,11 @@
             );
             const magicFlightDurationMs = getMagicFlightDurationMs(changedTargetCells.length);
             const targetKeySet = new Set(targetCells.map((cell) => toCellKey(cell.row, cell.col)));
-            const resolvedTargetKeys = new Set();
+            const resolvedTargetKeys = new Set(
+                targetCells
+                    .filter((cell) => boardState[cell.row][cell.col] === cell.color)
+                    .map((cell) => toCellKey(cell.row, cell.col))
+            );
 
             selected = null;
             isAnimating = true;
