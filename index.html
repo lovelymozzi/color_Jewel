@@ -1696,9 +1696,9 @@
                     <span class="button-badge" aria-hidden="true">5</span>
                     <span class="sr-only">영역 맞춤</span>
                 </button>
-                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="소켓 정리" title="소켓 정리">
+                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="빗자루" title="빗자루">
                     <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">소켓 정리</span>
+                    <span class="sr-only">빗자루</span>
                 </button>
                 <button class="pocket-action-button has-icon icon-rock" id="bottomActionButton3" type="button" aria-label="액션 버튼 3" title="액션 버튼 3">
                     <span class="sr-only">액션 버튼 3</span>
@@ -5053,7 +5053,7 @@
                     button: bottomActionButton2Element,
                     badge: bottomActionButton2BadgeElement,
                     count: actionCharges.clean,
-                    label: "소켓 정리",
+                    label: "빗자루",
                     armed: false
                 }
             ];
@@ -6106,6 +6106,110 @@
                 .map(({ row, col }) => ({ row, col }));
 
             return availableCells.length ? availableCells : null;
+        }
+
+        function findBroomTargetCellInBoard(boardSnapshot, colorId) {
+            const candidates = TARGET_POSITIONS
+                .filter((position) =>
+                    TARGET_MAP[position.row][position.col] === colorId &&
+                    !isCleanedSocketCell(position.row, position.col) &&
+                    (boardSnapshot[position.row][position.col] || 0) !== colorId
+                )
+                .map((position) => ({
+                    row: position.row,
+                    col: position.col,
+                    isEmpty: (boardSnapshot[position.row][position.col] || 0) === 0
+                }))
+                .sort(
+                    (left, right) =>
+                        Number(right.isEmpty) - Number(left.isEmpty) ||
+                        left.row - right.row ||
+                        left.col - right.col
+                );
+
+            if (!candidates.length) {
+                return null;
+            }
+
+            return {
+                row: candidates[0].row,
+                col: candidates[0].col
+            };
+        }
+
+        function buildBroomMovePlan() {
+            const openedPocketIndices = getOpenedPocketIndexSet();
+            const boardSnapshot = boardState.map((row) => [...row]);
+            const traySnapshot = [...trayState];
+            const trayIndices = [...openedPocketIndices].sort((left, right) => left - right);
+            const steps = [];
+
+            let passMoved = true;
+            let guard = 0;
+            const maxPasses = Math.max(ROWS * COLS, POCKET_SIZE * 2);
+
+            while (passMoved && guard < maxPasses) {
+                passMoved = false;
+
+                trayIndices.forEach((trayIndex) => {
+                    const colorId = traySnapshot[trayIndex] || 0;
+                    if (!colorId) {
+                        return;
+                    }
+
+                    const targetCell = findBroomTargetCellInBoard(boardSnapshot, colorId);
+                    if (!targetCell) {
+                        return;
+                    }
+
+                    const displacedGem = boardSnapshot[targetCell.row][targetCell.col] || 0;
+                    boardSnapshot[targetCell.row][targetCell.col] = colorId;
+                    traySnapshot[trayIndex] = displacedGem;
+                    steps.push({
+                        sourceIndex: trayIndex,
+                        targetCell,
+                        colorId,
+                        displacedGem
+                    });
+                    passMoved = true;
+                });
+
+                guard += 1;
+            }
+
+            return {
+                steps,
+                nextBoardState: boardSnapshot,
+                nextTrayState: traySnapshot
+            };
+        }
+
+        async function animateBroomMoves(steps) {
+            const totalSteps = steps.length;
+            const stepDelayMs = getMagicFlightDurationMs(totalSteps);
+
+            isAnimating = true;
+            selected = null;
+
+            for (let index = 0; index < steps.length; index += 1) {
+                const step = steps[index];
+
+                if (step.displacedGem) {
+                    swapBoardToTray(step.targetCell.row, step.targetCell.col, step.sourceIndex);
+                } else {
+                    moveTrayToBoard(step.sourceIndex, step.targetCell.row, step.targetCell.col);
+                }
+
+                markCorrectPlacementSparkle(step.targetCell.row, step.targetCell.col);
+                render();
+                void playPlaceSound();
+
+                if (index < totalSteps - 1 || totalSteps === 1) {
+                    await sleep(stepDelayMs);
+                }
+            }
+
+            isAnimating = false;
         }
 
         function prioritizeBoardCells(cells, anchor) {
@@ -7782,35 +7886,22 @@
             }
 
             if (actionCharges.clean <= 0) {
-                setStatus("클린 사용 횟수를 모두 썼어요.");
+                setStatus("빗자루 사용 횟수를 모두 썼어요.");
                 return;
             }
 
-            const cleanableCells = getCleanableSocketCells();
-            if (!cleanableCells.length) {
-                setStatus("정리할 소켓 보석이 아직 없어요.");
+            const broomPlan = buildBroomMovePlan();
+            const movedCount = broomPlan.steps.length;
+            if (!movedCount) {
+                setStatus("포켓의 보석으로 맞출 수 있는 칸이 없어요.");
                 return;
             }
 
             actionCharges.clean = Math.max(0, actionCharges.clean - 1);
-            isAnimating = true;
-            selected = null;
-
-            for (let index = 0; index < cleanableCells.length; index += 1) {
-                const cell = cleanableCells[index];
-                cleanedSocketCells.add(toCellKey(cell.row, cell.col));
-                boardState[cell.row][cell.col] = 0;
-                markCorrectPlacementSparkle(cell.row, cell.col);
-                render();
-                void playPlaceSound();
-
-                if (index < cleanableCells.length - 1) {
-                    await sleep(14);
-                }
-            }
-
-            isAnimating = false;
-            commitMove(`소켓에 맞춘 보석 ${cleanableCells.length}개를 한 번에 정리했어요.`, cleanableCells.length, false, null);
+            await animateBroomMoves(broomPlan.steps);
+            boardState = broomPlan.nextBoardState;
+            trayState = broomPlan.nextTrayState;
+            commitMove(`빗자루로 포켓의 보석 ${movedCount}개를 알맞은 칸에 자동 배치했어요.`, movedCount, false, null);
         }
 
         function findTrayClusterPlacement(indices, targetIndex) {
