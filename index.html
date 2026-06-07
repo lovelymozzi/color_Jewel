@@ -1805,6 +1805,7 @@
         <p class="pixel-admin-note" id="pixelAdminMessage">`Shift + A`로 어드민을 열고 닫을 수 있습니다.</p>
     </aside>
 
+    <script src="./sound.js"></script>
     <script>
         const BASE_IMAGE_MAP = [
             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
@@ -2162,29 +2163,6 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
 
-        const BUBBLE_TEA_IMAGE_MAP = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 7, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 7, 2, 2, 7, 2, 2, 2, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 7, 2, 7, 2, 2, 2, 2, 7, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 2, 2, 2, 7, 2, 2, 7, 2, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 2, 7, 2, 7, 2, 2, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
-        ];
-
         const PUPPY_IMAGE_MAP = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -2225,8 +2203,8 @@
             [0, 0, 0, 0, 0, 0, 7, 3, 3, 7, 7, 3, 3, 7, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 3, 7, 7, 3, 3, 7, 7, 3, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 7, 7, 3, 3, 7, 7, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 3, 3, 7, 7, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 3, 7, 7, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 7, 3, 3, 7, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
@@ -2673,31 +2651,6 @@
                 }
             },
             {
-                id: "strawberry",
-                displayName: "버블티",
-                overrideVersion: 4,
-                baseImageMap: BUBBLE_TEA_IMAGE_MAP,
-                scale: 1,
-                startMessageTemplate: "{title} 스테이지예요. 보석을 정리해 컵 안을 채워 보세요.",
-                pocketUnlock: {
-                    initialOpenCount: 12,
-                    completedColorsPerUnlock: 1,
-                    pocketsPerUnlock: 1
-                }
-            },
-            {
-                id: "apple",
-                displayName: "사과",
-                baseImageMap: APPLE_IMAGE_MAP,
-                scale: 1,
-                startMessageTemplate: "{title} 스테이지예요. 같은 색 칸에 보석을 맞춰 보세요.",
-                pocketUnlock: {
-                    initialOpenCount: 12,
-                    completedColorsPerUnlock: 1,
-                    pocketsPerUnlock: 1
-                }
-            },
-            {
                 id: "puppy",
                 displayName: "강아지",
                 overrideVersion: 2,
@@ -2813,6 +2766,7 @@
         const MAX_GRID_COLS = 20;
         const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
         const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
+        const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
 
         function padMapToGrid(sourceMap, rows = MAX_GRID_ROWS, cols = MAX_GRID_COLS) {
@@ -3064,13 +3018,189 @@
             return restoredIndex >= 0 ? restoredIndex : 0;
         }
 
+        function getFirstPlayableMapIndex() {
+            return MAP_DEFINITIONS.length > 1 ? 1 : 0;
+        }
+
         function clearPersistedGameProgress() {
             try {
                 window.sessionStorage.removeItem("color_jewel_game_progress_v1");
+                window.sessionStorage.removeItem(RUNTIME_SNAPSHOT_STORAGE_KEY);
                 return true;
             } catch (error) {
                 return false;
             }
+        }
+
+        function cloneBoardSnapshot(boardSnapshot) {
+            return boardSnapshot.map((row) => [...row]);
+        }
+
+        function getRuntimeSnapshotPayload() {
+            return {
+                version: 1,
+                mapId: ACTIVE_MAP?.id || null,
+                rows: ROWS,
+                cols: COLS,
+                boardState: cloneBoardSnapshot(boardState),
+                trayState: [...trayState],
+                cleanedSocketCells: [...cleanedSocketCells],
+                actionCharges: {
+                    magic: Math.max(0, Number(actionCharges.magic || 0)),
+                    clean: Math.max(0, Number(actionCharges.clean || 0))
+                },
+                moves: Math.max(0, Number(moves || 0))
+            };
+        }
+
+        function persistRuntimeSnapshot() {
+            if (!ACTIVE_MAP || solved || isAnimating || isStageTransitioning) {
+                return false;
+            }
+
+            try {
+                window.sessionStorage.setItem(
+                    RUNTIME_SNAPSHOT_STORAGE_KEY,
+                    JSON.stringify(getRuntimeSnapshotPayload())
+                );
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function clearRuntimeSnapshot() {
+            try {
+                window.sessionStorage.removeItem(RUNTIME_SNAPSHOT_STORAGE_KEY);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function readRuntimeSnapshot() {
+            try {
+                const rawValue = window.sessionStorage.getItem(RUNTIME_SNAPSHOT_STORAGE_KEY);
+                if (!rawValue) {
+                    return null;
+                }
+                return JSON.parse(rawValue);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function isValidSnapshotBoardForConfig(boardSnapshot, config, allowedColorIds) {
+            if (!Array.isArray(boardSnapshot) || boardSnapshot.length !== config.rows) {
+                return false;
+            }
+
+            return boardSnapshot.every((row, rowIndex) => (
+                Array.isArray(row) &&
+                row.length === config.cols &&
+                row.every((cell, colIndex) => {
+                    if (!Number.isInteger(cell) || !allowedColorIds.has(cell)) {
+                        return false;
+                    }
+
+                    if (!config.targetMap[rowIndex][colIndex]) {
+                        return cell === 0;
+                    }
+
+                    return true;
+                })
+            ));
+        }
+
+        function isValidSnapshotTrayForConfig(traySnapshot, allowedColorIds) {
+            return Array.isArray(traySnapshot) &&
+                traySnapshot.length === POCKET_SIZE &&
+                traySnapshot.every((cell) => Number.isInteger(cell) && allowedColorIds.has(cell));
+        }
+
+        function isValidSnapshotGemCounts(boardSnapshot, traySnapshot, config) {
+            const counts = new Map(
+                Object.entries(config.targetColorCounts).map(([colorId]) => [Number(colorId), 0])
+            );
+
+            boardSnapshot.forEach((row) => {
+                row.forEach((cell) => {
+                    if (cell) {
+                        counts.set(cell, (counts.get(cell) || 0) + 1);
+                    }
+                });
+            });
+
+            traySnapshot.forEach((cell) => {
+                if (cell) {
+                    counts.set(cell, (counts.get(cell) || 0) + 1);
+                }
+            });
+
+            return Object.entries(config.targetColorCounts).every(
+                ([colorId, targetCount]) => (counts.get(Number(colorId)) || 0) === targetCount
+            );
+        }
+
+        function normalizeSnapshotCleanedSocketCells(cleanedCells, config) {
+            if (!Array.isArray(cleanedCells)) {
+                return [];
+            }
+
+            const validKeys = new Set(config.targetPositions.map((position) => toCellKey(position.row, position.col)));
+            return cleanedCells.filter((key) => typeof key === "string" && validKeys.has(key));
+        }
+
+        function restoreRuntimeSnapshot() {
+            const snapshot = readRuntimeSnapshot();
+            if (!snapshot || snapshot.version !== 1 || !snapshot.mapId) {
+                return false;
+            }
+
+            const definitionIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === snapshot.mapId);
+            if (definitionIndex < 0) {
+                clearRuntimeSnapshot();
+                return false;
+            }
+
+            const config = buildMapConfig(MAP_DEFINITIONS[definitionIndex]);
+            const allowedColorIds = new Set([0, ...Object.keys(config.targetColorCounts).map(Number)]);
+
+            if (
+                snapshot.rows !== config.rows ||
+                snapshot.cols !== config.cols ||
+                !isValidSnapshotBoardForConfig(snapshot.boardState, config, allowedColorIds) ||
+                !isValidSnapshotTrayForConfig(snapshot.trayState, allowedColorIds) ||
+                !isValidSnapshotGemCounts(snapshot.boardState, snapshot.trayState, config)
+            ) {
+                clearRuntimeSnapshot();
+                return false;
+            }
+
+            syncActiveMap(definitionIndex);
+            boardState = cloneBoardSnapshot(snapshot.boardState);
+            trayState = [...snapshot.trayState];
+            cleanedSocketCells = new Set(normalizeSnapshotCleanedSocketCells(snapshot.cleanedSocketCells, config));
+            actionCharges = {
+                magic: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.magic, Number(snapshot.actionCharges?.magic || 0))),
+                clean: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.clean, Number(snapshot.actionCharges?.clean || 0)))
+            };
+            actionOverlayState = null;
+            clearSparkles();
+            clearCelebrationTimers();
+            clearSolvedStageFailSafeTimer();
+            clearStageClearTimers();
+            resetBoardTransform();
+            selected = null;
+            moves = Math.max(0, Number(snapshot.moves || 0));
+            solved = false;
+            isAnimating = false;
+            isStageTransitioning = false;
+            completedColorIds = getCompletedColorIds();
+            setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
+            render();
+            persistRuntimeSnapshot();
+            return true;
         }
 
         function persistPixelAdminStageOverride(definition) {
@@ -3349,20 +3479,6 @@
                     7: "#1F1E1E"
                 }
             },
-            strawberry: {
-                palette: {
-                    1: "#4D3A2E",
-                    2: "#E3BE7C",
-                    3: "#2F6F42",
-                    5: "#E1ECEF",
-                    7: "#7E522D"
-                },
-                cssVars: {
-                    "--app-bg": "#FFFFFF",
-                    "--grid-bg": "rgba(148, 163, 184, 0.08)",
-                    "--grid-line": "rgba(226, 232, 240, 0.9)"
-                }
-            },
             puppy: {
                 palette: {
                     1: "#272121",
@@ -3539,7 +3655,6 @@
         const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
         const TOUCH_TAP_GUARD_MS = 520;
         const SOUND_VOLUME_MULTIPLIER = 5.4;
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const appElement = document.querySelector(".app");
         const boardWrapElement = document.querySelector(".board-wrap");
         const boardPanzoomElement = document.getElementById("boardPanzoom");
@@ -3611,8 +3726,6 @@
         let solved = false;
         let isAnimating = false;
         let isStageTransitioning = false;
-        let audioContext = null;
-        let audioNoiseBuffer = null;
         let sparkleCells = new Map();
         let sparkleCleanupTimer = null;
         let completedColorIds = new Set();
@@ -3803,10 +3916,6 @@
         }
 
         function getPixelAdminDefaultExportBaseName(mapId) {
-            if (mapId === "strawberry") {
-                return "BUBBLE_TEA";
-            }
-
             return mapId.toUpperCase();
         }
 
@@ -4572,6 +4681,7 @@
 
         function goToNextLevelFromAdmin() {
             persistPixelAdminDraftState();
+            clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
@@ -4585,6 +4695,7 @@
 
         function goToPreviousLevelFromAdmin() {
             persistPixelAdminDraftState();
+            clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
@@ -4597,8 +4708,9 @@
         }
 
         function goToFirstPlayableLevelCheat() {
-            const targetMapIndex = MAP_DEFINITIONS.length > 1 ? 1 : 0;
+            const targetMapIndex = getFirstPlayableMapIndex();
 
+            clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
@@ -4781,14 +4893,6 @@
         }
 
         function getInitialClusterLimit() {
-            if (ACTIVE_MAP?.id === "strawberry") {
-                return 8;
-            }
-
-            if (ACTIVE_MAP?.id === "apple") {
-                return 10;
-            }
-
             return INITIAL_MAX_CLUSTER_SIZE;
         }
 
@@ -5384,471 +5488,32 @@
         });
         jewelTemplateImage.src = JEWEL_TEMPLATE_SRC;
 
-        function getAudioContext() {
-            if (!AudioContextClass) return null;
-            if (!audioContext || audioContext.state === "closed") {
-                audioContext = new AudioContextClass();
-                audioNoiseBuffer = null;
-            }
-            return audioContext;
-        }
-
-        function recreateAudioContext() {
-            if (!AudioContextClass) {
-                return null;
-            }
-
-            try {
-                audioContext?.close?.();
-            } catch (error) {}
-
-            audioContext = new AudioContextClass();
-            audioNoiseBuffer = null;
-            return audioContext;
-        }
-
-        function getNoiseBuffer(context) {
-            if (audioNoiseBuffer) return audioNoiseBuffer;
-
-            const length = Math.floor(context.sampleRate * 0.12);
-            const buffer = context.createBuffer(1, length, context.sampleRate);
-            const channel = buffer.getChannelData(0);
-
-            for (let index = 0; index < length; index += 1) {
-                channel[index] = Math.random() * 2 - 1;
-            }
-
-            audioNoiseBuffer = buffer;
-            return audioNoiseBuffer;
-        }
-
-        async function ensureAudioContext() {
-            let context = getAudioContext();
-            if (!context) return null;
-
-            if (context.state !== "running") {
-                try {
-                    await context.resume();
-                } catch (error) {}
-            }
-
-            if (context.state !== "running") {
-                context = recreateAudioContext();
-                if (!context) {
-                    return null;
-                }
-
-                try {
-                    await context.resume();
-                } catch (error) {
-                    return null;
-                }
-            }
-
-            return context.state === "running" ? context : null;
-        }
-
-        function primeAudioContextSync() {
-            const context = getAudioContext();
-            if (!context) {
-                return null;
-            }
-
-            if (context.state !== "running") {
-                try {
-                    const resumeResult = context.resume?.();
-                    resumeResult?.catch?.(() => {});
-                } catch (error) {}
-            }
-
-            try {
-                const gain = context.createGain();
-                const oscillator = context.createOscillator();
-                const startTime = Math.max(context.currentTime, 0) + 0.001;
-                gain.gain.value = 0.00001;
-                oscillator.type = "sine";
-                oscillator.frequency.value = 440;
-                oscillator.connect(gain);
-                gain.connect(context.destination);
-                oscillator.onended = () => {
-                    oscillator.disconnect();
-                    gain.disconnect();
-                };
-                oscillator.start(startTime);
-                oscillator.stop(startTime + 0.006);
-            } catch (error) {}
-
-            return context;
-        }
-
-        function playTone(context, options) {
-            const {
-                startTime = context.currentTime,
-                type = "sine",
-                startFrequency,
-                endFrequency = startFrequency,
-                duration = 0.1,
-                volume = 0.03,
-                attack = 0.003,
-                filterType = "lowpass",
-                filterFrequency = 1800,
-                filterQ = 0.9
-            } = options;
-            const oscillator = context.createOscillator();
-            const filter = context.createBiquadFilter();
-            const gain = context.createGain();
-            const endTime = startTime + duration;
-
-            oscillator.type = type;
-            oscillator.frequency.setValueAtTime(startFrequency, startTime);
-            oscillator.frequency.exponentialRampToValueAtTime(Math.max(endFrequency, 1), endTime);
-
-            filter.type = filterType;
-            filter.frequency.setValueAtTime(filterFrequency, startTime);
-            filter.Q.setValueAtTime(filterQ, startTime);
-
-            gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume * SOUND_VOLUME_MULTIPLIER, startTime + attack);
-            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
-
-            oscillator.connect(filter);
-            filter.connect(gain);
-            gain.connect(context.destination);
-
-            oscillator.onended = () => {
-                oscillator.disconnect();
-                filter.disconnect();
-                gain.disconnect();
-            };
-            oscillator.start(startTime);
-            oscillator.stop(endTime + 0.02);
-        }
-
-        function playNoiseBurst(context, options) {
-            const {
-                startTime = context.currentTime,
-                duration = 0.05,
-                volume = 0.012,
-                filterType = "bandpass",
-                filterFrequency = 1800,
-                filterQ = 1.2
-            } = options;
-            const source = context.createBufferSource();
-            const filter = context.createBiquadFilter();
-            const gain = context.createGain();
-            const endTime = startTime + duration;
-
-            source.buffer = getNoiseBuffer(context);
-
-            filter.type = filterType;
-            filter.frequency.setValueAtTime(filterFrequency, startTime);
-            filter.Q.setValueAtTime(filterQ, startTime);
-
-            gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume * SOUND_VOLUME_MULTIPLIER, startTime + 0.004);
-            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
-
-            source.connect(filter);
-            filter.connect(gain);
-            gain.connect(context.destination);
-
-            source.onended = () => {
-                source.disconnect();
-                filter.disconnect();
-                gain.disconnect();
-            };
-            source.start(startTime);
-            source.stop(endTime + 0.01);
-        }
+        const soundController = window.ColorJewelSound?.createController?.({
+            volumeMultiplier: SOUND_VOLUME_MULTIPLIER
+        }) || null;
 
         function queueAudioContextWarmup() {
-            primeAudioContextSync();
-            void ensureAudioContext();
+            soundController?.warmup?.();
         }
 
-        async function playPickupSound(clusterSize = 1) {
-            primeAudioContextSync();
-            const context = await ensureAudioContext();
-            if (!context) return;
-
-            const now = context.currentTime;
-            const accent = Math.min(clusterSize, 4);
-
-            playTone(context, {
-                startTime: now,
-                type: "triangle",
-                startFrequency: 760 + accent * 24,
-                endFrequency: 1180 + accent * 30,
-                duration: 0.11,
-                volume: 0.028 + accent * 0.002,
-                filterFrequency: 2400,
-                filterQ: 0.8
-            });
-            playTone(context, {
-                startTime: now + 0.018,
-                type: "sine",
-                startFrequency: 1440 + accent * 28,
-                endFrequency: 1760 + accent * 36,
-                duration: 0.08,
-                volume: 0.011 + accent * 0.001,
-                filterFrequency: 3200,
-                filterQ: 0.6
-            });
+        function playPickupSound(clusterSize = 1) {
+            soundController?.playPickup?.(clusterSize);
         }
 
-        async function playPlaceSound(clusterSize = 1) {
-            primeAudioContextSync();
-            const context = await ensureAudioContext();
-            if (!context) return;
-
-            const now = context.currentTime;
-            const accent = Math.min(clusterSize, 4);
-
-            playNoiseBurst(context, {
-                startTime: now,
-                duration: 0.045,
-                volume: 0.011 + accent * 0.001,
-                filterFrequency: 1600,
-                filterQ: 1.4
-            });
-            playTone(context, {
-                startTime: now,
-                type: "triangle",
-                startFrequency: 640 + accent * 18,
-                endFrequency: 430 + accent * 10,
-                duration: 0.1,
-                volume: 0.026 + accent * 0.002,
-                filterFrequency: 1700,
-                filterQ: 1.1
-            });
-            playTone(context, {
-                startTime: now + 0.01,
-                type: "sine",
-                startFrequency: 520 + accent * 12,
-                endFrequency: 610 + accent * 16,
-                duration: 0.09,
-                volume: 0.009 + accent * 0.001,
-                filterFrequency: 2200,
-                filterQ: 0.7
-            });
-        }
-
-        function playButtonPressSoundNow(context) {
-            const now = context.currentTime;
-
-            playNoiseBurst(context, {
-                startTime: now,
-                duration: 0.018,
-                volume: 0.0022,
-                filterType: "bandpass",
-                filterFrequency: 1450,
-                filterQ: 0.55
-            });
-            playTone(context, {
-                startTime: now,
-                type: "sine",
-                startFrequency: 640,
-                endFrequency: 980,
-                duration: 0.07,
-                volume: 0.017,
-                filterFrequency: 2400,
-                filterQ: 0.42
-            });
-            playTone(context, {
-                startTime: now + 0.018,
-                type: "sine",
-                startFrequency: 1180,
-                endFrequency: 1560,
-                duration: 0.06,
-                volume: 0.011,
-                filterFrequency: 3200,
-                filterQ: 0.38
-            });
-            playTone(context, {
-                startTime: now + 0.01,
-                type: "sine",
-                startFrequency: 720,
-                endFrequency: 520,
-                duration: 0.12,
-                volume: 0.0045,
-                filterFrequency: 1800,
-                filterQ: 0.48
-            });
+        function playPlaceSound(clusterSize = 1) {
+            soundController?.playPlace?.(clusterSize);
         }
 
         function triggerButtonPressSound() {
-            const context = primeAudioContextSync();
-            if (!context) {
-                return;
-            }
-
-            if (context.state !== "running") {
-                context.resume()
-                    .then(() => {
-                        if (context.state === "running") {
-                            playButtonPressSoundNow(context);
-                        }
-                    })
-                    .catch(() => {});
-                return;
-            }
-
-            playButtonPressSoundNow(context);
+            soundController?.playButton?.();
         }
 
-        async function playColorCompleteSound(startDelayMs = 0) {
-            primeAudioContextSync();
-            const context = await ensureAudioContext();
-            if (!context) return;
-
-            const startTime = context.currentTime + startDelayMs / 1000;
-            const notes = [880, 1174, 1568, 2093];
-
-            playNoiseBurst(context, {
-                startTime,
-                duration: 0.08,
-                volume: 0.005,
-                filterFrequency: 2600,
-                filterQ: 1.8
-            });
-
-            notes.forEach((frequency, index) => {
-                const noteTime = startTime + index * 0.072;
-                playTone(context, {
-                    startTime: noteTime,
-                    type: "triangle",
-                    startFrequency: frequency,
-                    endFrequency: frequency * 1.04,
-                    duration: 0.24,
-                    volume: 0.015 + index * 0.0015,
-                    filterFrequency: 3200,
-                    filterQ: 0.7
-                });
-                playTone(context, {
-                    startTime: noteTime + 0.012,
-                    type: "sine",
-                    startFrequency: frequency * 1.5,
-                    endFrequency: frequency * 1.62,
-                    duration: 0.18,
-                    volume: 0.008,
-                    filterFrequency: 4200,
-                    filterQ: 0.5
-                });
-            });
+        function playColorCompleteSound(startDelayMs = 0) {
+            soundController?.playComplete?.(startDelayMs);
         }
 
-        async function playFireworkBurstSound(startDelayMs = 0, accent = 0) {
-            primeAudioContextSync();
-            const context = await ensureAudioContext();
-            if (!context) return;
-
-            const startTime = context.currentTime + startDelayMs / 1000;
-            const liftPitch = 210 + accent * 18;
-            const boomPitch = 92 + accent * 6;
-            const crackPitch = 1240 + accent * 58;
-
-            playNoiseBurst(context, {
-                startTime,
-                duration: 0.11,
-                volume: 0.006,
-                filterType: "highpass",
-                filterFrequency: 1400 + accent * 80,
-                filterQ: 0.8
-            });
-            playTone(context, {
-                startTime,
-                type: "triangle",
-                startFrequency: liftPitch,
-                endFrequency: liftPitch * 2.8,
-                duration: 0.14,
-                volume: 0.008,
-                filterFrequency: 2200,
-                filterQ: 0.9
-            });
-
-            playNoiseBurst(context, {
-                startTime: startTime + 0.13,
-                duration: 0.16,
-                volume: 0.017 + accent * 0.0016,
-                filterType: "bandpass",
-                filterFrequency: 1700 + accent * 120,
-                filterQ: 0.7
-            });
-
-            playTone(context, {
-                startTime: startTime + 0.128,
-                type: "sine",
-                startFrequency: boomPitch,
-                endFrequency: Math.max(44, boomPitch * 0.48),
-                duration: 0.34,
-                volume: 0.03 + accent * 0.002,
-                filterType: "lowpass",
-                filterFrequency: 320,
-                filterQ: 0.5
-            });
-
-            playTone(context, {
-                startTime: startTime + 0.138,
-                type: "triangle",
-                startFrequency: boomPitch * 1.9,
-                endFrequency: boomPitch * 0.92,
-                duration: 0.22,
-                volume: 0.016 + accent * 0.001,
-                filterType: "lowpass",
-                filterFrequency: 780,
-                filterQ: 0.7
-            });
-
-            playNoiseBurst(context, {
-                startTime: startTime + 0.17,
-                duration: 0.08,
-                volume: 0.014 + accent * 0.0012,
-                filterType: "highpass",
-                filterFrequency: 3000 + accent * 160,
-                filterQ: 0.8
-            });
-
-            playNoiseBurst(context, {
-                startTime: startTime + 0.24,
-                duration: 0.06,
-                volume: 0.010 + accent * 0.0008,
-                filterType: "bandpass",
-                filterFrequency: 2200 + accent * 120,
-                filterQ: 1.1
-            });
-
-            playNoiseBurst(context, {
-                startTime: startTime + 0.31,
-                duration: 0.05,
-                volume: 0.008 + accent * 0.0007,
-                filterType: "bandpass",
-                filterFrequency: 2800 + accent * 140,
-                filterQ: 1.2
-            });
-
-            playTone(context, {
-                startTime: startTime + 0.155,
-                type: "sawtooth",
-                startFrequency: crackPitch,
-                endFrequency: crackPitch * 0.54,
-                duration: 0.18,
-                volume: 0.012 + accent * 0.0013,
-                filterType: "highpass",
-                filterFrequency: 2400,
-                filterQ: 0.8
-            });
-
-            playTone(context, {
-                startTime: startTime + 0.205,
-                type: "square",
-                startFrequency: crackPitch * 1.26,
-                endFrequency: crackPitch * 0.74,
-                duration: 0.12,
-                volume: 0.0048 + accent * 0.0007,
-                filterType: "highpass",
-                filterFrequency: 3200,
-                filterQ: 0.5
-            });
+        function playFireworkBurstSound(startDelayMs = 0, accent = 0) {
+            soundController?.playFirework?.(startDelayMs, accent);
         }
 
         function getConnectedGemCluster(startRow, startCol) {
@@ -6007,6 +5672,7 @@
             }
 
             clearPersistedGameProgress();
+            clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             isStageTransitioning = false;
@@ -7606,7 +7272,16 @@
             queueAudioContextWarmup();
         });
 
+        window.addEventListener("pagehide", () => {
+            persistRuntimeSnapshot();
+        });
+
         document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                persistRuntimeSnapshot();
+                return;
+            }
+
             if (document.visibilityState === "visible") {
                 queueAudioContextWarmup();
             }
@@ -8512,6 +8187,7 @@
                 clearCelebrationTimers();
                 clearSolvedStageFailSafeTimer();
                 clearPersistedGameProgress();
+                clearRuntimeSnapshot();
                 const stageClearDelay = scheduleFullBoardCelebration();
                 const stageClearTimer = window.setTimeout(() => {
                     startStageClearSequence(sessionVersion);
@@ -8533,6 +8209,8 @@
                     nextDelayMs = scheduleColorCompletionCelebration(colorId, nextDelayMs);
                 });
             }
+
+            persistRuntimeSnapshot();
         }
 
         function selectBoardCluster(row, col, gem) {
@@ -9023,7 +8701,7 @@
             if (!ACTIVE_MAP.initialBoardState) {
                 let bestBoardState = nextBoardState;
                 let bestBoardQuality = getInitialBoardQuality(nextBoardState);
-                const initialAttemptCount = ACTIVE_MAP.id === "strawberry" ? 32 : 18;
+                const initialAttemptCount = 18;
 
                 for (let attempt = 0; attempt < initialAttemptCount; attempt += 1) {
                     const candidateBoardState = createBoardState();
@@ -9059,6 +8737,7 @@
             completedColorIds = getCompletedColorIds();
             setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
             render();
+            persistRuntimeSnapshot();
         }
 
         pixelAdminToggleElement?.addEventListener("click", (event) => {
@@ -9208,11 +8887,13 @@
         });
 
         loadPersistedPixelAdminStageOverrides();
-        syncActiveMap(getInitialMapIndex());
+        syncActiveMap(getFirstPlayableMapIndex());
         initializeBoardGestures();
         initializeBottomActionButtons();
-        clearPersistedGameProgress();
-        resetGame();
+        if (!restoreRuntimeSnapshot()) {
+            clearPersistedGameProgress();
+            resetGame();
+        }
     </script>
 </body>
 </html>
