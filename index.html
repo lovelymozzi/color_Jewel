@@ -3470,6 +3470,22 @@
         const INITIAL_MAX_CLUSTER_SIZE = 12;
         const CLUSTER_STEP_MS = 46;
         const MAGIC_AREA_SIZE = 6;
+        const ORTHOGONAL_DIRECTIONS = Object.freeze([
+            { row: -1, col: 0 },
+            { row: 1, col: 0 },
+            { row: 0, col: -1 },
+            { row: 0, col: 1 }
+        ]);
+        const DIAGONAL_DIRECTIONS = Object.freeze([
+            { row: -1, col: -1 },
+            { row: -1, col: 1 },
+            { row: 1, col: -1 },
+            { row: 1, col: 1 }
+        ]);
+        const EIGHT_WAY_DIRECTIONS = Object.freeze([
+            ...ORTHOGONAL_DIRECTIONS,
+            ...DIAGONAL_DIRECTIONS
+        ]);
         const DEFAULT_ACTION_CHARGES = Object.freeze({
             magic: 3,
             clean: 2
@@ -5611,21 +5627,18 @@
             const colorId = boardState[startRow][startCol];
             if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
 
-            const stack = [{ row: startRow, col: startCol }];
-            const visited = new Set([`${startRow}-${startCol}`]);
+            const visited = new Set();
             const cluster = [];
-            const directions = [
-                { row: -1, col: 0 },
-                { row: 1, col: 0 },
-                { row: 0, col: -1 },
-                { row: 0, col: 1 }
-            ];
+            const queue = [{ row: startRow, col: startCol }];
+            let queueIndex = 0;
+            visited.add(`${startRow}-${startCol}`);
 
-            while (stack.length) {
-                const current = stack.pop();
+            while (queueIndex < queue.length) {
+                const current = queue[queueIndex];
+                queueIndex += 1;
                 cluster.push(current);
 
-                directions.forEach((direction) => {
+                EIGHT_WAY_DIRECTIONS.forEach((direction) => {
                     const nextRow = current.row + direction.row;
                     const nextCol = current.col + direction.col;
                     const key = `${nextRow}-${nextCol}`;
@@ -5643,11 +5656,11 @@
                     }
 
                     visited.add(key);
-                    stack.push({ row: nextRow, col: nextCol });
+                    queue.push({ row: nextRow, col: nextCol });
                 });
             }
 
-            return cluster.sort((a, b) => a.row - b.row || a.col - b.col);
+            return cluster;
         }
 
         function getEmptyTrayIndices() {
@@ -5672,22 +5685,18 @@
             const colorId = trayState[startIndex];
             if (!colorId) return [];
 
-            const stack = [startIndex];
             const visited = new Set([startIndex]);
             const cluster = [];
-            const directions = [
-                { row: -1, col: 0 },
-                { row: 1, col: 0 },
-                { row: 0, col: -1 },
-                { row: 0, col: 1 }
-            ];
+            const queue = [startIndex];
+            let queueIndex = 0;
 
-            while (stack.length) {
-                const currentIndex = stack.pop();
+            while (queueIndex < queue.length) {
+                const currentIndex = queue[queueIndex];
+                queueIndex += 1;
                 const currentPosition = getTrayPosition(currentIndex);
                 cluster.push(currentIndex);
 
-                directions.forEach((direction) => {
+                EIGHT_WAY_DIRECTIONS.forEach((direction) => {
                     const nextRow = currentPosition.row + direction.row;
                     const nextCol = currentPosition.col + direction.col;
 
@@ -5706,11 +5715,11 @@
                     }
 
                     visited.add(nextIndex);
-                    stack.push(nextIndex);
+                    queue.push(nextIndex);
                 });
             }
 
-            return cluster.sort((left, right) => left - right);
+            return cluster;
         }
 
         function toCellKey(row, col) {
@@ -6054,18 +6063,12 @@
             const region = [];
             const visited = new Set([toCellKey(startRow, startCol)]);
             const stack = [{ row: startRow, col: startCol }];
-            const directions = [
-                { row: -1, col: 0 },
-                { row: 1, col: 0 },
-                { row: 0, col: -1 },
-                { row: 0, col: 1 }
-            ];
 
             while (stack.length) {
                 const current = stack.pop();
                 region.push(current);
 
-                directions.forEach((direction) => {
+                EIGHT_WAY_DIRECTIONS.forEach((direction) => {
                     const nextRow = current.row + direction.row;
                     const nextCol = current.col + direction.col;
                     const key = toCellKey(nextRow, nextCol);
@@ -6098,19 +6101,13 @@
             const visited = new Set([toCellKey(startRow, startCol)]);
             const queue = [{ row: startRow, col: startCol }];
             let queueIndex = 0;
-            const directions = [
-                { row: -1, col: 0 },
-                { row: 1, col: 0 },
-                { row: 0, col: -1 },
-                { row: 0, col: 1 }
-            ];
 
             while (queueIndex < queue.length) {
                 const current = queue[queueIndex];
                 queueIndex += 1;
                 region.push(current);
 
-                directions.forEach((direction) => {
+                EIGHT_WAY_DIRECTIONS.forEach((direction) => {
                     const nextRow = current.row + direction.row;
                     const nextCol = current.col + direction.col;
                     const key = toCellKey(nextRow, nextCol);
@@ -6329,12 +6326,7 @@
         }
 
         function prioritizeBoardCells(cells, anchor) {
-            if (!anchor) return [...cells];
-
-            return [
-                ...cells.filter((cell) => cell.row === anchor.row && cell.col === anchor.col),
-                ...cells.filter((cell) => cell.row !== anchor.row || cell.col !== anchor.col)
-            ];
+            return orderBoardCellsFromAnchor(cells, anchor);
         }
 
         function prioritizeTrayIndices(indices, anchorIndex) {
@@ -7466,10 +7458,27 @@
             );
         }
 
+        function orderBoardCellsFromAnchor(cells, anchor = null) {
+            if (!anchor) {
+                return [...cells];
+            }
+
+            const anchorIndex = cells.findIndex((cell) => cell.row === anchor.row && cell.col === anchor.col);
+            if (anchorIndex < 0) {
+                return [...cells];
+            }
+
+            return [
+                cells[anchorIndex],
+                ...cells.slice(0, anchorIndex),
+                ...cells.slice(anchorIndex + 1)
+            ];
+        }
+
         function createBoardSelection(cells, anchor, color = null, includeEmpty = false) {
-            const normalizedCells = [...new Map(cells.map((cell) => [toCellKey(cell.row, cell.col), cell])).values()]
-                .filter((cell) => (includeEmpty || boardState[cell.row][cell.col] !== 0) && !isLockedCorrectGem(cell.row, cell.col))
-                .sort((left, right) => left.row - right.row || left.col - right.col);
+            const uniqueCells = [...new Map(cells.map((cell) => [toCellKey(cell.row, cell.col), cell])).values()]
+                .filter((cell) => (includeEmpty || boardState[cell.row][cell.col] !== 0) && !isLockedCorrectGem(cell.row, cell.col));
+            const normalizedCells = orderBoardCellsFromAnchor(uniqueCells, anchor);
 
             if (!normalizedCells.length) return null;
 
