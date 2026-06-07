@@ -6089,6 +6089,51 @@
             return region;
         }
 
+        function getConnectedEmptyTargetRegion(startRow, startCol, colorId) {
+            if (!isAvailableTargetCell(startRow, startCol, colorId)) {
+                return [];
+            }
+
+            const region = [];
+            const visited = new Set([toCellKey(startRow, startCol)]);
+            const queue = [{ row: startRow, col: startCol }];
+            let queueIndex = 0;
+            const directions = [
+                { row: -1, col: 0 },
+                { row: 1, col: 0 },
+                { row: 0, col: -1 },
+                { row: 0, col: 1 }
+            ];
+
+            while (queueIndex < queue.length) {
+                const current = queue[queueIndex];
+                queueIndex += 1;
+                region.push(current);
+
+                directions.forEach((direction) => {
+                    const nextRow = current.row + direction.row;
+                    const nextCol = current.col + direction.col;
+                    const key = toCellKey(nextRow, nextCol);
+
+                    if (
+                        nextRow < 0 ||
+                        nextRow >= ROWS ||
+                        nextCol < 0 ||
+                        nextCol >= COLS ||
+                        visited.has(key) ||
+                        !isAvailableTargetCell(nextRow, nextCol, colorId)
+                    ) {
+                        return;
+                    }
+
+                    visited.add(key);
+                    queue.push({ row: nextRow, col: nextCol });
+                });
+            }
+
+            return region;
+        }
+
         function isMatchingTargetCell(row, col, colorId) {
             return Boolean(TARGET_MAP[row][col]) && TARGET_MAP[row][col] === colorId;
         }
@@ -6101,14 +6146,38 @@
             return `${COLOR_PALETTE[colorId].name} 보석은 ${COLOR_PALETTE[targetColorId].name} 칸에 둘 수 없어요. 같은 색 칸으로 옮겨 주세요.`;
         }
 
+        function canPlaceBoardClusterInConnectedEmptyRegion(cells, anchor, targetRow, targetCol, colorId, regionKeySet) {
+            if (!canPlaceBoardCluster(cells, anchor, targetRow, targetCol, colorId)) {
+                return false;
+            }
+
+            const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
+            return translatedCells.every((cell) => regionKeySet.has(toCellKey(cell.row, cell.col)));
+        }
+
         function findNearestBoardClusterPlacement(cells, anchor, targetRow, targetCol, colorId) {
+            const connectedEmptyRegion = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
+            const regionKeySet = new Set(
+                connectedEmptyRegion.map((cell) => toCellKey(cell.row, cell.col))
+            );
             let bestPlacement = null;
 
             for (let row = 0; row < ROWS; row += 1) {
                 for (let col = 0; col < COLS; col += 1) {
                     if (!TARGET_MAP[row][col]) continue;
                     if (row === anchor.row && col === anchor.col) continue;
-                    if (!canPlaceBoardCluster(cells, anchor, row, col, colorId)) continue;
+                    if (
+                        !canPlaceBoardClusterInConnectedEmptyRegion(
+                            cells,
+                            anchor,
+                            row,
+                            col,
+                            colorId,
+                            regionKeySet
+                        )
+                    ) {
+                        continue;
+                    }
 
                     const translatedCells = getTranslatedCells(cells, anchor, row, col);
                     const includesTargetCell = translatedCells.some(
@@ -6136,35 +6205,19 @@
         }
 
         function findNearestColorSlotPlacement(cells, targetRow, targetCol, colorId) {
-            const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
-            const availableCells = regionCells
-                .filter((cell) => isAvailableTargetCell(cell.row, cell.col, colorId))
-                .map((cell) => ({
-                    row: cell.row,
-                    col: cell.col,
-                    distance: Math.abs(targetRow - cell.row) + Math.abs(targetCol - cell.col)
-                }));
-
-            if (availableCells.length < cells.length) {
+            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
+            if (regionCells.length < cells.length) {
                 return null;
             }
 
-            return availableCells
-                .sort((a, b) => a.distance - b.distance || a.row - b.row || a.col - b.col)
+            return regionCells
                 .slice(0, cells.length)
                 .map(({ row, col }) => ({ row, col }));
         }
 
         function findPartialColorSlotPlacement(count, targetRow, targetCol, colorId) {
-            const regionCells = getConnectedTargetRegion(targetRow, targetCol, colorId);
+            const regionCells = getConnectedEmptyTargetRegion(targetRow, targetCol, colorId);
             const availableCells = regionCells
-                .filter((cell) => isAvailableTargetCell(cell.row, cell.col, colorId))
-                .map((cell) => ({
-                    row: cell.row,
-                    col: cell.col,
-                    distance: Math.abs(targetRow - cell.row) + Math.abs(targetCol - cell.col)
-                }))
-                .sort((a, b) => a.distance - b.distance || a.row - b.row || a.col - b.col)
                 .slice(0, count)
                 .map(({ row, col }) => ({ row, col }));
 
