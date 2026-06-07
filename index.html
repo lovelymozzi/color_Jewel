@@ -74,6 +74,10 @@
                 rgba(255, 255, 255, 0.04);
         }
 
+        html {
+            overscroll-behavior: none;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -90,6 +94,7 @@
             color: var(--ink);
             font-family: "Trebuchet MS", "Avenir Next", sans-serif;
             overflow: hidden;
+            overscroll-behavior: none;
         }
 
         .app {
@@ -109,6 +114,7 @@
             box-shadow: none;
             backdrop-filter: none;
             overflow: hidden;
+            overscroll-behavior: none;
         }
 
         .panel {
@@ -1084,6 +1090,8 @@
             letter-spacing: -0.01em;
             box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
             cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .pixel-admin {
@@ -2804,6 +2812,7 @@
         const MAX_GRID_ROWS = 20;
         const MAX_GRID_COLS = 20;
         const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
+        const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
         const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
 
         function padMapToGrid(sourceMap, rows = MAX_GRID_ROWS, cols = MAX_GRID_COLS) {
@@ -3021,6 +3030,43 @@
                     PIXEL_ADMIN_STAGE_STORAGE_KEY,
                     JSON.stringify(storagePayload)
                 );
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function readPersistedCurrentMapId() {
+            try {
+                const rawValue = window.localStorage.getItem(CURRENT_MAP_STORAGE_KEY);
+                return typeof rawValue === "string" && rawValue.trim() ? rawValue : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function persistCurrentMapId(mapId) {
+            if (!mapId) {
+                return false;
+            }
+
+            try {
+                window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, mapId);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function getInitialMapIndex() {
+            const persistedMapId = readPersistedCurrentMapId();
+            const restoredIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === persistedMapId);
+            return restoredIndex >= 0 ? restoredIndex : 0;
+        }
+
+        function clearPersistedGameProgress() {
+            try {
+                window.sessionStorage.removeItem("color_jewel_game_progress_v1");
                 return true;
             } catch (error) {
                 return false;
@@ -3490,6 +3536,8 @@
             magic: 3,
             clean: 2
         });
+        const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
+        const TOUCH_TAP_GUARD_MS = 520;
         const SOUND_VOLUME_MULTIPLIER = 2.3;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const appElement = document.querySelector(".app");
@@ -3576,6 +3624,11 @@
         let tutorialOverlayFrame = null;
         let renderFrame = null;
         let areGemsHiddenByCheat = false;
+        let gameSessionVersion = 0;
+        let pixelAdminToggleHoldTimer = null;
+        let suppressPixelAdminToggleClick = false;
+        let lastTouchActivationAt = 0;
+        let solvedStageFailSafeTimer = null;
         let pixelAdminAutoSaveTimer = null;
         const pixelAdminState = {
             isOpen: false,
@@ -3651,6 +3704,7 @@
 
         function syncActiveMap(nextMapIndex = 0) {
             currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            persistCurrentMapId(MAP_DEFINITIONS[currentMapIndex].id);
             applyMapTheme(MAP_DEFINITIONS[currentMapIndex].id);
             ACTIVE_MAP = buildMapConfig(MAP_DEFINITIONS[currentMapIndex]);
             TARGET_MAP = ACTIVE_MAP.targetMap;
@@ -4307,6 +4361,33 @@
             setPixelAdminOpen(!pixelAdminState.isOpen);
         }
 
+        function clearPixelAdminToggleHoldTimer() {
+            if (!pixelAdminToggleHoldTimer) {
+                return;
+            }
+
+            window.clearTimeout(pixelAdminToggleHoldTimer);
+            pixelAdminToggleHoldTimer = null;
+        }
+
+        function startPixelAdminToggleHold(event) {
+            if (event.button != null && event.button !== 0) {
+                return;
+            }
+
+            suppressPixelAdminToggleClick = false;
+            clearPixelAdminToggleHoldTimer();
+            pixelAdminToggleHoldTimer = window.setTimeout(() => {
+                pixelAdminToggleHoldTimer = null;
+                suppressPixelAdminToggleClick = true;
+                goToFirstPlayableLevelCheat();
+            }, PIXEL_ADMIN_CHEAT_HOLD_MS);
+        }
+
+        function cancelPixelAdminToggleHold() {
+            clearPixelAdminToggleHoldTimer();
+        }
+
         function paintPixelAdminCell(rowIndex, colIndex, colorId) {
             return paintPixelAdminCellWithOptions(rowIndex, colIndex, colorId);
         }
@@ -4491,6 +4572,7 @@
 
         function goToNextLevelFromAdmin() {
             persistPixelAdminDraftState();
+            clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
             isStageTransitioning = false;
@@ -4503,6 +4585,7 @@
 
         function goToPreviousLevelFromAdmin() {
             persistPixelAdminDraftState();
+            clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
             isStageTransitioning = false;
@@ -4511,6 +4594,18 @@
             resetGame();
             pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
+        }
+
+        function goToFirstPlayableLevelCheat() {
+            const targetMapIndex = MAP_DEFINITIONS.length > 1 ? 1 : 0;
+
+            clearSolvedStageFailSafeTimer();
+            clearStageClearTimers();
+            clearCelebrationTimers();
+            isStageTransitioning = false;
+            selected = null;
+            syncActiveMap(targetMapIndex);
+            resetGame();
         }
 
         async function copyPixelAdminExport() {
@@ -4685,6 +4780,18 @@
             return Math.abs(from.row - to.row) + Math.abs(from.col - to.col);
         }
 
+        function getInitialClusterLimit() {
+            if (ACTIVE_MAP?.id === "strawberry") {
+                return 8;
+            }
+
+            if (ACTIVE_MAP?.id === "apple") {
+                return 10;
+            }
+
+            return INITIAL_MAX_CLUSTER_SIZE;
+        }
+
         function getInitialLayoutOffsets() {
             const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
             const scoredOffsets = [];
@@ -4758,12 +4865,6 @@
         function getBoardColorClusters(board) {
             const visited = new Set();
             const clusters = [];
-            const directions = [
-                { row: -1, col: 0 },
-                { row: 1, col: 0 },
-                { row: 0, col: -1 },
-                { row: 0, col: 1 }
-            ];
 
             TARGET_POSITIONS.forEach((position) => {
                 const startKey = toCellKey(position.row, position.col);
@@ -4778,7 +4879,7 @@
                     const current = stack.pop();
                     cells.push(current);
 
-                    directions.forEach((direction) => {
+                    EIGHT_WAY_DIRECTIONS.forEach((direction) => {
                         const nextRow = current.row + direction.row;
                         const nextCol = current.col + direction.col;
                         const nextKey = toCellKey(nextRow, nextCol);
@@ -4821,19 +4922,61 @@
         }
 
         function getBoardClusterStats(board) {
+            const clusterLimit = getInitialClusterLimit();
             const clusters = getBoardColorClusters(board);
-            const oversizedClusters = clusters.filter(({ size }) => size > INITIAL_MAX_CLUSTER_SIZE);
+            const oversizedClusters = clusters.filter(({ size }) => size > clusterLimit);
 
             return {
                 clusters,
                 oversizedClusters,
                 maxClusterSize: clusters.reduce((maxSize, cluster) => Math.max(maxSize, cluster.size), 0),
                 oversizeCellCount: oversizedClusters.reduce(
-                    (count, cluster) => count + (cluster.size - INITIAL_MAX_CLUSTER_SIZE),
+                    (count, cluster) => count + (cluster.size - clusterLimit),
                     0
                 ),
                 adjacencyScore: getBoardAdjacencyScore(board)
             };
+        }
+
+        function prepareInitialBoardCandidate(board) {
+            if (!board?.length) {
+                return board;
+            }
+
+            removeMatchedInitialCells(board);
+            softenInitialClusters(board);
+            breakLargeInitialClusters(board);
+            removeMatchedInitialCells(board);
+            return board;
+        }
+
+        function getInitialBoardQuality(board) {
+            const clusterStats = getBoardClusterStats(board);
+            return {
+                matchedCount: countCorrectCellsInBoard(board),
+                maxClusterSize: clusterStats.maxClusterSize,
+                oversizeCellCount: clusterStats.oversizeCellCount,
+                adjacencyScore: clusterStats.adjacencyScore
+            };
+        }
+
+        function isBetterInitialBoardQuality(candidate, currentBest) {
+            if (!currentBest) {
+                return true;
+            }
+
+            return (
+                candidate.matchedCount < currentBest.matchedCount ||
+                (candidate.matchedCount === currentBest.matchedCount &&
+                    candidate.oversizeCellCount < currentBest.oversizeCellCount) ||
+                (candidate.matchedCount === currentBest.matchedCount &&
+                    candidate.oversizeCellCount === currentBest.oversizeCellCount &&
+                    candidate.maxClusterSize < currentBest.maxClusterSize) ||
+                (candidate.matchedCount === currentBest.matchedCount &&
+                    candidate.oversizeCellCount === currentBest.oversizeCellCount &&
+                    candidate.maxClusterSize === currentBest.maxClusterSize &&
+                    candidate.adjacencyScore < currentBest.adjacencyScore)
+            );
         }
 
         function breakLargeInitialClusters(board) {
@@ -5027,6 +5170,7 @@
                     board[position.row][position.col] = sourceColors[index];
                 });
 
+                prepareInitialBoardCandidate(board);
                 if (!hasMatchedInitialCells(board) || (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board))) {
                     return board;
                 }
@@ -5039,6 +5183,7 @@
                     board[position.row][position.col] = targetColors[(index + offset) % targetColors.length];
                 });
 
+                prepareInitialBoardCandidate(board);
                 if (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board)) {
                     return board;
                 }
@@ -5048,6 +5193,7 @@
             INITIAL_LAYOUT_ORDER.forEach((position, index) => {
                 fallbackBoard[position.row][position.col] = targetColors[(index + 1) % targetColors.length];
             });
+            prepareInitialBoardCandidate(fallbackBoard);
             removeMatchedInitialCells(fallbackBoard);
             return fallbackBoard;
         }
@@ -5093,6 +5239,10 @@
 
         function sleep(ms) {
             return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        function isCurrentGameSession(sessionVersion) {
+            return sessionVersion === gameSessionVersion;
         }
 
         function isCleanedSocketCell(row, col) {
@@ -5764,6 +5914,29 @@
             }
         }
 
+        function clearSolvedStageFailSafeTimer() {
+            if (!solvedStageFailSafeTimer) {
+                return;
+            }
+
+            window.clearTimeout(solvedStageFailSafeTimer);
+            solvedStageFailSafeTimer = null;
+        }
+
+        function advanceToNextStage(sessionVersion = gameSessionVersion) {
+            if (!isCurrentGameSession(sessionVersion)) {
+                return false;
+            }
+
+            clearPersistedGameProgress();
+            clearSolvedStageFailSafeTimer();
+            clearStageClearTimers();
+            isStageTransitioning = false;
+            syncActiveMap(currentMapIndex + 1);
+            resetGame();
+            return true;
+        }
+
         function spawnFireworkBurst(leftPercent, topPercent) {
             if (!fireworksLayerElement) return;
 
@@ -5810,7 +5983,11 @@
             stageClearTimers.push(cleanupTimer);
         }
 
-        function startStageClearSequence() {
+        function startStageClearSequence(sessionVersion = gameSessionVersion) {
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             isStageTransitioning = true;
             selected = null;
 
@@ -5829,6 +6006,9 @@
 
             STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ left, top, delay }) => {
                 const timerId = window.setTimeout(() => {
+                    if (!isCurrentGameSession(sessionVersion)) {
+                        return;
+                    }
                     spawnFireworkBurst(left, top);
                 }, delay);
                 stageClearTimers.push(timerId);
@@ -5842,10 +6022,10 @@
             void playColorCompleteSound(520);
 
             const nextStageTimer = window.setTimeout(() => {
-                clearStageClearTimers();
-                isStageTransitioning = false;
-                syncActiveMap(currentMapIndex + 1);
-                resetGame();
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+                advanceToNextStage(sessionVersion);
             }, STAGE_TRANSITION_DELAY_MS);
             stageClearTimers.push(nextStageTimer);
         }
@@ -6300,11 +6480,16 @@
         async function animateBroomMoves(steps) {
             const totalSteps = steps.length;
             const stepDelayMs = getMagicFlightDurationMs(totalSteps);
+            const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
             selected = null;
 
             for (let index = 0; index < steps.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 const step = steps[index];
 
                 if (step.displacedGem) {
@@ -6320,6 +6505,10 @@
                 if (index < totalSteps - 1 || totalSteps === 1) {
                     await sleep(stepDelayMs);
                 }
+            }
+
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
             }
 
             isAnimating = false;
@@ -6360,6 +6549,7 @@
         async function animateBoardClusterMove(cells, anchor, targetRow, targetCol, previewSelection = null) {
             const translatedCells = getTranslatedCells(cells, anchor, targetRow, targetCol);
             const gems = cells.map((cell) => boardState[cell.row][cell.col]);
+            const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
@@ -6369,6 +6559,10 @@
             render();
 
             for (let index = 0; index < translatedCells.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 const cell = translatedCells[index];
                 boardState[cell.row][cell.col] = gems[index];
                 markCorrectPlacementSparkle(cell.row, cell.col);
@@ -6379,14 +6573,23 @@
                 }
             }
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             isAnimating = false;
         }
 
         async function animateBoardClusterToTray(cells, traySlots, previewSelection = null) {
+            const sessionVersion = gameSessionVersion;
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < cells.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 const cell = cells[index];
                 const trayIndex = traySlots[index];
                 trayState[trayIndex] = boardState[cell.row][cell.col];
@@ -6399,16 +6602,25 @@
                 }
             }
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             isAnimating = false;
         }
 
         async function animateBoardClusterToBoardSlots(cells, targetCells, previewSelection = null) {
             const gems = cells.map((cell) => boardState[cell.row][cell.col]);
+            const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < cells.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 const sourceCell = cells[index];
                 const targetCell = targetCells[index];
                 boardState[sourceCell.row][sourceCell.col] = 0;
@@ -6422,16 +6634,25 @@
                 }
             }
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             isAnimating = false;
         }
 
         async function animateTrayClusterToBoardSlots(indices, targetCells, previewSelection = null) {
             const gems = indices.map((index) => trayState[index]);
+            const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
 
             for (let index = 0; index < indices.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 const sourceIndex = indices[index];
                 const targetCell = targetCells[index];
                 trayState[sourceIndex] = 0;
@@ -6445,11 +6666,16 @@
                 }
             }
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             isAnimating = false;
         }
 
         async function animateTrayClusterMove(indices, targetIndices, previewSelection = null) {
             const gems = indices.map((index) => trayState[index]);
+            const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
             selected = normalizeSelection(previewSelection, true);
@@ -6459,6 +6685,10 @@
             render();
 
             for (let index = 0; index < targetIndices.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+
                 trayState[targetIndices[index]] = gems[index];
                 render();
                 void playPlaceSound();
@@ -6466,6 +6696,10 @@
                 if (index < targetIndices.length - 1) {
                     await sleep(CLUSTER_STEP_MS);
                 }
+            }
+
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
             }
 
             isAnimating = false;
@@ -6476,6 +6710,18 @@
             for (let row = 0; row < ROWS; row += 1) {
                 for (let col = 0; col < COLS; col += 1) {
                     if (isCompletedTargetCell(row, col)) {
+                        count += 1;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function countCorrectCellsInBoard(boardSnapshot) {
+            let count = 0;
+            for (let row = 0; row < ROWS; row += 1) {
+                for (let col = 0; col < COLS; col += 1) {
+                    if (isCompletedTargetCellInBoard(boardSnapshot, row, col)) {
                         count += 1;
                     }
                 }
@@ -6575,14 +6821,19 @@
                     if (event.cancelable) {
                         event.preventDefault();
                     }
-                    boardInteraction.suppressClickUntil = Date.now() + 120;
+                    lastTouchActivationAt = Date.now();
+                    boardInteraction.suppressClickUntil = lastTouchActivationAt + TOUCH_TAP_GUARD_MS;
                     handler();
                 },
                 { passive: false }
             );
 
             element.addEventListener("click", (event) => {
-                if (Date.now() < boardInteraction.suppressClickUntil) {
+                const now = Date.now();
+                if (
+                    now < boardInteraction.suppressClickUntil ||
+                    now - lastTouchActivationAt < TOUCH_TAP_GUARD_MS
+                ) {
                     event.preventDefault();
                     event.stopPropagation();
                     return;
@@ -6622,11 +6873,46 @@
                 return;
             }
 
+            let activePointerId = null;
+            let shouldActivate = false;
+
+            element.addEventListener("pointerdown", (event) => {
+                if (event.pointerType === "mouse" && event.button !== 0) {
+                    return;
+                }
+
+                activePointerId = event.pointerId;
+                shouldActivate = true;
+            });
+
+            element.addEventListener("pointerleave", (event) => {
+                if (event.pointerId === activePointerId) {
+                    shouldActivate = false;
+                }
+            });
+
+            element.addEventListener("pointercancel", (event) => {
+                if (event.pointerId === activePointerId) {
+                    shouldActivate = false;
+                    activePointerId = null;
+                }
+            });
+
             element.addEventListener("pointerup", (event) => {
                 if (event.pointerType === "mouse" && event.button !== 0) {
                     return;
                 }
 
+                const isSamePointer = activePointerId == null || event.pointerId === activePointerId;
+                const targetInsideButton = element.contains(event.target);
+                activePointerId = null;
+
+                if (!isSamePointer || !shouldActivate || !targetInsideButton) {
+                    shouldActivate = false;
+                    return;
+                }
+
+                shouldActivate = false;
                 event.preventDefault();
                 event.stopPropagation();
                 handler();
@@ -6913,6 +7199,20 @@
                 { passive: false, capture: true }
             );
 
+            document.addEventListener(
+                "touchmove",
+                (event) => {
+                    if (pixelAdminElement?.contains(event.target)) {
+                        return;
+                    }
+
+                    if (event.cancelable) {
+                        event.preventDefault();
+                    }
+                },
+                { passive: false, capture: true }
+            );
+
             boardWrapElement.addEventListener("gesturestart", preventBrowserGestureZoom, { passive: false });
             boardWrapElement.addEventListener("gesturechange", preventBrowserGestureZoom, { passive: false });
             boardWrapElement.addEventListener("gestureend", preventBrowserGestureZoom, { passive: false });
@@ -7184,6 +7484,12 @@
             if (event.shiftKey && event.code === "KeyG") {
                 event.preventDefault();
                 toggleGemVisibilityCheat();
+                return;
+            }
+
+            if (event.shiftKey && event.code === "KeyN") {
+                event.preventDefault();
+                goToFirstPlayableLevelCheat();
                 return;
             }
 
@@ -7851,6 +8157,7 @@
         }
 
         async function applyMagicToBounds(bounds) {
+            const sessionVersion = gameSessionVersion;
             const arrangement = computeMagicArrangement(bounds);
             if (!arrangement) {
                 setActionOverlay(null);
@@ -7880,6 +8187,10 @@
             render();
             await sleep(18);
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             for (let index = 0; index < changedTargetCells.length; index += 1) {
                 const targetCell = changedTargetCells[index];
                 const source = findCurrentMagicSourceForCell(
@@ -7892,6 +8203,9 @@
                 const sourceRect = getMagicSourceRect(source);
                 const targetRect = getMagicTargetRect(targetCell);
                 await animateMagicGemFlight(targetCell.color, sourceRect, targetRect, magicFlightDurationMs);
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
                 if (source) {
                     applyCurrentMagicPlacement(source, targetCell, targetCell.color);
                 } else {
@@ -7909,6 +8223,10 @@
                 void playPlaceSound();
             }
 
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
             boardState = nextBoardState;
             trayState = nextTrayState;
             render();
@@ -7924,6 +8242,9 @@
 
             actionCharges.magic = Math.max(0, actionCharges.magic - 1);
             await sleep(20);
+            if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
             setActionOverlay(null);
             commitMove(
                 `${describeMagicBounds(bounds)} 안의 보석 ${changedTargetCells.length}개를 매직으로 자동 정렬했어요.`,
@@ -8060,6 +8381,7 @@
 
         function commitMove(message, clusterSize = 1, shouldPlaySound = true, nextSelection = null) {
             const previousCompleted = new Set(completedColorIds);
+            const sessionVersion = gameSessionVersion;
             moves += 1;
             selected = normalizeSelection(nextSelection);
             const justSolved = checkSolved();
@@ -8075,11 +8397,20 @@
 
             if (justSolved) {
                 clearCelebrationTimers();
+                clearSolvedStageFailSafeTimer();
+                clearPersistedGameProgress();
                 const stageClearDelay = scheduleFullBoardCelebration();
                 const stageClearTimer = window.setTimeout(() => {
-                    startStageClearSequence();
+                    startStageClearSequence(sessionVersion);
                 }, stageClearDelay);
                 stageClearTimers.push(stageClearTimer);
+                solvedStageFailSafeTimer = window.setTimeout(() => {
+                    if (!isCurrentGameSession(sessionVersion) || !solved) {
+                        return;
+                    }
+
+                    advanceToNextStage(sessionVersion);
+                }, stageClearDelay + STAGE_TRANSITION_DELAY_MS + 480);
                 return;
             }
 
@@ -8171,88 +8502,6 @@
                     }
 
                     if (!gem) {
-                        const nearestPlacement = findNearestBoardClusterPlacement(
-                            activeSelection.cells,
-                            activeSelection.anchor,
-                            row,
-                            col,
-                            activeSelection.color
-                        );
-                        if (nearestPlacement) {
-                            const translatedCells = getTranslatedCells(
-                                activeSelection.cells,
-                                activeSelection.anchor,
-                                nearestPlacement.row,
-                                nearestPlacement.col
-                            );
-                            const nextSelection = createBoardSelection(
-                                translatedCells,
-                                { row: nearestPlacement.row, col: nearestPlacement.col },
-                                activeSelection.color,
-                                true
-                            );
-                            await animateBoardClusterMove(
-                                activeSelection.cells,
-                                activeSelection.anchor,
-                                nearestPlacement.row,
-                                nearestPlacement.col,
-                                nextSelection
-                            );
-                            commitMove(
-                                "가장 가까운 빈 자리로 묶음 보석을 맞춰 옮겼어요.",
-                                activeSelection.cells.length,
-                                false,
-                                nextSelection
-                            );
-                            return;
-                        }
-
-                        const nearestSlots = findNearestColorSlotPlacement(activeSelection.cells, row, col, activeSelection.color);
-                        if (nearestSlots) {
-                            const nextSelection = createBoardSelection(
-                                nearestSlots,
-                                mapBoardAnchor(activeSelection.cells, nearestSlots, activeSelection.anchor),
-                                activeSelection.color,
-                                true
-                            );
-                            await animateBoardClusterToBoardSlots(activeSelection.cells, nearestSlots, nextSelection);
-                            commitMove(
-                                "같은 색 빈칸을 가까운 순서대로 채우며 묶음 보석을 옮겼어요.",
-                                activeSelection.cells.length,
-                                false,
-                                nextSelection
-                            );
-                            return;
-                        }
-
-                        const partialSlots = findPartialColorSlotPlacement(
-                            activeSelection.cells.length,
-                            row,
-                            col,
-                            activeSelection.color
-                        );
-                        if (partialSlots) {
-                            const prioritizedCells = prioritizeBoardCells(activeSelection.cells, activeSelection.anchor);
-                            const movableCells = prioritizedCells.slice(0, partialSlots.length);
-                            const movedCellKeys = new Set(movableCells.map((cell) => toCellKey(cell.row, cell.col)));
-                            const remainingCells = activeSelection.cells.filter(
-                                (cell) => !movedCellKeys.has(toCellKey(cell.row, cell.col))
-                            );
-                            const nextSelection = createBoardSelection(
-                                remainingCells,
-                                activeSelection.anchor,
-                                activeSelection.color
-                            );
-                            await animateBoardClusterToBoardSlots(movableCells, partialSlots, nextSelection);
-                            commitMove(
-                                `묶음에서 보석 ${movableCells.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
-                                movableCells.length,
-                                false,
-                                nextSelection
-                            );
-                            return;
-                        }
-
                         const anchorCell =
                             activeSelection.cells.find(
                                 (cell) => cell.row === activeSelection.anchor.row && cell.col === activeSelection.anchor.col
@@ -8278,7 +8527,7 @@
                             return;
                         }
 
-                        setStatus("이 위치 근처에도 묶음이 들어갈 자리가 없어요.");
+                        setStatus("묶음 전체는 이 칸에 바로 놓을 수 없어요.");
                         return;
                     }
 
@@ -8321,41 +8570,20 @@
             }
 
             if (trayIndices.length > 1) {
-                const nearestSlots = findNearestColorSlotPlacement(trayIndices, row, col, trayGem);
-                if (nearestSlots) {
-                    const nextSelection = createBoardSelection(
-                        nearestSlots,
-                        mapBoardAnchor(
-                            trayIndices.map((index) => ({ row: 0, col: index })),
-                            nearestSlots,
-                            { row: 0, col: activeSelection.anchor }
-                        ),
-                        trayGem,
-                        true
-                    );
-                    await animateTrayClusterToBoardSlots(trayIndices, nearestSlots, nextSelection);
+                const anchorTrayIndex =
+                    trayIndices.find((index) => index === activeSelection.anchor) ?? trayIndices[0] ?? null;
+                if (anchorTrayIndex != null) {
+                    moveTrayToBoard(anchorTrayIndex, row, col);
+                    void playPlaceSound();
                     commitMove(
-                        "포켓의 같은 색 보석 묶음을 보드에 옮겼어요.",
-                        trayIndices.length,
+                        "포켓 묶음에서 보석 1개를 빈 칸으로 옮겼어요.",
+                        1,
                         false,
-                        nextSelection
-                    );
-                    return;
-                }
-
-                const partialSlots = findPartialColorSlotPlacement(trayIndices.length, row, col, trayGem);
-                if (partialSlots) {
-                    const prioritizedTrayIndices = prioritizeTrayIndices(trayIndices, activeSelection.anchor);
-                    const movableTrayIndices = prioritizedTrayIndices.slice(0, partialSlots.length);
-                    const movedTrayIndexSet = new Set(movableTrayIndices);
-                    const remainingTrayIndices = trayIndices.filter((index) => !movedTrayIndexSet.has(index));
-                    const nextSelection = createTraySelection(remainingTrayIndices, activeSelection.anchor, trayGem);
-                    await animateTrayClusterToBoardSlots(movableTrayIndices, partialSlots, nextSelection);
-                    commitMove(
-                        `포켓의 보석 ${movableTrayIndices.length}개를 같은 색 빈칸에 먼저 채웠어요.`,
-                        movableTrayIndices.length,
-                        false,
-                        nextSelection
+                        createTraySelection(
+                            trayIndices.filter((index) => index !== anchorTrayIndex),
+                            activeSelection.anchor,
+                            trayGem
+                        )
                     );
                     return;
                 }
@@ -8523,10 +8751,42 @@
         }
 
         function resetGame() {
+            gameSessionVersion += 1;
+            clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
-            boardState = createBoardState();
-            trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
             cleanedSocketCells = new Set();
+            isAnimating = false;
+            isStageTransitioning = false;
+            let nextBoardState = createBoardState();
+
+            if (!ACTIVE_MAP.initialBoardState) {
+                let bestBoardState = nextBoardState;
+                let bestBoardQuality = getInitialBoardQuality(nextBoardState);
+                const initialAttemptCount = ACTIVE_MAP.id === "strawberry" ? 32 : 18;
+
+                for (let attempt = 0; attempt < initialAttemptCount; attempt += 1) {
+                    const candidateBoardState = createBoardState();
+                    const candidateQuality = getInitialBoardQuality(candidateBoardState);
+
+                    if (isBetterInitialBoardQuality(candidateQuality, bestBoardQuality)) {
+                        bestBoardState = candidateBoardState;
+                        bestBoardQuality = candidateQuality;
+                    }
+
+                    if (
+                        bestBoardQuality.matchedCount === 0 &&
+                        bestBoardQuality.oversizeCellCount === 0 &&
+                        bestBoardQuality.maxClusterSize <= getInitialClusterLimit()
+                    ) {
+                        break;
+                    }
+                }
+
+                nextBoardState = bestBoardState;
+            }
+
+            boardState = nextBoardState;
+            trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
             actionCharges = { ...DEFAULT_ACTION_CHARGES };
             actionOverlayState = null;
             clearSparkles();
@@ -8535,14 +8795,35 @@
             selected = null;
             moves = 0;
             solved = false;
-            isStageTransitioning = false;
             completedColorIds = getCompletedColorIds();
             setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
             render();
         }
 
-        pixelAdminToggleElement?.addEventListener("click", () => {
+        pixelAdminToggleElement?.addEventListener("click", (event) => {
+            if (suppressPixelAdminToggleClick) {
+                event.preventDefault();
+                suppressPixelAdminToggleClick = false;
+                return;
+            }
+
             togglePixelAdmin();
+        });
+
+        pixelAdminToggleElement?.addEventListener("pointerdown", (event) => {
+            startPixelAdminToggleHold(event);
+        });
+
+        pixelAdminToggleElement?.addEventListener("pointerup", () => {
+            cancelPixelAdminToggleHold();
+        });
+
+        pixelAdminToggleElement?.addEventListener("pointercancel", () => {
+            cancelPixelAdminToggleHold();
+        });
+
+        pixelAdminToggleElement?.addEventListener("pointerleave", () => {
+            cancelPixelAdminToggleHold();
         });
 
         pixelAdminCloseElement?.addEventListener("click", () => {
@@ -8666,9 +8947,10 @@
         });
 
         loadPersistedPixelAdminStageOverrides();
-        syncActiveMap(0);
+        syncActiveMap(getInitialMapIndex());
         initializeBoardGestures();
         initializeBottomActionButtons();
+        clearPersistedGameProgress();
         resetGame();
     </script>
 </body>
