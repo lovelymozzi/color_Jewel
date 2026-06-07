@@ -980,17 +980,48 @@
 
         .magic-area-focus {
             position: absolute;
-            border: 2px solid rgba(255, 246, 220, 0.96);
-            border-radius: 18px;
-            background:
-                linear-gradient(180deg, rgba(255, 229, 181, 0.22), rgba(255, 229, 181, 0.12)),
-                rgba(255, 255, 255, 0.12);
-            box-shadow:
-                inset 0 0 0 2px rgba(245, 210, 138, 0.55),
-                inset 0 0 28px rgba(255, 255, 255, 0.18),
-                0 10px 24px rgba(156, 104, 42, 0.2);
-            backdrop-filter: blur(1px);
-            animation: tutorial-focus-pulse 0.58s ease-in-out infinite;
+            box-sizing: border-box;
+            border-radius: 20px;
+            background: transparent;
+            box-shadow: 0 10px 24px rgba(81, 53, 138, 0.2);
+            animation: none;
+        }
+
+        .magic-area-focus::before,
+        .magic-area-focus::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        .magic-area-focus::before {
+            padding: 4px;
+            background: conic-gradient(
+                from 180deg,
+                #ff5f6d 0deg,
+                #ff9a44 50deg,
+                #ffe066 100deg,
+                #61e294 150deg,
+                #4cc9f0 210deg,
+                #4361ee 260deg,
+                #9b5de5 310deg,
+                #ff5f6d 360deg
+            );
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            mask-composite: exclude;
+        }
+
+        .magic-area-focus::after {
+            inset: 4px;
+            box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.42);
         }
 
         .magic-area-spark {
@@ -1009,6 +1040,16 @@
                 0 0 18px rgba(255, 193, 59, 0.58);
             transform: translate(-50%, -50%);
             animation: magic-spark-pop 0.32s ease-out both;
+        }
+
+        .flying-gem {
+            position: fixed;
+            width: calc(var(--board-cell-size) * 0.84);
+            aspect-ratio: 1;
+            margin: 0;
+            pointer-events: none;
+            z-index: 72;
+            will-change: left, top, transform;
         }
 
         .tutorial-hint {
@@ -1651,9 +1692,9 @@
             </div>
 
             <div class="bottom-actions" aria-label="하단 액션 버튼">
-                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="자동 맞춤" title="자동 맞춤">
+                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="영역 맞춤" title="영역 맞춤">
                     <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">자동 맞춤</span>
+                    <span class="sr-only">영역 맞춤</span>
                 </button>
                 <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="소켓 정리" title="소켓 정리">
                     <span class="button-badge" aria-hidden="true">5</span>
@@ -3428,7 +3469,7 @@
         const TRAY_ROW_COUNT = POCKET_SIZE / TOP_POCKET_COUNT;
         const INITIAL_MAX_CLUSTER_SIZE = 12;
         const CLUSTER_STEP_MS = 46;
-        const MAGIC_AREA_SIZE = 5;
+        const MAGIC_AREA_SIZE = 6;
         const DEFAULT_ACTION_CHARGES = Object.freeze({
             magic: 3,
             clean: 2
@@ -5005,7 +5046,7 @@
                     button: bottomActionButton1Element,
                     badge: bottomActionButton1BadgeElement,
                     count: actionCharges.magic,
-                    label: "자동 맞춤",
+                    label: "영역 맞춤",
                     armed: actionOverlayState?.type === "magic-targeting"
                 },
                 {
@@ -6352,16 +6393,32 @@
             button.addEventListener("keyup", deactivatePressed);
         }
 
+        function bindDirectPointerActivation(element, handler) {
+            if (!element) {
+                return;
+            }
+
+            element.addEventListener("pointerup", (event) => {
+                if (event.pointerType === "mouse" && event.button !== 0) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                handler();
+            });
+        }
+
         function initializeBottomActionButtons() {
             bottomActionButtonElements.forEach((button) => {
                 bindActionButtonPressState(button);
             });
 
-            bindTapActivation(bottomActionButton1Element, () => {
+            bindDirectPointerActivation(bottomActionButton1Element, () => {
                 void useMagicAction();
             });
 
-            bindTapActivation(bottomActionButton2Element, () => {
+            bindDirectPointerActivation(bottomActionButton2Element, () => {
                 void useCleanAction();
             });
         }
@@ -6413,9 +6470,26 @@
                     if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs));
 
                     if (!button.disabled) {
-                        bindTapActivation(button, () => {
-                            void handleBoardClick(row, col);
-                        });
+                        if (magicTargeting) {
+                            button.addEventListener("pointerdown", () => {
+                                previewMagicBounds(row, col);
+                            });
+                            button.addEventListener("pointerup", (event) => {
+                                if (event.pointerType === "mouse" && event.button !== 0) {
+                                    return;
+                                }
+
+                                event.preventDefault();
+                                void handleBoardClick(row, col);
+                            });
+                            button.addEventListener("mouseenter", () => {
+                                previewMagicBounds(row, col);
+                            });
+                        } else {
+                            bindTapActivation(button, () => {
+                                void handleBoardClick(row, col);
+                            });
+                        }
                     }
                     boardElement.appendChild(button);
                 }
@@ -7003,27 +7077,33 @@
             }
 
             const { bounds, sparkRow, sparkCol } = actionOverlayState;
-            const regionCells = getMagicTargetCells(bounds, true)
-                .map((cell) => boardElement.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`))
-                .filter(Boolean);
-
-            if (!regionCells.length) {
+            if (!bounds) {
                 return false;
             }
 
             const stageRect = boardStageElement.getBoundingClientRect();
-            const rects = regionCells.map((cell) => cell.getBoundingClientRect());
-            const minLeft = Math.min(...rects.map((rect) => rect.left));
-            const minTop = Math.min(...rects.map((rect) => rect.top));
-            const maxRight = Math.max(...rects.map((rect) => rect.right));
-            const maxBottom = Math.max(...rects.map((rect) => rect.bottom));
+            const startCell = boardElement.querySelector(
+                `[data-row="${bounds.startRow}"][data-col="${bounds.startCol}"]`
+            );
+            const endCell = boardElement.querySelector(
+                `[data-row="${bounds.endRow}"][data-col="${bounds.endCol}"]`
+            );
+            if (!startCell || !endCell) {
+                return false;
+            }
+            const startRect = startCell.getBoundingClientRect();
+            const endRect = endCell.getBoundingClientRect();
+            const minLeft = Math.min(startRect.left, endRect.left);
+            const minTop = Math.min(startRect.top, endRect.top);
+            const maxRight = Math.max(startRect.right, endRect.right);
+            const maxBottom = Math.max(startRect.bottom, endRect.bottom);
 
             const focus = document.createElement("div");
             focus.className = "magic-area-focus";
-            focus.style.left = `${minLeft - stageRect.left - 7}px`;
-            focus.style.top = `${minTop - stageRect.top - 7}px`;
-            focus.style.width = `${maxRight - minLeft + 14}px`;
-            focus.style.height = `${maxBottom - minTop + 14}px`;
+            focus.style.left = `${Math.round(minLeft - stageRect.left - 7)}px`;
+            focus.style.top = `${Math.round(minTop - stageRect.top - 7)}px`;
+            focus.style.width = `${Math.round(maxRight - minLeft + 14)}px`;
+            focus.style.height = `${Math.round(maxBottom - minTop + 14)}px`;
             tutorialLayerElement.append(focus);
 
             if (sparkRow != null && sparkCol != null) {
@@ -7222,23 +7302,30 @@
             return actionOverlayState?.type === "magic-targeting";
         }
 
-        function getMagicBounds(startRow, startCol) {
+        function getMagicBoundsFromCell(row, col) {
+            const rowOffset = Math.floor((MAGIC_AREA_SIZE - 1) / 2);
+            const colOffset = Math.floor((MAGIC_AREA_SIZE - 1) / 2);
             const maxRowStart = Math.max(0, ROWS - MAGIC_AREA_SIZE);
             const maxColStart = Math.max(0, COLS - MAGIC_AREA_SIZE);
-            const resolvedRowStart = Math.max(0, Math.min(startRow, maxRowStart));
-            const resolvedColStart = Math.max(0, Math.min(startCol, maxColStart));
+            const startRow = Math.max(0, Math.min(maxRowStart, row - rowOffset));
+            const startCol = Math.max(0, Math.min(maxColStart, col - colOffset));
 
             return {
-                startRow: resolvedRowStart,
-                endRow: Math.min(ROWS - 1, resolvedRowStart + MAGIC_AREA_SIZE - 1),
-                startCol: resolvedColStart,
-                endCol: Math.min(COLS - 1, resolvedColStart + MAGIC_AREA_SIZE - 1)
+                startRow,
+                endRow: Math.min(ROWS - 1, startRow + MAGIC_AREA_SIZE - 1),
+                startCol,
+                endCol: Math.min(COLS - 1, startCol + MAGIC_AREA_SIZE - 1)
             };
         }
 
-        function getMagicBoundsFromCenter(centerRow, centerCol) {
-            const offset = Math.floor(MAGIC_AREA_SIZE / 2);
-            return getMagicBounds(centerRow - offset, centerCol - offset);
+        function describeMagicBounds(bounds) {
+            if (!bounds) {
+                return "";
+            }
+
+            const width = bounds.endCol - bounds.startCol + 1;
+            const height = bounds.endRow - bounds.startRow + 1;
+            return `${height} x ${width} 영역`;
         }
 
         function getMagicTargetCells(bounds, includeCompleted = false) {
@@ -7267,121 +7354,156 @@
                 .sort((left, right) => left.distance - right.distance || left.row - right.row || left.col - right.col);
         }
 
-        function getMovableGemCounts() {
-            const counts = new Map();
-
-            const addCount = (colorId) => {
-                if (!colorId) {
-                    return;
-                }
-
-                counts.set(colorId, (counts.get(colorId) || 0) + 1);
-            };
-
-            trayState.forEach((gem) => {
-                addCount(gem);
-            });
-
-            TARGET_POSITIONS.forEach((position) => {
-                const gem = boardState[position.row][position.col];
-                if (!gem || isLockedCorrectGem(position.row, position.col)) {
-                    return;
-                }
-
-                addCount(gem);
-            });
-
-            return counts;
+        function addMagicPoolCount(pool, colorId) {
+            pool.set(colorId, (pool.get(colorId) || 0) + 1);
         }
 
-        function scoreMagicRegion(bounds, movableCounts) {
-            const neededByColor = new Map();
-            const targetCells = getMagicTargetCells(bounds);
+        function consumeMagicPoolCount(pool, colorId) {
+            const nextCount = pool.get(colorId) || 0;
+            if (nextCount <= 0) {
+                return false;
+            }
 
-            targetCells.forEach((cell) => {
-                neededByColor.set(cell.color, (neededByColor.get(cell.color) || 0) + 1);
-            });
+            if (nextCount === 1) {
+                pool.delete(colorId);
+            } else {
+                pool.set(colorId, nextCount - 1);
+            }
 
-            const fixableCount = [...neededByColor.entries()].reduce((total, [colorId, count]) => {
-                return total + Math.min(count, movableCounts.get(colorId) || 0);
-            }, 0);
-
-            return {
-                unresolvedCount: targetCells.length,
-                fixableCount
-            };
+            return true;
         }
 
-        function findBestMagicRegion() {
-            const movableCounts = getMovableGemCounts();
-            const boardCenterRow = (ROWS - 1) / 2;
-            const boardCenterCol = (COLS - 1) / 2;
-            const maxRowStart = Math.max(0, ROWS - MAGIC_AREA_SIZE);
-            const maxColStart = Math.max(0, COLS - MAGIC_AREA_SIZE);
-            let bestRegion = null;
+        function takeMagicPoolColor(pool, preferredColor = null) {
+            if (preferredColor != null && consumeMagicPoolCount(pool, preferredColor)) {
+                return preferredColor;
+            }
 
-            for (let startRow = 0; startRow <= maxRowStart; startRow += 1) {
-                for (let startCol = 0; startCol <= maxColStart; startCol += 1) {
-                    const bounds = getMagicBounds(startRow, startCol);
-                    const score = scoreMagicRegion(bounds, movableCounts);
-
-                    if (score.fixableCount <= 0 || score.unresolvedCount <= 0) {
-                        continue;
-                    }
-
-                    const centerDistance =
-                        Math.abs((bounds.startRow + bounds.endRow) / 2 - boardCenterRow) +
-                        Math.abs((bounds.startCol + bounds.endCol) / 2 - boardCenterCol);
-
-                    const shouldReplace =
-                        !bestRegion ||
-                        score.fixableCount > bestRegion.fixableCount ||
-                        (score.fixableCount === bestRegion.fixableCount &&
-                            score.unresolvedCount > bestRegion.unresolvedCount) ||
-                        (score.fixableCount === bestRegion.fixableCount &&
-                            score.unresolvedCount === bestRegion.unresolvedCount &&
-                            centerDistance < bestRegion.centerDistance);
-
-                    if (shouldReplace) {
-                        bestRegion = {
-                            ...bounds,
-                            ...score,
-                            centerDistance
-                        };
-                    }
+            for (const [colorId] of pool.entries()) {
+                if (consumeMagicPoolCount(pool, colorId)) {
+                    return colorId;
                 }
             }
 
-            return bestRegion;
+            return null;
         }
 
-        function findMagicSourceForCell(colorId, targetRow, targetCol) {
+        function getTraySlotElement(index) {
+            return document.querySelector(`.tray-slot[data-index="${index}"]`);
+        }
+
+        function getBoardCellElement(row, col) {
+            return boardElement.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        }
+
+        function getMagicSourceRect(source) {
+            if (!source) {
+                return null;
+            }
+
+            const sourceElement = source.type === "tray"
+                ? getTraySlotElement(source.index)
+                : getBoardCellElement(source.row, source.col);
+            return sourceElement?.getBoundingClientRect() || null;
+        }
+
+        function getMagicTargetRect(targetCell) {
+            return getBoardCellElement(targetCell.row, targetCell.col)?.getBoundingClientRect() || null;
+        }
+
+        function getMagicFlightDurationMs(targetCount) {
+            const safeCount = Math.max(1, targetCount || 1);
+            return Math.max(18, Math.min(46, Math.floor(1100 / safeCount)));
+        }
+
+        async function animateMagicGemFlight(colorId, sourceRect, targetRect, durationMs = 32) {
+            if (!sourceRect || !targetRect) {
+                return;
+            }
+
+            const flyingGem = createGem(colorId);
+            flyingGem.classList.add("flying-gem");
+            flyingGem.style.left = `${sourceRect.left + sourceRect.width / 2}px`;
+            flyingGem.style.top = `${sourceRect.top + sourceRect.height / 2}px`;
+            flyingGem.style.width = `${Math.min(sourceRect.width, sourceRect.height) * 0.84}px`;
+            flyingGem.style.filter = "saturate(1.06) brightness(1.04) contrast(1.08) drop-shadow(0 8px 12px rgba(63, 33, 117, 0.22))";
+            document.body.appendChild(flyingGem);
+
+            const deltaX = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+            const deltaY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+            try {
+                if (typeof flyingGem.animate === "function") {
+                    const animation = flyingGem.animate(
+                        [
+                            { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+                            { transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(1.04)`, opacity: 1 }
+                        ],
+                        {
+                            duration: durationMs,
+                            easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+                            fill: "forwards"
+                        }
+                    );
+                    await animation.finished;
+                } else {
+                    flyingGem.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+                    await sleep(durationMs);
+                }
+            } catch (error) {
+                await sleep(Math.max(12, Math.floor(durationMs * 0.5)));
+            }
+
+            if (flyingGem.parentNode) {
+                flyingGem.parentNode.removeChild(flyingGem);
+            }
+        }
+
+        function findCurrentMagicSourceForCell(colorId, targetRow, targetCol, targetKeySet, resolvedTargetKeys) {
             const trayIndex = trayState.findIndex((gem) => gem === colorId);
             if (trayIndex !== -1) {
                 return {
                     type: "tray",
-                    index: trayIndex
+                    index: trayIndex,
+                    priority: 0,
+                    distance: 0
                 };
             }
 
             let bestBoardSource = null;
 
             TARGET_POSITIONS.forEach((position) => {
-                if (
-                    boardState[position.row][position.col] !== colorId ||
-                    isLockedCorrectGem(position.row, position.col) ||
-                    (position.row === targetRow && position.col === targetCol)
-                ) {
+                if (boardState[position.row][position.col] !== colorId) {
                     return;
                 }
 
+                if (position.row === targetRow && position.col === targetCol) {
+                    return;
+                }
+
+                const sourceKey = toCellKey(position.row, position.col);
+                const isTargetCell = targetKeySet.has(sourceKey);
+                const isResolvedTarget = resolvedTargetKeys.has(sourceKey);
+                const sourceIsCompleted = isCompletedTargetCell(position.row, position.col);
+                if (sourceIsCompleted && !isTargetCell) {
+                    return;
+                }
                 const distance = Math.abs(position.row - targetRow) + Math.abs(position.col - targetCol);
-                if (!bestBoardSource || distance < bestBoardSource.distance) {
+                const priority =
+                    !isTargetCell ? 0 :
+                    !isResolvedTarget ? 1 :
+                    sourceIsCompleted ? 3 :
+                    2;
+
+                if (
+                    !bestBoardSource ||
+                    priority < bestBoardSource.priority ||
+                    (priority === bestBoardSource.priority && distance < bestBoardSource.distance)
+                ) {
                     bestBoardSource = {
                         type: "board",
                         row: position.row,
                         col: position.col,
-                        distance
+                        distance,
+                        priority
                     };
                 }
             });
@@ -7389,7 +7511,7 @@
             return bestBoardSource;
         }
 
-        function applyMagicPlacement(source, targetCell) {
+        function applyCurrentMagicPlacement(source, targetCell, colorId) {
             const displacedGem = boardState[targetCell.row][targetCell.col];
 
             if (source.type === "tray") {
@@ -7398,13 +7520,80 @@
                 boardState[source.row][source.col] = displacedGem || 0;
             }
 
-            boardState[targetCell.row][targetCell.col] = targetCell.color;
-            markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+            boardState[targetCell.row][targetCell.col] = colorId;
+        }
+
+        function computeMagicArrangement(bounds) {
+            const targetCells = getMagicTargetCells(bounds, true)
+                .filter((cell) => !isCleanedSocketCell(cell.row, cell.col));
+            const selectedKeySet = new Set(targetCells.map((cell) => toCellKey(cell.row, cell.col)));
+            const mutableBoardCells = TARGET_POSITIONS.filter(
+                (position) => {
+                    if (isCleanedSocketCell(position.row, position.col)) {
+                        return false;
+                    }
+
+                    const cellKey = toCellKey(position.row, position.col);
+                    return selectedKeySet.has(cellKey) || !isCompletedTargetCell(position.row, position.col);
+                }
+            );
+            const otherBoardCells = mutableBoardCells.filter(
+                (position) => !selectedKeySet.has(toCellKey(position.row, position.col))
+            );
+            const colorPool = new Map();
+
+            mutableBoardCells.forEach((position) => {
+                addMagicPoolCount(colorPool, boardState[position.row][position.col] || 0);
+            });
+            trayState.forEach((gem) => {
+                addMagicPoolCount(colorPool, gem || 0);
+            });
+
+            for (const cell of targetCells) {
+                if (!consumeMagicPoolCount(colorPool, cell.color)) {
+                    return null;
+                }
+            }
+
+            const nextBoardState = boardState.map((row) => [...row]);
+            const nextTrayState = [...trayState];
+
+            targetCells.forEach((cell) => {
+                nextBoardState[cell.row][cell.col] = cell.color;
+            });
+
+            otherBoardCells.forEach((position) => {
+                const currentColor = boardState[position.row][position.col] || 0;
+                nextBoardState[position.row][position.col] = takeMagicPoolColor(colorPool, currentColor) ?? 0;
+            });
+
+            trayState.forEach((gem, index) => {
+                nextTrayState[index] = takeMagicPoolColor(colorPool, gem || 0) ?? 0;
+            });
+
+            return {
+                targetCells,
+                nextBoardState,
+                nextTrayState
+            };
         }
 
         async function applyMagicToBounds(bounds) {
-            const targetCells = getMagicTargetCells(bounds);
-            let fixedCount = 0;
+            const arrangement = computeMagicArrangement(bounds);
+            if (!arrangement) {
+                setActionOverlay(null);
+                render();
+                setStatus("선택한 영역을 맞출 수 있는 보석 구성이 아니에요.");
+                return;
+            }
+
+            const { targetCells, nextBoardState, nextTrayState } = arrangement;
+            const changedTargetCells = targetCells.filter(
+                (cell) => boardState[cell.row][cell.col] !== nextBoardState[cell.row][cell.col]
+            );
+            const magicFlightDurationMs = getMagicFlightDurationMs(changedTargetCells.length);
+            const targetKeySet = new Set(targetCells.map((cell) => toCellKey(cell.row, cell.col)));
+            const resolvedTargetKeys = new Set();
 
             selected = null;
             isAnimating = true;
@@ -7413,18 +7602,27 @@
                 bounds
             });
             render();
-            await sleep(120);
+            await sleep(18);
 
-            for (let index = 0; index < targetCells.length; index += 1) {
-                const targetCell = targetCells[index];
-                const source = findMagicSourceForCell(targetCell.color, targetCell.row, targetCell.col);
-
-                if (!source) {
-                    continue;
+            for (let index = 0; index < changedTargetCells.length; index += 1) {
+                const targetCell = changedTargetCells[index];
+                const source = findCurrentMagicSourceForCell(
+                    targetCell.color,
+                    targetCell.row,
+                    targetCell.col,
+                    targetKeySet,
+                    resolvedTargetKeys
+                );
+                const sourceRect = getMagicSourceRect(source);
+                const targetRect = getMagicTargetRect(targetCell);
+                await animateMagicGemFlight(targetCell.color, sourceRect, targetRect, magicFlightDurationMs);
+                if (source) {
+                    applyCurrentMagicPlacement(source, targetCell, targetCell.color);
+                } else {
+                    boardState[targetCell.row][targetCell.col] = targetCell.color;
                 }
-
-                applyMagicPlacement(source, targetCell);
-                fixedCount += 1;
+                markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+                resolvedTargetKeys.add(toCellKey(targetCell.row, targetCell.col));
                 setActionOverlay({
                     type: "magic",
                     bounds,
@@ -7433,15 +7631,15 @@
                 });
                 render();
                 void playPlaceSound();
-
-                if (index < targetCells.length - 1) {
-                    await sleep(34);
-                }
             }
+
+            boardState = nextBoardState;
+            trayState = nextTrayState;
+            render();
 
             isAnimating = false;
 
-            if (!fixedCount) {
+            if (!changedTargetCells.length) {
                 setActionOverlay(null);
                 render();
                 setStatus("선택한 영역에서 매직으로 바로 맞출 수 있는 보석이 없어요.");
@@ -7449,20 +7647,48 @@
             }
 
             actionCharges.magic = Math.max(0, actionCharges.magic - 1);
-            await sleep(120);
+            await sleep(20);
             setActionOverlay(null);
-            commitMove(`선택한 영역의 보석 ${fixedCount}개를 매직으로 자동 정렬했어요.`, fixedCount, false, null);
+            commitMove(
+                `${describeMagicBounds(bounds)} 안의 보석 ${changedTargetCells.length}개를 매직으로 자동 정렬했어요.`,
+                changedTargetCells.length,
+                false,
+                null
+            );
         }
 
-        function startMagicTargeting(bounds = null) {
-            const nextBounds = bounds || getMagicBoundsFromCenter(Math.floor(ROWS / 2), Math.floor(COLS / 2));
-            selected = null;
+        function previewMagicBounds(row, col) {
+            if (!isMagicTargetingMode()) {
+                return;
+            }
+
+            const nextBounds = getMagicBoundsFromCell(row, col);
+            const currentBounds = actionOverlayState?.bounds;
+            if (
+                currentBounds &&
+                currentBounds.startRow === nextBounds.startRow &&
+                currentBounds.endRow === nextBounds.endRow &&
+                currentBounds.startCol === nextBounds.startCol &&
+                currentBounds.endCol === nextBounds.endCol
+            ) {
+                return;
+            }
+
             setActionOverlay({
-                type: "magic-targeting",
+                ...actionOverlayState,
                 bounds: nextBounds
             });
+        }
+
+        function startMagicTargeting() {
+            selected = null;
+            const initialBounds = getMagicBoundsFromCell(Math.floor(ROWS / 2), Math.floor(COLS / 2));
+            setActionOverlay({
+                type: "magic-targeting",
+                bounds: initialBounds
+            });
             render();
-            setStatus("매직을 적용할 영역을 보드에서 눌러 주세요.");
+            setStatus("매직으로 맞출 6x6 영역을 선택해 주세요.");
         }
 
         function cancelMagicTargeting(message = "매직 영역 선택을 취소했어요.") {
@@ -7490,11 +7716,7 @@
                 return;
             }
 
-            const selectedAnchor = selected?.source === "board" ? selected.anchor : null;
-            const initialBounds = selectedAnchor
-                ? getMagicBoundsFromCenter(selectedAnchor.row, selectedAnchor.col)
-                : getMagicBoundsFromCenter(Math.floor(ROWS / 2), Math.floor(COLS / 2));
-            startMagicTargeting(initialBounds);
+            startMagicTargeting();
         }
 
         function getCleanableSocketCells() {
@@ -7632,7 +7854,13 @@
 
         async function handleBoardClick(row, col) {
             if (isMagicTargetingMode()) {
-                const selectedBounds = getMagicBoundsFromCenter(row, col);
+                const selectedBounds = getMagicBoundsFromCell(row, col);
+                setActionOverlay({
+                    type: "magic",
+                    bounds: selectedBounds
+                });
+                render();
+                await sleep(12);
                 await applyMagicToBounds(selectedBounds);
                 return;
             }
@@ -8182,7 +8410,3 @@
     </script>
 </body>
 </html>
-
-
-
-
