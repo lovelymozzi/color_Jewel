@@ -332,6 +332,11 @@ function normalizeImageStyleModel(imageLike) {
             color: im.shadowColor || '#000000',
             opacity: im.shadowOpacity ?? 50,
         },
+        tint: {
+            mode: im.tintMode || 'off',   // 'off' | 'tint'(색조,명암유지) | 'overlay'(덧입히기,불투명 페인트)
+            color: im.tintColor || '#ff3b30',
+            strength: im.tintStrength ?? 100,
+        },
     };
 }
 
@@ -1132,7 +1137,15 @@ export class SceneRenderer {
                 el.textContent = tpl ? tpl.replaceAll('{value}', String(value)) : String(value);
             });
             const imgs = this._boundImages[key];
-            if (imgs) imgs.forEach(img => { img.src = this._resolveAssetPath(String(value)); });
+            if (imgs) imgs.forEach(el => {
+                const url = this._resolveAssetPath(String(value));
+                if (el.tagName === 'IMG') { el.src = url; return; }
+                // 틴트 div: background-image 와 mask 의 이미지 URL 교체 (색상은 dataset.tintCol 유지)
+                const col = el.dataset.tintCol || 'transparent';
+                el.style.backgroundImage = `linear-gradient(${col},${col}),url("${url}")`;
+                const msk = `url("${url}") center / contain no-repeat`;
+                el.style.webkitMask = msk; el.style.mask = msk;
+            });
         }
         return this;
     }
@@ -1498,8 +1511,24 @@ export class SceneRenderer {
         const _sy = (layer.scaleY !== undefined ? layer.scaleY : 1) * _sc;
         const timelineControlsCss = !!(layer.stableId && this._timelineAnimationTargets?.has(layer.stableId));
 
+        // 좌우/상하 반전: 시각 콘텐츠를 감싸는 래퍼에 scale(-1) 적용.
+        // press/spin 등이 콘텐츠 자체의 transform 을 동적으로 덮어쓰므로 별도 래퍼에서 처리.
+        // 회전(rotWrap)은 바깥에서 감싸므로 rotate(flip(content)) 순서로 합성된다.
+        const _flipWrap = (result) => {
+            if (!layer.flipX && !layer.flipY) return result;
+            const fw = document.createElement('div');
+            fw.style.cssText = `display:inline-block;vertical-align:top;transform:scale(${layer.flipX ? -1 : 1},${layer.flipY ? -1 : 1});transform-origin:50% 50%;`;
+            fw.appendChild(result);
+            return fw;
+        };
+        // 텍스트 글자는 거울상이 되지 않도록 래퍼 반전을 상쇄(역-반전)한다. (이모지도 텍스트 content)
+        const _flipText = (span) => {
+            if (!layer.flipX && !layer.flipY) return;
+            span.style.transform += ` scale(${layer.flipX ? -1 : 1},${layer.flipY ? -1 : 1})`;
+        };
+
         if (layer.layerType === 'confetti') {
-            return this._buildConfettiVisual(layer, _sx, _sy);
+            return _flipWrap(this._buildConfettiVisual(layer, _sx, _sy));
         }
 
         if (layer.layerType === 'component' || layer.layerType === undefined) {
@@ -1523,6 +1552,7 @@ export class SceneRenderer {
                 span.className = `text-${i}`;
                 span.textContent = t.staticContent || '';
                 span.style.cssText = this._textCss(t, _sx, _sy);
+                _flipText(span);
                 if (t.bindingKey) {
                     if (t.staticContent && t.staticContent.includes('{value}')) span.dataset.bindingTemplate = t.staticContent;
                     if (!this._boundElements[t.bindingKey]) this._boundElements[t.bindingKey] = [];
@@ -1556,7 +1586,7 @@ export class SceneRenderer {
                 img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;';
                 inner.appendChild(img);
             }
-            return inner;
+            return _flipWrap(inner);
 
         } else if (layer.layerType === 'image') {
             const cssAnimation = timelineControlsCss
@@ -1564,38 +1594,63 @@ export class SceneRenderer {
                 : (findEffect(layer.effects, 'css-animation') || normalizeCssAnimationEffect(layer));
             const particleEffect = findEffect(layer.effects, 'particle-effect') || normalizeParticleEffect(layer);
             const img = document.createElement('img');
-            img.src = this._resolveAssetPath((layer.image?.exportPath) || (layer.visual?.exportPath) || '');
+            const _imgSrc = this._resolveAssetPath((layer.image?.exportPath) || (layer.visual?.exportPath) || '');
+            img.src = _imgSrc;
             img.draggable = false;
-            if (layer.image?.imageKey) {
-                if (!this._boundImages[layer.image.imageKey]) this._boundImages[layer.image.imageKey] = [];
-                this._boundImages[layer.image.imageKey].push(img);
-            }
             const iw = Math.round((layer.visual?.width || 64) * _sx) + 'px';
             const ih = Math.round((layer.visual?.height || 64) * _sy) + 'px';
             img.style.width = iw;
             img.style.height = ih;
             img.style.objectFit = 'contain';
             const imageStyle = layer.image?.style || layer.visual?.style || normalizeImageStyleModel(layer);
-            img.style.filter = imageShadowCss(imageStyle);
-            applyPressEffect(img, findEffect(layer.effects, 'press') || normalizePressEffect(layer), { baseFilter: img.style.filter || '' });
-            // 좌우/상하 반전: 이미지 콘텐츠를 감싸는 래퍼에 scale(-1) 적용.
-            // press effect 가 img.style.transform 을 동적으로 덮어쓰므로 별도 래퍼에서 처리.
-            const _flipWrap = (result) => {
-                if (!layer.flipX && !layer.flipY) return result;
-                const fw = document.createElement('div');
-                fw.style.cssText = `display:inline-block;vertical-align:top;transform:scale(${layer.flipX ? -1 : 1},${layer.flipY ? -1 : 1});transform-origin:50% 50%;`;
-                fw.appendChild(result);
-                return fw;
-            };
+            const _shadowFilter = imageShadowCss(imageStyle);
+            const _pressEffect = findEffect(layer.effects, 'press') || normalizePressEffect(layer);
+            // 색 채우기(재색칠): img 위에 별도 오버레이를 겹치면 안티앨리어싱 가장자리에 알파가 더해져
+            // 실루엣이 미세하게 굵어지고, 틴트된 두 이미지가 겹칠 때 1px 경계선(seam)이 보인다.
+            // → 레이어를 쌓지 않고 단일 div 의 background-blend-mode 로 합성 후, 이미지 알파로 마스킹한다.
+            //   불투명 background-color 위에서 합성 → 마스크 전 알파=1 → ×mask = 원본 이미지 알파(정확) → seam 없음.
+            //   tint(색조): blend 'color'(명암 유지) · overlay(덧입히기): blend 'normal'(불투명 페인트).
+            const _tint = imageStyle?.tint;
+            const _tintMode = _tint?.mode || 'off';
+            const _tintActive = _tintMode !== 'off' && (_tint.strength ?? 100) > 0;
+            let visual;
+            if (_tintActive) {
+                const _color = _tint.color || '#ff3b30';
+                const _col = _color.charAt(0) === '#' ? hexToRgba(_color, _tint.strength ?? 100) : _color;
+                const _blend = _tintMode === 'tint' ? 'color' : 'normal';
+                const _msk = `url("${_imgSrc}") center / contain no-repeat`;
+                visual = document.createElement('div');
+                visual.style.cssText =
+                    `width:${iw};height:${ih};` +
+                    `background-color:${_color};` +
+                    `background-image:linear-gradient(${_col},${_col}),url("${_imgSrc}");` +
+                    `background-repeat:no-repeat,no-repeat;background-position:center,center;background-size:100% 100%,contain;` +
+                    `background-blend-mode:${_blend},normal;` +
+                    `-webkit-mask:${_msk};mask:${_msk};` +
+                    (_shadowFilter ? `filter:${_shadowFilter};` : '');
+                visual.dataset.tintCol = _col; // 바인딩(imageKey) 런타임 src 교체 시 재구성용
+                applyPressEffect(visual, _pressEffect, { baseFilter: _shadowFilter || '' });
+            } else {
+                img.style.filter = _shadowFilter;
+                applyPressEffect(img, _pressEffect, { baseFilter: img.style.filter || '' });
+                visual = img;
+            }
+            // 동적 이미지 바인딩: 실제 표시 엘리먼트(visual)를 등록 (updateBindings 에서 img/div 모두 처리)
+            if (layer.image?.imageKey) {
+                if (!this._boundImages[layer.image.imageKey]) this._boundImages[layer.image.imageKey] = [];
+                this._boundImages[layer.image.imageKey].push(visual);
+            }
             if (layer.texts && layer.texts.length > 0) {
                 const wrapDiv = document.createElement('div');
                 wrapDiv.style.cssText = `position:relative;width:${iw};height:${ih};`;
-                img.style.position = 'absolute'; img.style.top = '0'; img.style.left = '0';
-                wrapDiv.appendChild(img);
+                visual.style.position = 'absolute'; visual.style.top = '0'; visual.style.left = '0';
+                if (visual !== img) { visual.style.width = '100%'; visual.style.height = '100%'; }
+                wrapDiv.appendChild(visual);
                 layer.texts.forEach(t => {
                     const span = document.createElement('span');
                     span.textContent = t.staticContent || '';
                     span.style.cssText = this._textCss(t, _sx, _sy);
+                    _flipText(span);
                     if (t.bindingKey) {
                         if (t.staticContent && t.staticContent.includes('{value}')) span.dataset.bindingTemplate = t.staticContent;
                         if (!this._boundElements[t.bindingKey]) this._boundElements[t.bindingKey] = [];
@@ -1607,9 +1662,9 @@ export class SceneRenderer {
                 playParticleEffect(wrapDiv, particleEffect);
                 return _flipWrap(wrapDiv);
             }
-            applyCssAnimationEffect(img, cssAnimation);
-            playParticleEffect(img, particleEffect);
-            return _flipWrap(img);
+            applyCssAnimationEffect(visual, cssAnimation);
+            playParticleEffect(visual, particleEffect);
+            return _flipWrap(visual);
         }
         return document.createElement('div');
     }
@@ -1725,6 +1780,7 @@ export class SceneRenderer {
         const isNotchL = shapeType === 'notch-left';
         const isRing = shapeType === 'ring';
         const isHollowRect = shapeType === 'hollow-rect';
+        const isTopRoundRect = shapeType === 'top-round-rect';
         const isHollow = isRing || isHollowRect;
         const w = (isCircle || isRing) ? Math.max(shape.width || 60, shape.height || 60) : (shape.width || 100);
         const h = (isCircle || isRing) ? Math.max(shape.width || 60, shape.height || 60) : (shape.height || 40);
@@ -1732,6 +1788,7 @@ export class SceneRenderer {
         if (isCircle || isRing) radius = w / 2;
         else if (isPill) radius = h / 2;
         else if (isRibbon || isRibbonL || isNotch || isNotchL) radius = 0;
+        const radiusCss = isTopRoundRect ? `${radius}px ${radius}px 0 0` : `${radius}px`;
 
         const bg = fill.type === 'none'           ? 'transparent'
             : fill.type === 'solid'               ? (fill.color1 || '#4a90d9')
@@ -1751,7 +1808,7 @@ export class SceneRenderer {
             const thickness = shape.hollowThickness || 8;
             el.style.cssText = [
                 `position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;`,
-                `width:${w}px;height:${h}px;border-radius:${radius}px;background:transparent;`,
+                `width:${w}px;height:${h}px;border-radius:${radiusCss};background:transparent;`,
                 `border:${thickness}px solid ${fill.color1 || '#4a90d9'};`,
                 shadows.length ? `box-shadow:${shadows.join(',')};` : '',
                 border.width > 0 ? `outline:${border.width}px solid ${border.color || '#fff'};outline-offset:0;` : '',
@@ -1783,7 +1840,7 @@ export class SceneRenderer {
             const maskCss = mask.enabled ? ringMaskCss(mask.innerPct, mask.outerPct) : '';
             el.style.cssText = [
                 `position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;`,
-                `width:${w}px;height:${h}px;border-radius:${radius}px;background:${bg};`,
+                `width:${w}px;height:${h}px;border-radius:${radiusCss};background:${bg};`,
                 `box-shadow:${shadows.join(',') || 'none'};`,
                 border.width > 0 ? `border:${border.width}px solid ${border.color || '#fff'};` : '',
                 maskCss ? `-webkit-mask-image:${maskCss};mask-image:${maskCss};` : '',
@@ -2133,8 +2190,8 @@ SceneRenderer.utils = {
             });
             if (!contractLayer.visual.images.length) delete contractLayer.visual.images;
         }
-        if (contractLayer.visual?.style?.shadow?.enabled === false) delete contractLayer.visual.style;
-        if (contractLayer.image?.style?.shadow?.enabled === false) delete contractLayer.image.style;
+        if (contractLayer.visual?.style?.shadow?.enabled === false && (contractLayer.visual.style.tint?.mode || 'off') === 'off') delete contractLayer.visual.style;
+        if (contractLayer.image?.style?.shadow?.enabled === false && (contractLayer.image.style.tint?.mode || 'off') === 'off') delete contractLayer.image.style;
         if (contractLayer.image && !contractLayer.image.imageKey) delete contractLayer.image;
         if (contractLayer.image === null) delete contractLayer.image;
         if (contractLayer.rotation === 0) delete contractLayer.rotation;

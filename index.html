@@ -705,8 +705,29 @@
         }
 
         .stage-clear-scene-host {
-            position: relative;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow: hidden;
             pointer-events: none;
+        }
+
+        .stage-clear-scene-shell {
+            position: relative;
+            flex: none;
+            pointer-events: none;
+        }
+
+        .stage-clear-scene-surface {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            transform-origin: top left;
         }
 
         .stage-clear-panel {
@@ -6194,6 +6215,48 @@
             });
         }
 
+        function getStageClearSceneLayoutMetrics(contract) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const mountWidth = stageClearSceneMountElement?.clientWidth || designWidth;
+            const mountHeight = stageClearSceneMountElement?.clientHeight || designHeight;
+            const insetPadding = Math.max(12, Math.min(24, Math.floor(Math.min(mountWidth, mountHeight) * 0.04)));
+            const availableWidth = Math.max(1, mountWidth - insetPadding * 2);
+            const availableHeight = Math.max(1, mountHeight - insetPadding * 2);
+            const scale = Math.min(1, availableWidth / designWidth, availableHeight / designHeight);
+
+            return {
+                designWidth,
+                designHeight,
+                scale,
+                scaledWidth: Math.round(designWidth * scale),
+                scaledHeight: Math.round(designHeight * scale)
+            };
+        }
+
+        function createStageClearSceneSurface(contract) {
+            if (!stageClearSceneMountElement) {
+                return null;
+            }
+
+            const { designWidth, designHeight, scale, scaledWidth, scaledHeight } =
+                getStageClearSceneLayoutMetrics(contract);
+            const shell = document.createElement("div");
+            shell.className = "stage-clear-scene-shell";
+            shell.style.width = `${scaledWidth}px`;
+            shell.style.height = `${scaledHeight}px`;
+
+            const surface = document.createElement("div");
+            surface.className = "stage-clear-scene-surface";
+            surface.style.width = `${designWidth}px`;
+            surface.style.height = `${designHeight}px`;
+            surface.style.transform = `scale(${scale})`;
+
+            shell.appendChild(surface);
+            stageClearSceneMountElement.appendChild(shell);
+            return surface;
+        }
+
         async function showStageClearScene(sessionVersion = gameSessionVersion) {
             if (!stageClearSceneMountElement) {
                 return false;
@@ -6211,15 +6274,26 @@
 
                 clearStageClearSceneEffects();
                 stageClearSceneMountElement.replaceChildren();
+                stageClearSceneRenderer?.hide();
 
-                if (!stageClearSceneRenderer) {
-                    stageClearSceneRenderer = new SceneRenderer(stageClearSceneMountElement, {
-                        basePath: "./src/"
-                    });
+                const surface = createStageClearSceneSurface(contract);
+                if (!surface) {
+                    return false;
                 }
 
+                stageClearSceneRenderer = new SceneRenderer(surface, {
+                    basePath: "./src/"
+                });
                 stageClearSceneRenderer.loadSync(contract);
                 stageClearSceneRenderer.show();
+                const sceneRootElement = surface.firstElementChild;
+                if (sceneRootElement) {
+                    sceneRootElement.style.top = "0";
+                    sceneRootElement.style.left = "0";
+                    sceneRootElement.style.right = "auto";
+                    sceneRootElement.style.bottom = "auto";
+                    sceneRootElement.style.pointerEvents = "none";
+                }
                 stageClearSceneMountElement.setAttribute("aria-hidden", "false");
                 return true;
             } catch (error) {
@@ -6236,6 +6310,7 @@
 
             if (stageClearSceneRenderer) {
                 stageClearSceneRenderer.hide();
+                stageClearSceneRenderer = null;
             }
 
             if (stageClearSceneMountElement) {

@@ -114,6 +114,11 @@
                 "blur": 0,
                 "color": "#000000",
                 "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
               }
             }
           },
@@ -512,6 +517,11 @@
                 "blur": 0,
                 "color": "#000000",
                 "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
               }
             }
           },
