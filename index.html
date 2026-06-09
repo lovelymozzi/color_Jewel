@@ -16,8 +16,8 @@
             --app-bg: #ffffff;
             --grid-bg: rgba(148, 163, 184, 0.08);
             --grid-line: rgba(226, 232, 240, 0.9);
-            --app-shell-width: min(100vw, 430px);
-            --app-shell-height: min(100dvh, calc(var(--app-shell-width) * 16 / 9));
+            --app-shell-width: min(100vw, 390px);
+            --app-shell-height: min(100dvh, 844px);
             --viewport-gap: 20px;
             --pocket-bottom-offset: 20px;
             --ad-banner-height: 56px;
@@ -153,6 +153,92 @@
             gap: 0;
         }
 
+        #sceneBottomUiMount {
+            position: absolute;
+            inset: 0;
+            z-index: 18;
+            pointer-events: none;
+        }
+
+        .scene-ui-surface {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .scene-pocket-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .scene-pocket-tray {
+            position: absolute;
+            display: grid;
+            grid-template-columns: repeat(12, var(--scene-pocket-slot-size, 18px));
+            gap: var(--scene-pocket-slot-gap, 4px);
+            width: max-content;
+            pointer-events: none;
+        }
+
+        .scene-pocket-tray .tray-slot {
+            width: var(--scene-pocket-slot-size, 18px);
+            min-height: var(--scene-pocket-slot-size, 18px);
+            height: var(--scene-pocket-slot-size, 18px);
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            pointer-events: auto;
+            overflow: visible;
+        }
+
+        .scene-pocket-tray .tray-slot::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.9) 0 28%, rgba(255, 255, 255, 0.18) 28% 44%, transparent 44%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(214, 223, 237, 0.92));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.92),
+                inset 0 -1px 0 rgba(138, 164, 196, 0.34),
+                0 1px 2px rgba(70, 98, 134, 0.12);
+            opacity: 0.92;
+            pointer-events: none;
+        }
+
+        .scene-pocket-tray .tray-slot.hidden-slot,
+        .scene-pocket-tray .tray-slot.empty-target,
+        .scene-pocket-tray .tray-slot.next-open-slot {
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .scene-pocket-tray .tray-slot.hidden-slot::before {
+            opacity: 0.32;
+            filter: grayscale(1);
+        }
+
+        .scene-pocket-tray .tray-slot.empty-target::before {
+            opacity: 0.94;
+        }
+
+        .scene-pocket-tray .tray-slot.next-open-slot::before {
+            opacity: 0.82;
+        }
+
+        .scene-pocket-tray .tray-slot.next-open-slot::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border: 1.4px dashed rgba(171, 182, 201, 0.96);
+            border-radius: 999px;
+            pointer-events: none;
+        }
+
         .board-wrap {
             display: flex;
             justify-content: center;
@@ -239,10 +325,28 @@
         }
 
         .tray-slot.next-open-slot {
-            border: 0;
-            box-shadow:
-                inset 0 0 0 0.6px rgba(255, 255, 255, 0.12),
-                inset 0 0 0 1.4px rgba(188, 170, 149, 0.42);
+            background: rgba(255, 255, 255, 0.22);
+            border: 1.5px dashed rgba(198, 203, 214, 0.98);
+            box-shadow: none;
+            cursor: default;
+        }
+
+        .tray-slot.next-open-slot::before {
+            content: "";
+            position: absolute;
+            width: var(--gem-size);
+            aspect-ratio: 1;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(180deg);
+            clip-path: var(--socket-shape);
+            background:
+                linear-gradient(180deg, rgba(210, 214, 222, 0.18), rgba(210, 214, 222, 0.28)),
+                url("src/assets/jewel.png") center / contain no-repeat;
+            background-blend-mode: color-burn, normal;
+            filter: grayscale(1) brightness(1.04) saturate(0.08);
+            opacity: 0.34;
+            pointer-events: none;
         }
 
         .tray-slot.hidden-slot::before {
@@ -524,22 +628,25 @@
             transform: translateX(-50%);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             align-items: center;
             width: min(var(--pocket-shell-width), calc(var(--app-shell-width) - (var(--viewport-gap) * 2)));
             max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
-            padding: 16px 18px 18px;
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid rgba(203, 213, 225, 0.92);
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            padding: 12px 14px 14px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(244, 244, 246, 0.98), rgba(236, 237, 240, 0.98));
+            border: 0;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.88),
+                0 6px 0 rgba(0, 0, 0, 0.08),
+                0 12px 24px rgba(15, 23, 42, 0.06);
             z-index: 18;
         }
 
         .pocket-stack {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             align-items: center;
         }
@@ -552,10 +659,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 0;
+            gap: 12px;
             width: min(var(--pocket-shell-width), calc(var(--app-shell-width) - (var(--viewport-gap) * 2)));
             max-width: calc(var(--app-shell-width) - (var(--viewport-gap) * 2));
-            padding: 0 4px;
+            padding: 0;
             z-index: 18;
         }
 
@@ -586,10 +693,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background:
-                radial-gradient(circle at 50% 42%, rgba(255, 206, 65, 0.12), transparent 26%),
-                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08), transparent 44%),
-                rgba(255, 255, 255, 0.72);
+            background: transparent;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.24s ease;
@@ -598,6 +702,11 @@
 
         .stage-clear-overlay.active {
             opacity: 1;
+        }
+
+        .stage-clear-scene-host {
+            position: relative;
+            pointer-events: none;
         }
 
         .stage-clear-panel {
@@ -809,12 +918,16 @@
             width: var(--action-button-size);
             aspect-ratio: 1;
             border: 0;
-            border-radius: 0;
+            border-radius: 18px;
             padding: 0;
-            background: transparent url("src/assets/button_off.png?v=20260605-1") center / 100% 100% no-repeat;
-            box-shadow: none;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 245, 247, 0.98));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                0 4px 0 rgba(0, 0, 0, 0.08),
+                0 10px 18px rgba(15, 23, 42, 0.06);
             cursor: pointer;
-            transition: transform 0.12s ease, filter 0.12s ease, background-image 0.12s ease;
+            transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
             transform: translateY(0) scale(1);
             transform-origin: center center;
             filter: none;
@@ -838,31 +951,36 @@
             pointer-events: none;
         }
 
-        .pocket-action-button.icon-magic::after,
-        .pocket-action-button.icon-clean::after {
+        .pocket-action-button.has-badge::after {
             content: "";
             position: absolute;
-            right: 1%;
-            bottom: 2%;
-            width: 36%;
-            height: 36%;
-            background: transparent url("src/assets/circle1.png?v=20260605-1") center / contain no-repeat;
+            left: 50%;
+            bottom: 6px;
+            width: 24px;
+            height: 24px;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: linear-gradient(180deg, #7dd9a5, #56c287);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.46),
+                0 2px 0 rgba(42, 131, 82, 0.34);
             z-index: 2;
             pointer-events: none;
         }
 
         .pocket-action-button .button-badge {
             position: absolute;
-            right: 1%;
-            bottom: 2%;
-            width: 36%;
-            height: 36%;
+            left: 50%;
+            bottom: 6px;
+            width: 24px;
+            height: 24px;
+            transform: translateX(-50%);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
             font-family: "Trebuchet MS", "Avenir Next", sans-serif;
-            font-size: clamp(11px, 1.35vw, 16px);
+            font-size: 15px;
             font-weight: 900;
             line-height: 1;
             letter-spacing: -0.02em;
@@ -872,7 +990,7 @@
         }
 
         .pocket-action-button.is-empty {
-            opacity: 0.62;
+            opacity: 0.5;
         }
 
         .pocket-action-button.is-empty .button-badge {
@@ -880,7 +998,11 @@
         }
 
         .pocket-action-button.is-armed {
-            background-image: url("src/assets/button_on.png?v=20260605-1");
+            box-shadow:
+                inset 0 0 0 2px rgba(96, 128, 168, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                0 3px 0 rgba(0, 0, 0, 0.08),
+                0 10px 18px rgba(15, 23, 42, 0.08);
             transform: translateY(1px);
         }
 
@@ -891,8 +1013,8 @@
         }
 
         .pocket-action-button.icon-set {
-            --button-icon-image: transparent url("src/assets/set.png?v=20260605-1");
-            --button-icon-size: 40%;
+            --button-icon-image: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23929aa3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3.25'/%3E%3Cpath d='M12 2.75v2.1M12 19.15v2.1M21.25 12h-2.1M4.85 12h-2.1M18.54 5.46l-1.48 1.48M6.94 17.06l-1.48 1.48M18.54 18.54l-1.48-1.48M6.94 6.94L5.46 5.46'/%3E%3C/g%3E%3C/svg%3E");
+            --button-icon-size: 46%;
         }
 
         .pocket-action-button.icon-clean {
@@ -914,9 +1036,13 @@
 
         .pocket-action-button:active,
         .pocket-action-button.is-pressed {
-            background-image: url("src/assets/button_on.png?v=20260605-1");
             transform: translateY(2px);
             filter: none;
+            box-shadow:
+                inset 0 0 0 2px rgba(96, 128, 168, 0.14),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                0 2px 0 rgba(0, 0, 0, 0.08),
+                0 8px 12px rgba(15, 23, 42, 0.05);
         }
 
         .pocket-action-button:focus-visible {
@@ -941,8 +1067,8 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            align-items: center;
-            width: max-content;
+            align-items: stretch;
+            width: 100%;
             max-width: 100%;
         }
 
@@ -950,20 +1076,26 @@
             display: grid;
             grid-template-columns: repeat(12, var(--tray-cell-size));
             gap: var(--tray-gap);
-            justify-content: center;
-            width: max-content;
+            justify-content: start;
+            width: 100%;
             max-width: 100%;
         }
 
         .tray-slot {
             min-height: var(--tray-cell-size);
-            background: transparent;
+            background: rgba(255, 255, 255, 0.34);
             border: 0;
-            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.10);
+            border-radius: 10px;
+            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.18);
         }
 
         .tray-slot.hidden-slot {
             box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.07);
+        }
+
+        .tray-slot.next-open-slot {
+            border: 1.5px dashed rgba(198, 203, 214, 0.98);
+            box-shadow: none;
         }
 
         .tutorial-layer {
@@ -1586,7 +1718,7 @@
 
         @media (max-width: 980px) {
             :root {
-                --app-shell-width: min(100vw, 430px);
+                --app-shell-width: min(100vw, 390px);
                 --viewport-gap: 16px;
                 --pocket-bottom-offset: 16px;
                 --ad-banner-height: 54px;
@@ -1693,43 +1825,10 @@
                 </div>
             </div>
 
-            <div class="pocket-dock">
-                <div class="pocket-stack">
-                    <div class="pocket-group">
-                        <div class="tray" id="topTray" aria-label="하단 포켓 1열"></div>
-                    </div>
-
-                    <div class="pocket-group">
-                        <div class="tray" id="bottomTray" aria-label="하단 포켓 2열"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bottom-actions" aria-label="하단 액션 버튼">
-                <button class="pocket-action-button has-icon icon-magic" id="bottomActionButton1" type="button" aria-label="영역 맞춤" title="영역 맞춤">
-                    <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">영역 맞춤</span>
-                </button>
-                <button class="pocket-action-button has-icon icon-clean" id="bottomActionButton2" type="button" aria-label="빗자루" title="빗자루">
-                    <span class="button-badge" aria-hidden="true">5</span>
-                    <span class="sr-only">빗자루</span>
-                </button>
-                <button class="pocket-action-button has-icon icon-rock" id="bottomActionButton3" type="button" aria-label="액션 버튼 3" title="액션 버튼 3">
-                    <span class="sr-only">액션 버튼 3</span>
-                </button>
-                <button class="pocket-action-button has-icon icon-set" id="bottomActionButton4" type="button" aria-label="액션 버튼 4" title="액션 버튼 4">
-                    <span class="sr-only">액션 버튼 4</span>
-                </button>
-            </div>
-
-            <div class="bottom-ad-slot" aria-label="배너 광고 영역">배너 광고 영역</div>
+            <div id="sceneBottomUiMount"></div>
 
             <div class="stage-clear-overlay" id="stageClearOverlay" aria-hidden="true">
-                <div class="fireworks-layer" id="fireworksLayer"></div>
-                <div class="stage-clear-panel">
-                    <h2 class="stage-clear-title" id="stageClearTitle">스테이지 클리어</h2>
-                    <p class="stage-clear-subtitle" id="stageClearSubtitle"></p>
-                </div>
+                <div class="stage-clear-scene-host" id="stageClearSceneMount" aria-hidden="true"></div>
             </div>
         </section>
     </main>
@@ -1796,6 +1895,7 @@
 
         <div class="pixel-admin-actions">
             <button class="pixel-admin-action" id="pixelAdminApply" type="button">스테이지 적용</button>
+            <button class="pixel-admin-action" id="pixelAdminStageClear" type="button">스테이지 클리어</button>
             <button class="pixel-admin-action" id="pixelAdminReload" type="button">현재값 다시 불러오기</button>
             <button class="pixel-admin-action" id="pixelAdminRestore" type="button">기본값 복원</button>
             <button class="pixel-admin-action" id="pixelAdminCopy" type="button">매트릭스 복사</button>
@@ -3784,6 +3884,203 @@
             });
         }
 
+        function getColorJewelContract() {
+            if (colorJewelSceneContract) {
+                return Promise.resolve(colorJewelSceneContract);
+            }
+
+            if (colorJewelSceneContractPromise) {
+                return colorJewelSceneContractPromise;
+            }
+
+            colorJewelSceneContractPromise = fetch("./Color_Jewel.contract.json", { cache: "no-store" })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`Color_Jewel contract load failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((contract) => {
+                    colorJewelSceneContract = contract;
+                    return contract;
+                })
+                .catch((error) => {
+                    colorJewelSceneContractPromise = null;
+                    throw error;
+                });
+
+            return colorJewelSceneContractPromise;
+        }
+
+        function getColorJewelPocketLayout(contract) {
+            const pocketLayer = contract?.layers?.find((layer) => layer.stableId === "time-display-56");
+            const shape = pocketLayer?.visual?.model?.shape || {};
+            const images = Array.isArray(pocketLayer?.visual?.images) ? pocketLayer.visual.images : [];
+            const topRowImages = images
+                .filter((image) => image.offsetY < 0)
+                .sort((left, right) => left.offsetX - right.offsetX);
+            const pocketWidth = shape.width || 327;
+            const pocketHeight = shape.height || 71;
+            const slotCount = TOP_POCKET_COUNT;
+            const horizontalPadding = Math.max(12, Math.round(pocketWidth * 0.038));
+            const verticalPadding = Math.max(11, Math.round(pocketHeight * 0.16));
+            const rowGap = Math.max(8, Math.round(pocketHeight * 0.14));
+            const defaultGap = 8;
+            const hasExplicitSlotImages = topRowImages.length >= 2;
+
+            if (!hasExplicitSlotImages) {
+                const slotSizeFromWidth = Math.floor(
+                    (pocketWidth - horizontalPadding * 2 - defaultGap * (slotCount - 1)) / slotCount
+                );
+                const slotSizeFromHeight = Math.floor(
+                    (pocketHeight - verticalPadding * 2 - rowGap) / 2
+                );
+                const slotSize = Math.max(14, Math.min(18, slotSizeFromWidth, slotSizeFromHeight));
+                const totalRowWidth = slotSize * slotCount;
+                const slotGap = Math.max(
+                    4,
+                    Math.floor((pocketWidth - horizontalPadding * 2 - totalRowWidth) / Math.max(1, slotCount - 1))
+                );
+                const contentHeight = slotSize * 2 + rowGap;
+                const topTop = Math.max(6, Math.floor((pocketHeight - contentHeight) / 2));
+
+                return {
+                    slotWidth: slotSize,
+                    slotGap,
+                    topLeft: Math.floor((pocketWidth - (totalRowWidth + slotGap * (slotCount - 1))) / 2),
+                    topTop,
+                    bottomLeft: Math.floor((pocketWidth - (totalRowWidth + slotGap * (slotCount - 1))) / 2),
+                    bottomTop: topTop + slotSize + rowGap
+                };
+            }
+
+            const nextRowImage =
+                images.find((image) => String(image.exportPath || "").includes("pocket_slot_next")) ||
+                images.find((image) => image.offsetY >= 0) ||
+                null;
+            const firstTopRowImage = topRowImages[0] || nextRowImage || { width: 18, height: 18, offsetX: -121, offsetY: -12 };
+            const secondTopRowImage = topRowImages[1] || null;
+            const slotWidth = firstTopRowImage.width || 18;
+            const slotHeight = firstTopRowImage.height || 18;
+            const slotGap = secondTopRowImage
+                ? Math.max(0, Math.round(Math.abs(secondTopRowImage.offsetX - firstTopRowImage.offsetX) - slotWidth))
+                : defaultGap;
+
+            return {
+                slotWidth,
+                slotGap,
+                topLeft: (pocketWidth / 2) + (firstTopRowImage.offsetX || 0) - (slotWidth / 2),
+                topTop: (pocketHeight / 2) + (firstTopRowImage.offsetY || 0) - (slotHeight / 2),
+                bottomLeft: (pocketWidth / 2) + ((nextRowImage?.offsetX) ?? (firstTopRowImage.offsetX || 0)) - (slotWidth / 2),
+                bottomTop: (pocketHeight / 2) + ((nextRowImage?.offsetY) ?? 12) - (slotHeight / 2)
+            };
+        }
+
+        function applyActiveSceneViewport(contract) {
+            activeSceneViewportWidth =
+                contract?.viewport?.width ||
+                contract?.canvas?.width ||
+                activeSceneViewportWidth;
+            activeSceneViewportHeight =
+                contract?.viewport?.height ||
+                contract?.canvas?.height ||
+                activeSceneViewportHeight;
+        }
+
+        function attachColorJewelPocketOverlay(contract) {
+            const pocketElement = colorJewelSceneRenderer?.getElement("time-display-56");
+            if (!pocketElement) {
+                return;
+            }
+
+            colorJewelPocketOverlayElement?.remove();
+
+            const layout = getColorJewelPocketLayout(contract);
+            const overlay = document.createElement("div");
+            overlay.className = "scene-pocket-overlay";
+            overlay.setAttribute("aria-hidden", "true");
+            overlay.style.setProperty("--scene-pocket-slot-size", `${layout.slotWidth}px`);
+            overlay.style.setProperty("--scene-pocket-slot-gap", `${layout.slotGap}px`);
+
+            const topTray = document.createElement("div");
+            topTray.id = "topTray";
+            topTray.className = "tray scene-pocket-tray";
+            topTray.setAttribute("aria-label", "하단 포켓 1열");
+            topTray.style.left = `${layout.topLeft}px`;
+            topTray.style.top = `${layout.topTop}px`;
+
+            const bottomTray = document.createElement("div");
+            bottomTray.id = "bottomTray";
+            bottomTray.className = "tray scene-pocket-tray";
+            bottomTray.setAttribute("aria-label", "하단 포켓 2열");
+            bottomTray.style.left = `${layout.bottomLeft}px`;
+            bottomTray.style.top = `${layout.bottomTop}px`;
+
+            overlay.append(topTray, bottomTray);
+            pocketElement.appendChild(overlay);
+
+            colorJewelPocketOverlayElement = overlay;
+            topTrayElement = topTray;
+            bottomTrayElement = bottomTray;
+        }
+
+        async function ensureColorJewelSceneUi() {
+            if (colorJewelUiReadyPromise) {
+                return colorJewelUiReadyPromise;
+            }
+
+            colorJewelUiReadyPromise = Promise.all([
+                getSceneRendererCtor(),
+                getColorJewelContract()
+            ]).then(([SceneRenderer, contract]) => {
+                if (!sceneBottomUiMountElement) {
+                    return false;
+                }
+
+                applyActiveSceneViewport(contract);
+                sceneBottomUiMountElement.replaceChildren();
+
+                const surface = document.createElement("div");
+                surface.className = "scene-ui-surface";
+                sceneBottomUiMountElement.appendChild(surface);
+                colorJewelSceneRenderer = new SceneRenderer(surface, {
+                    basePath: "./src/"
+                });
+                colorJewelSceneRenderer.loadSync(contract);
+                colorJewelSceneRenderer.show();
+
+                const sceneRootElement = surface.firstElementChild;
+                if (sceneRootElement) {
+                    sceneRootElement.style.pointerEvents = "none";
+                }
+
+                bottomActionButton1Element = colorJewelSceneRenderer.getElement("level-node-4");
+                bottomActionButton2Element = colorJewelSceneRenderer.getElement("level-node-57");
+                bottomActionButton3Element = colorJewelSceneRenderer.getElement("level-node-18");
+                bottomActionButton4Element = colorJewelSceneRenderer.getElement("level-node-19");
+                bottomActionButtonElements = [
+                    bottomActionButton1Element,
+                    bottomActionButton2Element,
+                    bottomActionButton3Element,
+                    bottomActionButton4Element
+                ].filter(Boolean);
+
+                bottomActionButtonElements.forEach((button) => {
+                    button.style.pointerEvents = "auto";
+                });
+
+                attachColorJewelPocketOverlay(contract);
+                updateActionButtonState();
+                return true;
+            }).catch((error) => {
+                colorJewelUiReadyPromise = null;
+                console.error("[ColorJewel] scene mount failed:", error);
+                throw error;
+            });
+
+            return colorJewelUiReadyPromise;
+        }
+
         const POCKET_SIZE = 24;
         const TOP_POCKET_COUNT = 12;
         const TRAY_ROW_COUNT = POCKET_SIZE / TOP_POCKET_COUNT;
@@ -3814,27 +4111,24 @@
         const TOUCH_TAP_GUARD_MS = 520;
         const SOUND_VOLUME_MULTIPLIER = 5.4;
         const appElement = document.querySelector(".app");
+        const boardStageElement = document.querySelector(".board-stage");
+        const sceneBottomUiMountElement = document.getElementById("sceneBottomUiMount");
         const boardWrapElement = document.querySelector(".board-wrap");
         const boardPanzoomElement = document.getElementById("boardPanzoom");
         const boardElement = document.getElementById("board");
-        const topTrayElement = document.getElementById("topTray");
-        const bottomTrayElement = document.getElementById("bottomTray");
-        const pocketDockElement = document.querySelector(".pocket-dock");
-        const bottomActionsElement = document.querySelector(".bottom-actions");
-        const bottomActionButtonElements = Array.from(document.querySelectorAll(".pocket-action-button"));
-        const bottomActionButton1Element = document.getElementById("bottomActionButton1");
-        const bottomActionButton2Element = document.getElementById("bottomActionButton2");
-        const bottomActionButton3Element = document.getElementById("bottomActionButton3");
-        const bottomActionButton4Element = document.getElementById("bottomActionButton4");
-        const bottomActionButton1BadgeElement = bottomActionButton1Element?.querySelector(".button-badge") || null;
-        const bottomActionButton2BadgeElement = bottomActionButton2Element?.querySelector(".button-badge") || null;
-        const bottomAdSlotElement = document.querySelector(".bottom-ad-slot");
-        const boardStageElement = document.querySelector(".board-stage");
+        let topTrayElement = null;
+        let bottomTrayElement = null;
+        let pocketDockElement = null;
+        let bottomActionsElement = null;
+        let bottomActionButtonElements = [];
+        let bottomActionButton1Element = null;
+        let bottomActionButton2Element = null;
+        let bottomActionButton3Element = null;
+        let bottomActionButton4Element = null;
+        let bottomAdSlotElement = null;
         const tutorialLayerElement = document.getElementById("tutorialLayer");
         const stageClearOverlayElement = document.getElementById("stageClearOverlay");
-        const stageClearTitleElement = document.getElementById("stageClearTitle");
-        const stageClearSubtitleElement = document.getElementById("stageClearSubtitle");
-        const fireworksLayerElement = document.getElementById("fireworksLayer");
+        const stageClearSceneMountElement = document.getElementById("stageClearSceneMount");
         const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminToggleElement = document.getElementById("pixelAdminToggle");
         const pixelAdminCloseElement = document.getElementById("pixelAdminClose");
@@ -3854,6 +4148,7 @@
         const pixelAdminAxisRightElement = document.getElementById("pixelAdminAxisRight");
         const pixelAdminGridElement = document.getElementById("pixelAdminGrid");
         const pixelAdminApplyElement = document.getElementById("pixelAdminApply");
+        const pixelAdminStageClearElement = document.getElementById("pixelAdminStageClear");
         const pixelAdminReloadElement = document.getElementById("pixelAdminReload");
         const pixelAdminRestoreElement = document.getElementById("pixelAdminRestore");
         const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
@@ -3892,10 +4187,21 @@
         let actionOverlayState = null;
         let celebrationTimers = [];
         let stageClearTimers = [];
+        let colorJewelSceneRenderer = null;
+        let colorJewelSceneContract = null;
+        let colorJewelSceneContractPromise = null;
+        let colorJewelUiReadyPromise = null;
+        let colorJewelPocketOverlayElement = null;
+        let stageClearSceneRenderer = null;
+        let stageClearSceneContract = null;
+        let stageClearSceneContractPromise = null;
+        let sceneRendererCtorPromise = null;
         let tutorialOverlayFrame = null;
         let renderFrame = null;
         let areGemsHiddenByCheat = false;
         let gameSessionVersion = 0;
+        let activeSceneViewportWidth = 390;
+        let activeSceneViewportHeight = 844;
         let pixelAdminToggleHoldTimer = null;
         let suppressPixelAdminToggleClick = false;
         let lastTouchActivationAt = 0;
@@ -5468,32 +5774,37 @@
         }
 
         function updateActionButtonState() {
+            colorJewelSceneRenderer?.update({
+                item: {
+                    wand: Math.max(0, actionCharges.magic),
+                    clean: Math.max(0, actionCharges.clean)
+                }
+            });
+
             const buttonStates = [
                 {
                     button: bottomActionButton1Element,
-                    badge: bottomActionButton1BadgeElement,
                     count: actionCharges.magic,
-                    label: "영역 맞춤",
+                    label: "마법봉",
                     armed: actionOverlayState?.type === "magic-targeting"
                 },
                 {
                     button: bottomActionButton2Element,
-                    badge: bottomActionButton2BadgeElement,
                     count: actionCharges.clean,
                     label: "빗자루",
                     armed: false
                 }
             ];
 
-            buttonStates.forEach(({ button, badge, count, label, armed }) => {
-                if (!button || !badge) {
+            buttonStates.forEach(({ button, count, label, armed }) => {
+                if (!button) {
                     return;
                 }
 
-                badge.textContent = String(Math.max(0, count));
-                button.classList.toggle("is-empty", count <= 0);
-                button.classList.toggle("is-armed", Boolean(armed));
+                button.style.opacity = count <= 0 ? "0.62" : "1";
                 button.setAttribute("title", `${label} ${Math.max(0, count)}회`);
+                button.setAttribute("aria-disabled", count <= 0 ? "true" : "false");
+                button.setAttribute("aria-pressed", armed ? "true" : "false");
             });
         }
 
@@ -5813,12 +6124,123 @@
             celebrationTimers = [];
         }
 
+        function getSceneRendererCtor() {
+            if (sceneRendererCtorPromise) {
+                return sceneRendererCtorPromise;
+            }
+
+            sceneRendererCtorPromise = import("./scene-renderer.js")
+                .then((module) => {
+                    const ctor = module.SceneRenderer ?? window.SceneRenderer;
+                    if (!ctor) {
+                        throw new Error("SceneRenderer를 찾을 수 없습니다.");
+                    }
+                    return ctor;
+                })
+                .catch((error) => {
+                    sceneRendererCtorPromise = null;
+                    throw error;
+                });
+            return sceneRendererCtorPromise;
+        }
+
+        function getStageClearContract() {
+            if (stageClearSceneContract) {
+                return Promise.resolve(stageClearSceneContract);
+            }
+
+            if (stageClearSceneContractPromise) {
+                return stageClearSceneContractPromise;
+            }
+
+            stageClearSceneContractPromise = fetch("./Stage_Clear.contract.json", { cache: "no-store" })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`Stage_Clear contract load failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((contract) => {
+                    stageClearSceneContract = contract;
+                    return contract;
+                })
+                .catch((error) => {
+                    stageClearSceneContractPromise = null;
+                    throw error;
+                });
+            return stageClearSceneContractPromise;
+        }
+
+        function clearStageClearSceneEffects() {
+            if (!stageClearSceneMountElement) {
+                return;
+            }
+
+            const mountedNodes = [
+                stageClearSceneMountElement,
+                ...stageClearSceneMountElement.querySelectorAll("*")
+            ];
+
+            mountedNodes.forEach((node) => {
+                if (node._confettiLoopId) {
+                    window.clearInterval(node._confettiLoopId);
+                    node._confettiLoopId = null;
+                }
+
+                if (node._confettiCleanupId) {
+                    window.clearTimeout(node._confettiCleanupId);
+                    node._confettiCleanupId = null;
+                }
+            });
+        }
+
+        async function showStageClearScene(sessionVersion = gameSessionVersion) {
+            if (!stageClearSceneMountElement) {
+                return false;
+            }
+
+            try {
+                const [SceneRenderer, contract] = await Promise.all([
+                    getSceneRendererCtor(),
+                    getStageClearContract()
+                ]);
+
+                if (!isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                    return false;
+                }
+
+                clearStageClearSceneEffects();
+                stageClearSceneMountElement.replaceChildren();
+
+                if (!stageClearSceneRenderer) {
+                    stageClearSceneRenderer = new SceneRenderer(stageClearSceneMountElement, {
+                        basePath: "./src/"
+                    });
+                }
+
+                stageClearSceneRenderer.loadSync(contract);
+                stageClearSceneRenderer.show();
+                stageClearSceneMountElement.setAttribute("aria-hidden", "false");
+                return true;
+            } catch (error) {
+                console.error("[StageClear] Stage_Clear scene mount failed:", error);
+                return false;
+            }
+        }
+
         function clearStageClearTimers() {
             stageClearTimers.forEach((timerId) => window.clearTimeout(timerId));
             stageClearTimers = [];
 
-            if (fireworksLayerElement) {
-                fireworksLayerElement.innerHTML = "";
+            clearStageClearSceneEffects();
+
+            if (stageClearSceneRenderer) {
+                stageClearSceneRenderer.hide();
+            }
+
+            if (stageClearSceneMountElement) {
+                stageClearSceneMountElement.replaceChildren();
+                stageClearSceneMountElement.setAttribute("aria-hidden", "true");
             }
 
             if (stageClearOverlayElement) {
@@ -5851,52 +6273,6 @@
             return true;
         }
 
-        function spawnFireworkBurst(leftPercent, topPercent) {
-            if (!fireworksLayerElement) return;
-
-            const burst = document.createElement("div");
-            burst.className = "firework-burst";
-            burst.style.left = `${leftPercent}%`;
-            burst.style.top = `${topPercent}%`;
-
-            const palette = [
-                { color: "#DC685D", glow: "rgba(220, 104, 93, 0.88)" },
-                { color: "#D2C54A", glow: "rgba(210, 197, 74, 0.88)" },
-                { color: "#4ABED2", glow: "rgba(74, 190, 210, 0.9)" },
-                { color: "#8271E0", glow: "rgba(130, 113, 224, 0.9)" },
-                { color: "#5CDC81", glow: "rgba(92, 220, 129, 0.88)" },
-                { color: "#E06EC7", glow: "rgba(224, 110, 199, 0.9)" }
-            ];
-            const baseColor = palette[Math.floor(Math.random() * palette.length)];
-            const sparkCount = 18;
-            const core = document.createElement("span");
-            core.className = "firework-core";
-            core.style.setProperty("--burst-color", baseColor.color);
-            core.style.setProperty("--burst-glow", baseColor.glow);
-
-            const ring = document.createElement("span");
-            ring.className = "firework-ring";
-            ring.style.setProperty("--burst-color", baseColor.color);
-
-            burst.append(core, ring);
-
-            for (let index = 0; index < sparkCount; index += 1) {
-                const spark = document.createElement("span");
-                spark.className = "firework-spark";
-                const sparkColor = palette[(index + Math.floor(Math.random() * palette.length)) % palette.length];
-                spark.style.setProperty("--spark-rotation", `${(360 / sparkCount) * index}deg`);
-                spark.style.setProperty("--spark-color", sparkColor.color);
-                spark.style.setProperty("--burst-glow", sparkColor.glow);
-                burst.appendChild(spark);
-            }
-
-            fireworksLayerElement.appendChild(burst);
-            const cleanupTimer = window.setTimeout(() => {
-                burst.remove();
-            }, FIREWORK_BURST_CLEANUP_MS);
-            stageClearTimers.push(cleanupTimer);
-        }
-
         function startStageClearSequence(sessionVersion = gameSessionVersion) {
             if (!isCurrentGameSession(sessionVersion)) {
                 return;
@@ -5905,28 +6281,12 @@
             isStageTransitioning = true;
             selected = null;
 
-            if (stageClearTitleElement) {
-                stageClearTitleElement.textContent = "스테이지 클리어";
-            }
-
-            if (stageClearSubtitleElement) {
-                stageClearSubtitleElement.textContent = "";
-            }
-
             if (stageClearOverlayElement) {
                 stageClearOverlayElement.classList.add("active");
                 stageClearOverlayElement.setAttribute("aria-hidden", "false");
             }
 
-            STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ left, top, delay }) => {
-                const timerId = window.setTimeout(() => {
-                    if (!isCurrentGameSession(sessionVersion)) {
-                        return;
-                    }
-                    spawnFireworkBurst(left, top);
-                }, delay);
-                stageClearTimers.push(timerId);
-            });
+            void showStageClearScene(sessionVersion);
 
             STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ delay, accent }) => {
                 void playFireworkBurstSound(delay, accent);
@@ -5942,6 +6302,57 @@
                 advanceToNextStage(sessionVersion);
             }, STAGE_TRANSITION_DELAY_MS);
             stageClearTimers.push(nextStageTimer);
+        }
+
+        function triggerSolvedStageSequence(sessionVersion = gameSessionVersion) {
+            clearCelebrationTimers();
+            clearSolvedStageFailSafeTimer();
+            clearPersistedGameProgress();
+            clearRuntimeSnapshot();
+            const stageClearDelay = scheduleFullBoardCelebration();
+            const stageClearTimer = window.setTimeout(() => {
+                startStageClearSequence(sessionVersion);
+            }, stageClearDelay);
+            stageClearTimers.push(stageClearTimer);
+            solvedStageFailSafeTimer = window.setTimeout(() => {
+                if (!isCurrentGameSession(sessionVersion) || !solved) {
+                    return;
+                }
+
+                advanceToNextStage(sessionVersion);
+            }, stageClearDelay + STAGE_TRANSITION_DELAY_MS + 480);
+        }
+
+        function clearCurrentStageFromPixelAdmin() {
+            if (!ACTIVE_MAP) {
+                return;
+            }
+
+            if (isAnimating || isStageTransitioning) {
+                pixelAdminState.message = "이동이나 전환이 끝난 뒤에 스테이지 클리어를 눌러 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            clearSparkles();
+            clearCelebrationTimers();
+            clearSolvedStageFailSafeTimer();
+            clearStageClearTimers();
+            boardState = clonePixelMap(TARGET_MAP);
+            trayState = Array.from({ length: POCKET_SIZE }, () => 0);
+            cleanedSocketCells = new Set();
+            actionOverlayState = null;
+            selected = null;
+            completedColorIds = getCompletedColorIds();
+            solved = checkSolved();
+            setStatus("현재 스테이지를 즉시 클리어했어요.");
+            render();
+
+            if (solved) {
+                pixelAdminState.message = "현재 스테이지를 클리어했어요.";
+                renderPixelAdmin();
+                triggerSolvedStageSequence(gameSessionVersion);
+            }
         }
 
         function cleanupExpiredSparkles(now = performance.now()) {
@@ -6943,29 +7354,32 @@
             for (let index = startIndex; index < endIndex; index += 1) {
                 const gem = trayState[index];
                 const isOpenedPocket = isPocketOpened(index, openedPocketIndices);
+                const isNextOpenPocket = index === nextOpenIndex && nextOpenIndex < POCKET_SIZE;
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "cell tray-slot";
                 button.dataset.index = String(index);
-                button.setAttribute(
-                    "aria-label",
-                    `${labelPrefix} 포켓 ${index - startIndex + 1} ${isOpenedPocket ? "열림" : "잠김"}`
-                );
+                button.setAttribute("aria-label", `${labelPrefix} 포켓 ${index - startIndex + 1}`);
 
-                if (!isOpenedPocket) {
+                if (isNextOpenPocket) {
+                    button.classList.add("next-open-slot");
+                    button.disabled = true;
+                    button.setAttribute("aria-label", `${labelPrefix} 포켓 ${index - startIndex + 1} 다음 등록 예정`);
+                } else if (!isOpenedPocket) {
                     button.classList.add("hidden-slot");
-                    if (index === nextOpenIndex && nextOpenIndex < POCKET_SIZE) {
-                        button.classList.add("next-open-slot");
-                    }
+                    button.disabled = true;
+                    button.setAttribute("aria-label", `${labelPrefix} 포켓 ${index - startIndex + 1} 잠김`);
                 } else if (!gem) {
                     button.classList.add("empty-target");
                 }
                 if (isSelected("tray", index)) button.classList.add("selected");
                 if (shouldRenderGems && gem) button.appendChild(createGem(gem));
 
-                bindTapActivation(button, () => {
-                    void handleTrayClick(index);
-                });
+                if (!button.disabled) {
+                    bindTapActivation(button, () => {
+                        void handleTrayClick(index);
+                    });
+                }
                 container.appendChild(button);
             }
         }
@@ -7361,9 +7775,9 @@
             const rootStyles = getComputedStyle(root);
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const aspectWidth = 9;
-            const aspectHeight = 16;
-            const maxShellWidth = 430;
+            const aspectWidth = activeSceneViewportWidth;
+            const aspectHeight = activeSceneViewportHeight;
+            const maxShellWidth = activeSceneViewportWidth;
             const maxWidthFromHeight = Math.floor((viewportHeight * aspectWidth) / aspectHeight);
             let appShellWidth = Math.min(viewportWidth, maxShellWidth, maxWidthFromHeight);
             let appShellHeight = Math.floor((appShellWidth * aspectHeight) / aspectWidth);
@@ -8534,22 +8948,7 @@
             render();
 
             if (justSolved) {
-                clearCelebrationTimers();
-                clearSolvedStageFailSafeTimer();
-                clearPersistedGameProgress();
-                clearRuntimeSnapshot();
-                const stageClearDelay = scheduleFullBoardCelebration();
-                const stageClearTimer = window.setTimeout(() => {
-                    startStageClearSequence(sessionVersion);
-                }, stageClearDelay);
-                stageClearTimers.push(stageClearTimer);
-                solvedStageFailSafeTimer = window.setTimeout(() => {
-                    if (!isCurrentGameSession(sessionVersion) || !solved) {
-                        return;
-                    }
-
-                    advanceToNextStage(sessionVersion);
-                }, stageClearDelay + STAGE_TRANSITION_DELAY_MS + 480);
+                triggerSolvedStageSequence(sessionVersion);
                 return;
             }
 
@@ -9170,6 +9569,10 @@
             applyPixelAdminDraft();
         });
 
+        pixelAdminStageClearElement?.addEventListener("click", () => {
+            clearCurrentStageFromPixelAdmin();
+        });
+
         pixelAdminReloadElement?.addEventListener("click", () => {
             reloadPixelAdminDraft();
         });
@@ -9237,20 +9640,29 @@
             }
         });
 
+        async function bootGame() {
+            try {
+                await ensureColorJewelSceneUi();
+                initializeBottomActionButtons();
+                const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
+                pushLifecycleDebugEntry("runtime-restore", {
+                    restored: restoredRuntimeSnapshot
+                });
+                if (!restoredRuntimeSnapshot) {
+                    clearPersistedGameProgress();
+                    resetGame();
+                }
+            } catch (error) {
+                console.error("[Boot] UI initialization failed:", error);
+            }
+        }
+
         syncLifecycleDebugGlobals();
         bootLifecycleDebug();
         loadPersistedPixelAdminStageOverrides();
         syncActiveMap(getFirstPlayableMapIndex());
         initializeBoardGestures();
-        initializeBottomActionButtons();
-        const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
-        pushLifecycleDebugEntry("runtime-restore", {
-            restored: restoredRuntimeSnapshot
-        });
-        if (!restoredRuntimeSnapshot) {
-            clearPersistedGameProgress();
-            resetGame();
-        }
+        void bootGame();
     </script>
 </body>
 </html>

@@ -1,0 +1,81 @@
+{
+  "contractVersion": 1,
+  "sceneId": "new-scene",
+  "sceneName": "New Scene",
+  "canvas": {
+    "width": 390,
+    "height": 844
+  },
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "background": {
+    "type": "solid",
+    "color": "#16213e",
+    "color2": "#0e4a8c",
+    "gradientAngle": 180,
+    "imagePath": "",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "circle1-png-57",
+      "layerType": "image",
+      "displayName": "circle1.png",
+      "x": 170,
+      "y": 388,
+      "zIndex": 1,
+      "visual": {
+        "exportPath": "assets/circle1.png",
+        "width": 64,
+        "height": 64
+      }
+    },
+    {
+      "stableId": "circle1-png-58",
+      "layerType": "image",
+      "displayName": "circle1.png",
+      "x": 31,
+      "y": 388,
+      "zIndex": 2,
+      "visual": {
+        "exportPath": "assets/circle1.png",
+        "width": 64,
+        "height": 64
+      }
+    },
+    {
+      "stableId": "circle1-png-59",
+      "layerType": "image",
+      "displayName": "circle1.png",
+      "x": 101,
+      "y": 388,
+      "zIndex": 3,
+      "visual": {
+        "exportPath": "assets/circle1.png",
+        "width": 64,
+        "height": 64
+      }
+    },
+    {
+      "stableId": "circle1-png-60",
+      "layerType": "image",
+      "displayName": "circle1.png",
+      "x": 240,
+      "y": 388,
+      "zIndex": 4,
+      "visual": {
+        "exportPath": "assets/circle1.png",
+        "width": 64,
+        "height": 64
+      }
+    }
+  ]
+}

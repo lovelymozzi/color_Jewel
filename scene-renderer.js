@@ -847,6 +847,11 @@ export class SceneRenderer {
         this._navHostRenderer = null; // SceneRenderer instance for matched scene
         // 네비바가 가리는 영역(px) — 스크롤시 콘텐츠가 가려지지 않게 viewport 에서 차감
         this._safeArea = (options && options.safeArea) || { top: 0, bottom: 0, left: 0, right: 0 };
+        // Scale-with-screen: 최상위 풀스크린 마운트 시 디자인 박스를 화면 비율에 맞춰 통째 스케일
+        this._fitEl = null;
+        this._designW = 0;
+        this._designH = 0;
+        this._onResize = null;
     }
 
     /** 매칭 씬 contract 사전 등록 (Live preview / 인라인 임베드용). */
@@ -885,12 +890,65 @@ export class SceneRenderer {
         return this;
     }
 
+    // ── Scale-with-screen ───────────────────────────────────────────────────
+    // 비율만 맞으면 화면 크기에 무관하게 배치되도록, 디자인 박스를 화면에 맞춰 통째로 스케일.
+    // 최상위 풀스크린 마운트(container === document.body/documentElement)일 때만 적용한다.
+    // navigation host 합성/인라인 임베드(자식 렌더러)는 비-body 컨테이너이므로 기존 동작을 유지한다.
+
+    /** this._el 을 컨테이너에 마운트. 최상위면 fit 래퍼로 감싸 스케일, 아니면 그대로 append. */
+    _mountFit() {
+        const cont = this.container;
+        const topLevel = cont === document.body || cont === document.documentElement;
+        if (!topLevel) { cont.appendChild(this._el); this._fitEl = null; return; }
+
+        const c = this._contract;
+        let dw, dh;
+        if (c.sceneType === 'navigation') {
+            dw = c.viewport?.width || 390; dh = c.viewport?.height || 844;
+        } else {
+            dw = c.canvas?.width || 390; dh = c.viewport?.height || c.canvas?.height || 844;
+        }
+        const fit = document.createElement('div');
+        fit.className = 'sr-fit';
+        fit.style.cssText = `position:fixed;top:0;left:0;width:${dw}px;height:${dh}px;transform-origin:top left;`;
+        fit.appendChild(this._el);
+        this._fitEl = fit;
+        this._designW = dw; this._designH = dh;
+        cont.appendChild(fit);
+        this._applyScreenFit();
+        this._onResize = () => this._applyScreenFit();
+        window.addEventListener('resize', this._onResize);
+    }
+
+    /** 디자인 박스(_designW×_designH)를 가용 영역에 비율 유지로 맞추고 중앙 정렬. */
+    _applyScreenFit() {
+        const fit = this._fitEl;
+        if (!fit) return;
+        const cont = this.container;
+        const useWin = cont === document.body || cont === document.documentElement;
+        const availW = useWin ? window.innerWidth  : cont.clientWidth;
+        const availH = useWin ? window.innerHeight : cont.clientHeight;
+        if (!availW || !availH || !this._designW || !this._designH) return;
+        const scale = Math.min(availW / this._designW, availH / this._designH);
+        const tx = (availW - this._designW * scale) / 2;
+        const ty = (availH - this._designH * scale) / 2;
+        fit.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    }
+
+    /** fit 래퍼/리스너 정리 후 마운트된 노드를 DOM 에서 제거. */
+    _unmountFit() {
+        if (this._onResize) { window.removeEventListener('resize', this._onResize); this._onResize = null; }
+        const node = this._fitEl || this._el;
+        if (node?.parentNode) node.parentNode.removeChild(node);
+        this._fitEl = null;
+    }
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     show() {
         if (!this._contract) throw new Error('SceneRenderer: load() 또는 loadSync()를 먼저 호출하세요.');
         this._buildDOM();
-        this.container.appendChild(this._el);
+        this._mountFit();
         requestAnimationFrame(() => {
             this._rootEl.classList.add('visible');
             this._rootEl.style.opacity = '1';
@@ -904,7 +962,7 @@ export class SceneRenderer {
         this._rootEl.classList.remove('visible');
         const dur = this._contract?.transitionDuration || 300;
         setTimeout(() => {
-            if (this._el?.parentNode) this._el.parentNode.removeChild(this._el);
+            this._unmountFit();
             this._el = null;
             this._rootEl = null;
             this._boundElements = {};
@@ -922,7 +980,7 @@ export class SceneRenderer {
         await this.load(typeof contractOrUrl === 'string' ? contractOrUrl : '').catch(() => {});
         if (typeof contractOrUrl !== 'string') this._contract = contractOrUrl;
         if (wasVisible) {
-            if (this._el?.parentNode) this._el.parentNode.removeChild(this._el);
+            this._unmountFit();
             if (this._styleEl?.parentNode) this._styleEl.parentNode.removeChild(this._styleEl);
             this._el = null;
             this._rootEl = null;
@@ -930,7 +988,7 @@ export class SceneRenderer {
             this._boundElements = {};
             this._groupWrappers = {};
             this._buildDOM();
-            this.container.appendChild(this._el);
+            this._mountFit();
             this._rootEl.classList.add('visible');
             this._rootEl.style.opacity = '1';
             this._runSceneAnimations();
@@ -1520,6 +1578,15 @@ export class SceneRenderer {
             const imageStyle = layer.image?.style || layer.visual?.style || normalizeImageStyleModel(layer);
             img.style.filter = imageShadowCss(imageStyle);
             applyPressEffect(img, findEffect(layer.effects, 'press') || normalizePressEffect(layer), { baseFilter: img.style.filter || '' });
+            // 좌우/상하 반전: 이미지 콘텐츠를 감싸는 래퍼에 scale(-1) 적용.
+            // press effect 가 img.style.transform 을 동적으로 덮어쓰므로 별도 래퍼에서 처리.
+            const _flipWrap = (result) => {
+                if (!layer.flipX && !layer.flipY) return result;
+                const fw = document.createElement('div');
+                fw.style.cssText = `display:inline-block;vertical-align:top;transform:scale(${layer.flipX ? -1 : 1},${layer.flipY ? -1 : 1});transform-origin:50% 50%;`;
+                fw.appendChild(result);
+                return fw;
+            };
             if (layer.texts && layer.texts.length > 0) {
                 const wrapDiv = document.createElement('div');
                 wrapDiv.style.cssText = `position:relative;width:${iw};height:${ih};`;
@@ -1538,11 +1605,11 @@ export class SceneRenderer {
                 });
                 applyCssAnimationEffect(wrapDiv, cssAnimation);
                 playParticleEffect(wrapDiv, particleEffect);
-                return wrapDiv;
+                return _flipWrap(wrapDiv);
             }
             applyCssAnimationEffect(img, cssAnimation);
             playParticleEffect(img, particleEffect);
-            return img;
+            return _flipWrap(img);
         }
         return document.createElement('div');
     }
@@ -2044,6 +2111,7 @@ SceneRenderer.utils = {
             })),
             image: layer.type === 'image' ? { exportPath: layer.exportPath || '', imageKey: layer.imageKey || '', style: normalizedImageStyle } : null,
             rotation: layer.rotation || 0,
+            flipX: !!layer.flipX, flipY: !!layer.flipY,
             events: (layer.events || []).map(ev => ({
                 trigger: ev.trigger,
                 eventName: ev.eventName || (stableId + ':' + (ev.trigger || 'click')),
@@ -2070,6 +2138,8 @@ SceneRenderer.utils = {
         if (contractLayer.image && !contractLayer.image.imageKey) delete contractLayer.image;
         if (contractLayer.image === null) delete contractLayer.image;
         if (contractLayer.rotation === 0) delete contractLayer.rotation;
+        if (!contractLayer.flipX) delete contractLayer.flipX;
+        if (!contractLayer.flipY) delete contractLayer.flipY;
         if (!contractLayer.events.length) delete contractLayer.events;
         return contractLayer;
     },

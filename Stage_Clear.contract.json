@@ -3,19 +3,19 @@
   "sceneId": "stage-clear",
   "sceneName": "Stage_Clear",
   "canvas": {
-    "width": 360,
-    "height": 640
+    "width": 390,
+    "height": 844
   },
   "viewport": {
-    "width": 360,
-    "height": 640
+    "width": 390,
+    "height": 844
   },
   "background": {
-    "type": "image-stretch",
-    "color": "#f5f5f5",
+    "type": "none",
+    "color": "rgba(245,245,245,0)",
     "color2": "#0e4a8c",
     "gradientAngle": 180,
-    "imagePath": "assets/16_9.png",
+    "imagePath": "",
     "tileSize": 64,
     "stretchMode": "cover",
     "scrollEnabled": false,
@@ -101,7 +101,7 @@
       "stableId": "confetti-43",
       "layerType": "confetti",
       "displayName": "Confetti",
-      "x": 23,
+      "x": 35,
       "y": 100,
       "zIndex": 2,
       "visual": {
@@ -125,7 +125,7 @@
           "sizeMax": 12,
           "shape": "mixed",
           "autoplay": true,
-          "loop": true,
+          "loop": false,
           "triggerKey": ""
         }
       },
@@ -157,7 +157,7 @@
             "sizeMax": 12,
             "shape": "mixed",
             "autoplay": true,
-            "loop": true,
+            "loop": false,
             "triggerKey": ""
           }
         }
@@ -167,7 +167,7 @@
       "stableId": "rays-burst-44",
       "layerType": "component",
       "displayName": "Rays Burst",
-      "x": -224,
+      "x": -197,
       "y": -191,
       "zIndex": 3,
       "visual": {
