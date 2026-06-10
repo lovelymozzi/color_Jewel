@@ -590,6 +590,64 @@
           "eventName": "item.wand"
         }
       ]
+    },
+    {
+      "stableId": "pictoicon-tv-png-163",
+      "layerType": "image",
+      "displayName": "PictoIcon_Tv.Png",
+      "x": 72,
+      "y": 721,
+      "zIndex": 6,
+      "visible": false,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Tv.Png",
+        "width": 23,
+        "height": 23,
+        "style": {
+          "shadow": {
+            "enabled": false,
+            "x": 0,
+            "y": 4,
+            "blur": 8,
+            "color": "#000000",
+            "opacity": 50
+          },
+          "tint": {
+            "mode": "overlay",
+            "color": "#f24a63",
+            "strength": 100
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-tv-png-164",
+      "layerType": "image",
+      "displayName": "PictoIcon_Tv.Png",
+      "x": 156,
+      "y": 721,
+      "zIndex": 7,
+      "visible": false,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Tv.Png",
+        "width": 23,
+        "height": 26,
+        "style": {
+          "shadow": {
+            "enabled": false,
+            "x": 0,
+            "y": 4,
+            "blur": 8,
+            "color": "#000000",
+            "opacity": 50
+          },
+          "tint": {
+            "mode": "overlay",
+            "color": "#f24a63",
+            "strength": 100
+          }
+        }
+      }
     }
   ]
 }

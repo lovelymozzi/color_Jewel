@@ -3302,6 +3302,55 @@
             return boardSnapshot.map((row) => [...row]);
         }
 
+        function clampActionChargesSnapshot(charges = DEFAULT_ACTION_CHARGES) {
+            return {
+                magic: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.magic, Number(charges?.magic ?? DEFAULT_ACTION_CHARGES.magic))),
+                clean: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.clean, Number(charges?.clean ?? DEFAULT_ACTION_CHARGES.clean)))
+            };
+        }
+
+        function createLevelInitialStateSnapshot(boardSnapshot, traySnapshot, cleanedCells = [], charges = DEFAULT_ACTION_CHARGES) {
+            return {
+                mapId: ACTIVE_MAP?.id || null,
+                rows: ROWS,
+                cols: COLS,
+                boardState: cloneBoardSnapshot(boardSnapshot),
+                trayState: [...traySnapshot],
+                cleanedSocketCells: [...cleanedCells],
+                actionCharges: clampActionChargesSnapshot(charges)
+            };
+        }
+
+        function isValidLevelInitialStateSnapshot(levelInitialState, config, allowedColorIds) {
+            if (!levelInitialState || levelInitialState.mapId !== config.id) {
+                return false;
+            }
+
+            return (
+                levelInitialState.rows === config.rows &&
+                levelInitialState.cols === config.cols &&
+                isValidSnapshotBoardForConfig(levelInitialState.boardState, config, allowedColorIds) &&
+                isValidSnapshotTrayForConfig(levelInitialState.trayState, allowedColorIds) &&
+                isValidSnapshotGemCounts(levelInitialState.boardState, levelInitialState.trayState, config)
+            );
+        }
+
+        function normalizeLevelInitialStateSnapshot(levelInitialState, config, allowedColorIds) {
+            if (!isValidLevelInitialStateSnapshot(levelInitialState, config, allowedColorIds)) {
+                return null;
+            }
+
+            return {
+                mapId: config.id,
+                rows: config.rows,
+                cols: config.cols,
+                boardState: cloneBoardSnapshot(levelInitialState.boardState),
+                trayState: [...levelInitialState.trayState],
+                cleanedSocketCells: normalizeSnapshotCleanedSocketCells(levelInitialState.cleanedSocketCells, config),
+                actionCharges: clampActionChargesSnapshot(levelInitialState.actionCharges)
+            };
+        }
+
         function getRuntimeSnapshotPayload() {
             return {
                 version: 1,
@@ -3315,7 +3364,15 @@
                     magic: Math.max(0, Number(actionCharges.magic || 0)),
                     clean: Math.max(0, Number(actionCharges.clean || 0))
                 },
-                moves: Math.max(0, Number(moves || 0))
+                moves: Math.max(0, Number(moves || 0)),
+                levelInitialState: currentLevelInitialState
+                    ? createLevelInitialStateSnapshot(
+                        currentLevelInitialState.boardState,
+                        currentLevelInitialState.trayState,
+                        currentLevelInitialState.cleanedSocketCells,
+                        currentLevelInitialState.actionCharges
+                    )
+                    : null
             };
         }
 
@@ -3595,6 +3652,7 @@
             }
 
             syncActiveMap(definitionIndex);
+            currentLevelInitialState = normalizeLevelInitialStateSnapshot(snapshot.levelInitialState, config, allowedColorIds);
             boardState = cloneBoardSnapshot(snapshot.boardState);
             trayState = [...snapshot.trayState];
             cleanedSocketCells = new Set(normalizeSnapshotCleanedSocketCells(snapshot.cleanedSocketCells, config));
@@ -4352,6 +4410,7 @@
         let colorJewelSceneContractPromise = null;
         let colorJewelUiReadyPromise = null;
         let colorJewelPocketOverlayElement = null;
+        let currentLevelInitialState = null;
         let settingSceneRenderer = null;
         let settingSceneContract = null;
         let settingSceneContractPromise = null;
@@ -5321,7 +5380,7 @@
                 null;
             const didPersist = persistPixelAdminStageOverride(definition);
             syncActiveMap(currentMapIndex);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = didPersist
@@ -5349,7 +5408,7 @@
             definition.adminDisplayName = null;
             clearPersistedPixelAdminStageOverride(definition.id);
             syncActiveMap(currentMapIndex);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
             syncPixelAdminWithActiveMap(true);
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "기본 캔버스와 팔레트로 복원했어요.";
@@ -5365,7 +5424,7 @@
             isStageTransitioning = false;
             selected = null;
             syncActiveMap(currentMapIndex + 1);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
             pixelAdminState.message = `다음 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
         }
@@ -5379,7 +5438,7 @@
             isStageTransitioning = false;
             selected = null;
             syncActiveMap(currentMapIndex - 1);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
             pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
         }
@@ -5394,7 +5453,7 @@
             isStageTransitioning = false;
             selected = null;
             syncActiveMap(targetMapIndex);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
         }
 
         async function copyPixelAdminExport() {
@@ -5977,6 +6036,43 @@
             prepareInitialBoardCandidate(fallbackBoard);
             removeMatchedInitialCells(fallbackBoard);
             return fallbackBoard;
+        }
+
+        function buildCurrentLevelInitialState() {
+            let nextBoardState = createBoardState();
+
+            if (!ACTIVE_MAP.initialBoardState) {
+                let bestBoardState = nextBoardState;
+                let bestBoardQuality = getInitialBoardQuality(nextBoardState);
+                const initialAttemptCount = 18;
+
+                for (let attempt = 0; attempt < initialAttemptCount; attempt += 1) {
+                    const candidateBoardState = createBoardState();
+                    const candidateQuality = getInitialBoardQuality(candidateBoardState);
+
+                    if (isBetterInitialBoardQuality(candidateQuality, bestBoardQuality)) {
+                        bestBoardState = candidateBoardState;
+                        bestBoardQuality = candidateQuality;
+                    }
+
+                    if (
+                        bestBoardQuality.matchedCount === 0 &&
+                        bestBoardQuality.oversizeCellCount === 0 &&
+                        bestBoardQuality.maxClusterSize <= getInitialClusterLimit()
+                    ) {
+                        break;
+                    }
+                }
+
+                nextBoardState = bestBoardState;
+            }
+
+            return createLevelInitialStateSnapshot(
+                nextBoardState,
+                Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0),
+                [],
+                DEFAULT_ACTION_CHARGES
+            );
         }
 
         function setStatus(message) {
@@ -6637,8 +6733,8 @@
                 }
 
                 settingSceneUnsubscribers = [
-                    settingSceneRenderer.on("re play", restartGameFromSettingScene),
-                    settingSceneRenderer.on("shape-pill-115:click", restartGameFromSettingScene)
+                    settingSceneRenderer.on("re play", () => clearSettingScene()),
+                    settingSceneRenderer.on("re-start-115:click", restartGameFromSettingScene)
                 ];
 
                 settingOverlayElement.classList.remove("closing");
@@ -6806,7 +6902,7 @@
             clearStageClearTimers();
             isStageTransitioning = false;
             syncActiveMap(currentMapIndex + 1);
-            resetGame();
+            resetGame({ regenerateLevelStart: true });
             return true;
         }
 
@@ -9998,45 +10094,27 @@
             selectTrayCluster(index, gem);
         }
 
-        function resetGame() {
+        function resetGame(options = {}) {
+            const { regenerateLevelStart = false } = options;
             gameSessionVersion += 1;
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearMagicDragState();
-            cleanedSocketCells = new Set();
             isAnimating = false;
             isStageTransitioning = false;
-            let nextBoardState = createBoardState();
 
-            if (!ACTIVE_MAP.initialBoardState) {
-                let bestBoardState = nextBoardState;
-                let bestBoardQuality = getInitialBoardQuality(nextBoardState);
-                const initialAttemptCount = 18;
-
-                for (let attempt = 0; attempt < initialAttemptCount; attempt += 1) {
-                    const candidateBoardState = createBoardState();
-                    const candidateQuality = getInitialBoardQuality(candidateBoardState);
-
-                    if (isBetterInitialBoardQuality(candidateQuality, bestBoardQuality)) {
-                        bestBoardState = candidateBoardState;
-                        bestBoardQuality = candidateQuality;
-                    }
-
-                    if (
-                        bestBoardQuality.matchedCount === 0 &&
-                        bestBoardQuality.oversizeCellCount === 0 &&
-                        bestBoardQuality.maxClusterSize <= getInitialClusterLimit()
-                    ) {
-                        break;
-                    }
-                }
-
-                nextBoardState = bestBoardState;
+            if (
+                regenerateLevelStart ||
+                !currentLevelInitialState ||
+                currentLevelInitialState.mapId !== ACTIVE_MAP?.id
+            ) {
+                currentLevelInitialState = buildCurrentLevelInitialState();
             }
 
-            boardState = nextBoardState;
-            trayState = Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0);
-            actionCharges = { ...DEFAULT_ACTION_CHARGES };
+            boardState = cloneBoardSnapshot(currentLevelInitialState.boardState);
+            trayState = [...currentLevelInitialState.trayState];
+            cleanedSocketCells = new Set(currentLevelInitialState.cleanedSocketCells || []);
+            actionCharges = clampActionChargesSnapshot(currentLevelInitialState.actionCharges);
             actionOverlayState = null;
             clearSparkles();
             clearCelebrationTimers();
@@ -10210,7 +10288,7 @@
                 });
                 if (!restoredRuntimeSnapshot) {
                     clearPersistedGameProgress();
-                    resetGame();
+                    resetGame({ regenerateLevelStart: true });
                 }
             } catch (error) {
                 console.error("[Boot] UI initialization failed:", error);
