@@ -35,6 +35,14 @@ renderer.hide();
 - **텍스트 바인딩** — `renderer.update({ ... })`: `item.clean`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
 
+<!-- SCENE:Color_Jewel 2 BEGIN -->
+#### `Color_Jewel 2`  ·  contract: `./Color_Jewel 2.contract.json`
+- **이벤트** — `renderer.on(name, fn)` 으로만 연결 (이름 임의 생성 금지):
+  - `item.wand`  (click)
+  - `item.wand`  (click)
+- **텍스트 바인딩** — `renderer.update({ ... })`: `item.clean`, `item.wand`
+<!-- SCENE:Color_Jewel 2 END -->
+
 <!-- SCENE:New Scene BEGIN -->
 #### `New Scene`  ·  contract: `./New Scene.contract.json`
 - 이벤트: 없음
@@ -51,5 +59,12 @@ renderer.hide();
   - `re-start-115:click`  (click)
   - `re play`  (click)
 <!-- SCENE:setting END -->
+
+<!-- SCENE:setting 2 BEGIN -->
+#### `setting 2`  ·  contract: `./setting 2.contract.json`
+- **이벤트** — `renderer.on(name, fn)` 으로만 연결 (이름 임의 생성 금지):
+  - `re-start-195:click`  (click)
+  - `re play`  (click)
+<!-- SCENE:setting 2 END -->
 
 <!-- END: ui-editor scene-renderer guide -->

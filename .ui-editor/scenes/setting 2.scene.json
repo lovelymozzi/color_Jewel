@@ -1,5 +1,5 @@
 {
-  "name": "setting",
+  "name": "setting 2",
   "sceneType": "scene",
   "canvasHeight": 844,
   "bgType": "none",
@@ -14,8 +14,8 @@
   "bgScrollDuration": 4,
   "layers": [
     {
-      "id": 112,
-      "stableId": "shape-rect-112",
+      "id": 191,
+      "stableId": "shape-rect-191",
       "type": "component",
       "source": "preset",
       "name": "shape-rect",
@@ -35,7 +35,7 @@
         "height": 786,
         "borderRadius": 0,
         "bgType": "solid",
-        "bgColor1": "#fffcaf",
+        "bgColor1": "#536371",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -73,8 +73,8 @@
       "groupId": "grp-130"
     },
     {
-      "id": 111,
-      "stableId": "-111",
+      "id": 192,
+      "stableId": "-192",
       "type": "component",
       "source": "preset",
       "name": "원",
@@ -94,7 +94,7 @@
         "height": 111,
         "borderRadius": 12,
         "bgType": "solid",
-        "bgColor1": "#fffcaf",
+        "bgColor1": "#536371",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -132,8 +132,8 @@
       "groupId": "grp-130"
     },
     {
-      "id": 113,
-      "stableId": "shape-rect-113",
+      "id": 193,
+      "stableId": "shape-rect-193",
       "type": "component",
       "source": "preset",
       "name": "shape-rect",
@@ -153,7 +153,7 @@
         "height": 80,
         "borderRadius": 0,
         "bgType": "solid",
-        "bgColor1": "#fffcaf",
+        "bgColor1": "#536371",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -191,8 +191,8 @@
       "groupId": "grp-130"
     },
     {
-      "id": 119,
-      "stableId": "pause-119",
+      "id": 194,
+      "stableId": "pause-194",
       "type": "component",
       "source": "preset",
       "name": "pause",
@@ -212,7 +212,7 @@
         "height": 57,
         "borderRadius": 0,
         "bgType": "solid",
-        "bgColor1": "#e8d15d",
+        "bgColor1": "#465668",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -238,7 +238,7 @@
             "fontSize": 30,
             "fontWeight": "bold",
             "fontFamily": "\"Baloo 2\", cursive",
-            "color": "#ffffff",
+            "color": "#dbdddf",
             "textStrokeWidth": 0,
             "textStrokeColor": "#000000",
             "textShadowX": 0,
@@ -271,8 +271,8 @@
       "locked": true
     },
     {
-      "id": 115,
-      "stableId": "re-start-115",
+      "id": 195,
+      "stableId": "re-start-195",
       "type": "component",
       "source": "preset",
       "name": "re start",
@@ -292,14 +292,14 @@
         "height": 48,
         "borderRadius": 12,
         "bgType": "solid",
-        "bgColor1": "#ff907d",
+        "bgColor1": "#7a75c2",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
         "borderColor": "#6bb5ff",
         "depthEnabled": true,
         "depthSize": 4,
-        "depthColor": "#e37b68",
+        "depthColor": "#5a568f",
         "outerShadowEnabled": false,
         "outerShadowX": 0,
         "outerShadowY": 4,
@@ -364,8 +364,8 @@
       ]
     },
     {
-      "id": 114,
-      "stableId": "re-play-114",
+      "id": 196,
+      "stableId": "re-play-196",
       "type": "component",
       "source": "preset",
       "name": "re play",
@@ -385,14 +385,14 @@
         "height": 48,
         "borderRadius": 12,
         "bgType": "solid",
-        "bgColor1": "#47b2ff",
+        "bgColor1": "#75c397",
         "bgColor2": "#cde3fe",
         "gradientAngle": 360,
         "borderWidth": 0,
         "borderColor": "#6bb5ff",
         "depthEnabled": true,
         "depthSize": 4,
-        "depthColor": "#4898d5",
+        "depthColor": "#63a17e",
         "outerShadowEnabled": false,
         "outerShadowX": 0,
         "outerShadowY": -3,
@@ -457,11 +457,11 @@
       ]
     },
     {
-      "id": 122,
-      "stableId": "-122",
+      "id": 197,
+      "stableId": "shape-round-rect-197",
       "type": "component",
       "source": "preset",
-      "name": "둥근 사각형",
+      "name": "shape-round-rect",
       "exportPath": "",
       "x": 252,
       "y": 374,
@@ -469,7 +469,7 @@
       "scaleX": 1,
       "scaleY": 1,
       "rotation": 0,
-      "zIndex": 8,
+      "zIndex": 7,
       "visible": true,
       "componentState": {
         "name": "둥근 사각형",
@@ -478,7 +478,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#b980ff",
+        "bgColor1": "#75c397",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -515,8 +515,8 @@
       "groupId": "grp-129"
     },
     {
-      "id": 123,
-      "stableId": "pictoicon-sfx-on-png-123",
+      "id": 198,
+      "stableId": "pictoicon-sfx-on-png-198",
       "type": "image",
       "name": "PictoIcon_Sfx_On.Png",
       "exportPath": "assets/PictoIcon_Sfx_On.Png",
@@ -544,8 +544,8 @@
       "groupId": "grp-129"
     },
     {
-      "id": 125,
-      "stableId": "shape-ellipse-125",
+      "id": 199,
+      "stableId": "shape-ellipse-199",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -602,11 +602,11 @@
       "groupId": "grp-129"
     },
     {
-      "id": 147,
-      "stableId": "-147",
+      "id": 200,
+      "stableId": "shape-round-rect-200",
       "type": "component",
       "source": "preset",
-      "name": "둥근 사각형",
+      "name": "shape-round-rect",
       "exportPath": "",
       "x": 252,
       "y": 374,
@@ -623,7 +623,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#c4b254",
+        "bgColor1": "#2e3746",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -660,8 +660,8 @@
       "groupId": "grp-147"
     },
     {
-      "id": 149,
-      "stableId": "shape-ellipse-149",
+      "id": 201,
+      "stableId": "shape-ellipse-201",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -718,8 +718,8 @@
       "groupId": "grp-147"
     },
     {
-      "id": 150,
-      "stableId": "pictoicon-sfx-off-png-150",
+      "id": 202,
+      "stableId": "pictoicon-sfx-off-png-202",
       "type": "image",
       "name": "PictoIcon_Sfx_Off.Png",
       "exportPath": "assets/PictoIcon_Sfx_Off.Png",
@@ -747,8 +747,8 @@
       "groupId": "grp-147"
     },
     {
-      "id": 152,
-      "stableId": "shape-round-rect-152",
+      "id": 203,
+      "stableId": "shape-round-rect-203",
       "type": "component",
       "source": "preset",
       "name": "shape-round-rect",
@@ -768,7 +768,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#b980ff",
+        "bgColor1": "#75c397",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -805,8 +805,8 @@
       "groupId": "grp-152"
     },
     {
-      "id": 155,
-      "stableId": "pictoicon-music-on-png-155",
+      "id": 204,
+      "stableId": "pictoicon-music-on-png-204",
       "type": "image",
       "name": "PictoIcon_Music_On.Png",
       "exportPath": "assets/PictoIcon_Music_On.Png",
@@ -834,8 +834,8 @@
       "groupId": "grp-152"
     },
     {
-      "id": 154,
-      "stableId": "shape-ellipse-154",
+      "id": 205,
+      "stableId": "shape-ellipse-205",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -892,8 +892,8 @@
       "groupId": "grp-152"
     },
     {
-      "id": 157,
-      "stableId": "shape-round-rect-157",
+      "id": 206,
+      "stableId": "shape-round-rect-206",
       "type": "component",
       "source": "preset",
       "name": "shape-round-rect",
@@ -913,7 +913,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#c4b254",
+        "bgColor1": "#2e3746",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -950,8 +950,8 @@
       "groupId": "grp-157"
     },
     {
-      "id": 160,
-      "stableId": "pictoicon-music-off-png-160",
+      "id": 207,
+      "stableId": "pictoicon-music-off-png-207",
       "type": "image",
       "name": "PictoIcon_Music_Off.Png",
       "exportPath": "assets/PictoIcon_Music_Off.Png",
@@ -979,8 +979,8 @@
       "groupId": "grp-157"
     },
     {
-      "id": 159,
-      "stableId": "shape-ellipse-159",
+      "id": 208,
+      "stableId": "shape-ellipse-208",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -1037,8 +1037,8 @@
       "groupId": "grp-157"
     },
     {
-      "id": 173,
-      "stableId": "shape-round-rect-173",
+      "id": 209,
+      "stableId": "shape-round-rect-209",
       "type": "component",
       "source": "preset",
       "name": "shape-round-rect",
@@ -1058,7 +1058,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#c4b254",
+        "bgColor1": "#2e3746",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -1095,8 +1095,8 @@
       "groupId": "grp-173"
     },
     {
-      "id": 178,
-      "stableId": "haptics-off-png-178",
+      "id": 210,
+      "stableId": "haptics-off-png-210",
       "type": "image",
       "name": "Haptics_off.png",
       "exportPath": "assets/Haptics_off.png",
@@ -1124,8 +1124,8 @@
       "groupId": "grp-173"
     },
     {
-      "id": 174,
-      "stableId": "shape-ellipse-174",
+      "id": 211,
+      "stableId": "shape-ellipse-211",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -1182,11 +1182,11 @@
       "groupId": "grp-173"
     },
     {
-      "id": 180,
-      "stableId": "-180",
+      "id": 212,
+      "stableId": "shape-round-rect-212",
       "type": "component",
       "source": "preset",
-      "name": "둥근 사각형",
+      "name": "shape-round-rect",
       "exportPath": "",
       "x": 252,
       "y": 440,
@@ -1203,7 +1203,7 @@
         "height": 49,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#b980ff",
+        "bgColor1": "#75c397",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,
@@ -1240,8 +1240,8 @@
       "groupId": "grp-180"
     },
     {
-      "id": 183,
-      "stableId": "haptics-png-183",
+      "id": 213,
+      "stableId": "haptics-png-213",
       "type": "image",
       "name": "Haptics.png",
       "exportPath": "assets/Haptics.png",
@@ -1269,8 +1269,8 @@
       "groupId": "grp-180"
     },
     {
-      "id": 182,
-      "stableId": "shape-ellipse-182",
+      "id": 214,
+      "stableId": "shape-ellipse-214",
       "type": "component",
       "source": "preset",
       "name": "shape-ellipse",
@@ -1327,8 +1327,8 @@
       "groupId": "grp-180"
     },
     {
-      "id": 184,
-      "stableId": "bgm-184",
+      "id": 215,
+      "stableId": "bgm-215",
       "type": "component",
       "source": "preset",
       "name": "bgm",
@@ -1402,8 +1402,8 @@
       }
     },
     {
-      "id": 185,
-      "stableId": "sfx-185",
+      "id": 216,
+      "stableId": "sfx-216",
       "type": "component",
       "source": "preset",
       "name": "sfx",
@@ -1477,8 +1477,8 @@
       }
     },
     {
-      "id": 187,
-      "stableId": "vibration-187",
+      "id": 217,
+      "stableId": "vibration-217",
       "type": "component",
       "source": "preset",
       "name": "vibration",
@@ -1552,8 +1552,8 @@
       }
     },
     {
-      "id": 190,
-      "stableId": "shape-round-rect-190",
+      "id": 218,
+      "stableId": "shape-round-rect-218",
       "type": "component",
       "source": "preset",
       "name": "shape-round-rect",
@@ -1573,7 +1573,7 @@
         "height": 231,
         "borderRadius": 16,
         "bgType": "solid",
-        "bgColor1": "#e8d15d",
+        "bgColor1": "#465668",
         "bgColor2": "#2e6ab4",
         "gradientAngle": 180,
         "borderWidth": 0,

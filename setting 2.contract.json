@@ -1,7 +1,7 @@
 {
   "contractVersion": 1,
-  "sceneId": "setting",
-  "sceneName": "setting",
+  "sceneId": "setting-2",
+  "sceneName": "setting 2",
   "canvas": {
     "width": 390,
     "height": 844
@@ -26,65 +26,65 @@
     {
       "name": "sound_on",
       "layerStableIds": [
-        "-122",
-        "pictoicon-sfx-on-png-123",
-        "shape-ellipse-125"
+        "shape-round-rect-197",
+        "pictoicon-sfx-on-png-198",
+        "shape-ellipse-199"
       ]
     },
     {
       "name": "bg",
       "layerStableIds": [
-        "shape-rect-112",
-        "-111",
-        "shape-rect-113",
-        "pause-119"
+        "shape-rect-191",
+        "-192",
+        "shape-rect-193",
+        "pause-194"
       ]
     },
     {
       "name": "sound_off",
       "layerStableIds": [
-        "-147",
-        "shape-ellipse-149",
-        "pictoicon-sfx-off-png-150"
+        "shape-round-rect-200",
+        "shape-ellipse-201",
+        "pictoicon-sfx-off-png-202"
       ]
     },
     {
       "name": "bgm_on",
       "layerStableIds": [
-        "shape-round-rect-152",
-        "pictoicon-music-on-png-155",
-        "shape-ellipse-154"
+        "shape-round-rect-203",
+        "pictoicon-music-on-png-204",
+        "shape-ellipse-205"
       ]
     },
     {
       "name": "bgm_off",
       "layerStableIds": [
-        "shape-round-rect-157",
-        "pictoicon-music-off-png-160",
-        "shape-ellipse-159"
+        "shape-round-rect-206",
+        "pictoicon-music-off-png-207",
+        "shape-ellipse-208"
       ]
     },
     {
       "name": "haptics_off",
       "layerStableIds": [
-        "shape-round-rect-173",
-        "haptics-off-png-178",
-        "shape-ellipse-174"
+        "shape-round-rect-209",
+        "haptics-off-png-210",
+        "shape-ellipse-211"
       ]
     },
     {
       "name": "haptics_on",
       "layerStableIds": [
-        "-180",
-        "haptics-png-183",
-        "shape-ellipse-182"
+        "shape-round-rect-212",
+        "haptics-png-213",
+        "shape-ellipse-214"
       ]
     }
   ],
   "sceneAnimations": [],
   "layers": [
     {
-      "stableId": "shape-rect-112",
+      "stableId": "shape-rect-191",
       "layerType": "component",
       "displayName": "사각형",
       "x": 67,
@@ -102,7 +102,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#536371",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -148,7 +148,7 @@
       }
     },
     {
-      "stableId": "-111",
+      "stableId": "-192",
       "layerType": "component",
       "displayName": "원",
       "x": 67,
@@ -166,7 +166,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#536371",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -212,7 +212,7 @@
       }
     },
     {
-      "stableId": "shape-rect-113",
+      "stableId": "shape-rect-193",
       "layerType": "component",
       "displayName": "사각형",
       "x": 125,
@@ -230,7 +230,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#536371",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -276,7 +276,7 @@
       }
     },
     {
-      "stableId": "pause-119",
+      "stableId": "pause-194",
       "layerType": "component",
       "displayName": "pause",
       "x": 67,
@@ -294,7 +294,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#e8d15d",
+            "color1": "#465668",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -346,7 +346,7 @@
           "fontSize": 30,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#ffffff",
+          "color": "#dbdddf",
           "offsetX": -30,
           "offsetY": 0,
           "zIndex": 1,
@@ -371,7 +371,7 @@
       ]
     },
     {
-      "stableId": "re-start-115",
+      "stableId": "re-start-195",
       "layerType": "component",
       "displayName": "re start",
       "x": 110,
@@ -389,7 +389,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#ff907d",
+            "color1": "#7a75c2",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -404,7 +404,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 4,
-              "color": "#e37b68"
+              "color": "#5a568f"
             },
             {
               "type": "outer",
@@ -510,12 +510,12 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "re-start-115:click"
+          "eventName": "re-start-195:click"
         }
       ]
     },
     {
-      "stableId": "re-play-114",
+      "stableId": "re-play-196",
       "layerType": "component",
       "displayName": "re play",
       "x": 110,
@@ -533,7 +533,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#47b2ff",
+            "color1": "#75c397",
             "color2": "#cde3fe",
             "angle": 360,
             "depthIntensity": 26,
@@ -548,7 +548,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 4,
-              "color": "#4898d5"
+              "color": "#63a17e"
             },
             {
               "type": "outer",
@@ -659,12 +659,12 @@
       ]
     },
     {
-      "stableId": "-122",
+      "stableId": "shape-round-rect-197",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
       "y": 374,
-      "zIndex": 8,
+      "zIndex": 7,
       "visual": {
         "model": {
           "shape": {
@@ -677,7 +677,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#b980ff",
+            "color1": "#75c397",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -723,7 +723,7 @@
       }
     },
     {
-      "stableId": "pictoicon-sfx-on-png-123",
+      "stableId": "pictoicon-sfx-on-png-198",
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_On.Png",
       "x": 305,
@@ -736,7 +736,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-125",
+      "stableId": "shape-ellipse-199",
       "layerType": "component",
       "displayName": "타원",
       "x": 261,
@@ -800,7 +800,7 @@
       }
     },
     {
-      "stableId": "-147",
+      "stableId": "shape-round-rect-200",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
@@ -818,7 +818,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#c4b254",
+            "color1": "#2e3746",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -864,7 +864,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-149",
+      "stableId": "shape-ellipse-201",
       "layerType": "component",
       "displayName": "타원",
       "x": 305,
@@ -928,7 +928,7 @@
       }
     },
     {
-      "stableId": "pictoicon-sfx-off-png-150",
+      "stableId": "pictoicon-sfx-off-png-202",
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_Off.Png",
       "x": 262,
@@ -941,7 +941,7 @@
       }
     },
     {
-      "stableId": "shape-round-rect-152",
+      "stableId": "shape-round-rect-203",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
@@ -959,7 +959,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#b980ff",
+            "color1": "#75c397",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -1005,7 +1005,7 @@
       }
     },
     {
-      "stableId": "pictoicon-music-on-png-155",
+      "stableId": "pictoicon-music-on-png-204",
       "layerType": "image",
       "displayName": "PictoIcon_Music_On.Png",
       "x": 304,
@@ -1018,7 +1018,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-154",
+      "stableId": "shape-ellipse-205",
       "layerType": "component",
       "displayName": "타원",
       "x": 261,
@@ -1082,7 +1082,7 @@
       }
     },
     {
-      "stableId": "shape-round-rect-157",
+      "stableId": "shape-round-rect-206",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
@@ -1100,7 +1100,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#c4b254",
+            "color1": "#2e3746",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -1146,7 +1146,7 @@
       }
     },
     {
-      "stableId": "pictoicon-music-off-png-160",
+      "stableId": "pictoicon-music-off-png-207",
       "layerType": "image",
       "displayName": "PictoIcon_Music_Off.Png",
       "x": 260,
@@ -1159,7 +1159,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-159",
+      "stableId": "shape-ellipse-208",
       "layerType": "component",
       "displayName": "타원",
       "x": 304,
@@ -1223,7 +1223,7 @@
       }
     },
     {
-      "stableId": "shape-round-rect-173",
+      "stableId": "shape-round-rect-209",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
@@ -1241,7 +1241,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#c4b254",
+            "color1": "#2e3746",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -1287,7 +1287,7 @@
       }
     },
     {
-      "stableId": "haptics-off-png-178",
+      "stableId": "haptics-off-png-210",
       "layerType": "image",
       "displayName": "Haptics_off.png",
       "x": 262,
@@ -1300,7 +1300,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-174",
+      "stableId": "shape-ellipse-211",
       "layerType": "component",
       "displayName": "타원",
       "x": 305,
@@ -1364,7 +1364,7 @@
       }
     },
     {
-      "stableId": "-180",
+      "stableId": "shape-round-rect-212",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
@@ -1382,7 +1382,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#b980ff",
+            "color1": "#75c397",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -1428,7 +1428,7 @@
       }
     },
     {
-      "stableId": "haptics-png-183",
+      "stableId": "haptics-png-213",
       "layerType": "image",
       "displayName": "Haptics.png",
       "x": 303,
@@ -1441,7 +1441,7 @@
       }
     },
     {
-      "stableId": "shape-ellipse-182",
+      "stableId": "shape-ellipse-214",
       "layerType": "component",
       "displayName": "타원",
       "x": 261,
@@ -1505,7 +1505,7 @@
       }
     },
     {
-      "stableId": "bgm-184",
+      "stableId": "bgm-215",
       "layerType": "component",
       "displayName": "bgm",
       "x": 64,
@@ -1599,7 +1599,7 @@
       ]
     },
     {
-      "stableId": "sfx-185",
+      "stableId": "sfx-216",
       "layerType": "component",
       "displayName": "sfx",
       "x": 64,
@@ -1693,7 +1693,7 @@
       ]
     },
     {
-      "stableId": "vibration-187",
+      "stableId": "vibration-217",
       "layerType": "component",
       "displayName": "vibration",
       "x": 69,
@@ -1787,7 +1787,7 @@
       ]
     },
     {
-      "stableId": "shape-round-rect-190",
+      "stableId": "shape-round-rect-218",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 98,
@@ -1805,7 +1805,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#e8d15d",
+            "color1": "#465668",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,

@@ -1,7 +1,7 @@
 {
   "contractVersion": 1,
-  "sceneId": "color-jewel",
-  "sceneName": "Color_Jewel",
+  "sceneId": "color-jewel-2",
+  "sceneName": "Color_Jewel 2",
   "canvas": {
     "width": 390,
     "height": 844
@@ -12,8 +12,8 @@
   },
   "background": {
     "type": "none",
-    "color": "rgba(255,255,255,0)",
-    "color2": "rgba(71,178,255,0.35)",
+    "color": "#16213e",
+    "color2": "#0e4a8c",
     "gradientAngle": 180,
     "imagePath": "assets/16_9.png",
     "tileSize": 64,
@@ -26,25 +26,21 @@
     {
       "name": "Button",
       "layerStableIds": [
-        "level-node-19",
-        "level-node-18",
-        "level-node-57",
-        "level-node-4"
+        "level-node-200",
+        "level-node-202",
+        "level-node-203",
+        "level-node-204"
       ]
-    },
-    {
-      "name": "sound_off",
-      "layerStableIds": []
     }
   ],
   "sceneAnimations": [],
   "layers": [
     {
-      "stableId": "level-node-19",
+      "stableId": "level-node-200",
       "layerType": "component",
       "displayName": "Level Node",
       "x": 296,
-      "y": 689,
+      "y": 691,
       "scale": 1.35,
       "zIndex": 1,
       "visual": {
@@ -59,7 +55,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -73,8 +69,8 @@
             {
               "type": "depth-edge",
               "enabled": true,
-              "size": 3,
-              "color": "#d3d08d"
+              "size": 5,
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -104,12 +100,12 @@
         },
         "images": [
           {
-            "exportPath": "assets/PictoIcon_Setting_1.webp",
-            "width": 32,
-            "height": 32,
+            "exportPath": "assets/set.png",
+            "width": 25,
+            "height": 30,
             "offsetX": 0,
             "offsetY": 0,
-            "zIndex": 3
+            "zIndex": 2
           }
         ]
       },
@@ -133,11 +129,11 @@
       ]
     },
     {
-      "stableId": "time-display-56",
+      "stableId": "time-display-201",
       "layerType": "component",
       "displayName": "Pocket Area",
       "x": 28,
-      "y": 595,
+      "y": 599,
       "zIndex": 2,
       "visual": {
         "model": {
@@ -151,7 +147,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#ffebbe",
+            "color1": "#f2f2f3",
             "color2": "#2558a0",
             "angle": 180,
             "depthIntensity": 50,
@@ -165,26 +161,26 @@
             {
               "type": "depth-edge",
               "enabled": true,
-              "size": 3,
-              "color": "#ccba93"
+              "size": 5,
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
-              "enabled": false,
+              "enabled": true,
               "x": 0,
               "y": 4,
               "blur": 0,
-              "color": "#fffae7",
-              "opacity": 0
+              "color": "#d6d6d6",
+              "opacity": 30
             },
             {
               "type": "inner",
               "enabled": true,
               "x": 0,
-              "y": 3,
-              "blur": 0,
-              "color": "#fff0d1",
-              "opacity": 100
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 10
             }
           ],
           "mask": {
@@ -197,11 +193,11 @@
       }
     },
     {
-      "stableId": "level-node-18",
+      "stableId": "level-node-202",
       "layerType": "component",
       "displayName": "Level Node",
       "x": 207,
-      "y": 689,
+      "y": 691,
       "scale": 1.35,
       "zIndex": 3,
       "visual": {
@@ -230,7 +226,7 @@
             {
               "type": "depth-edge",
               "enabled": true,
-              "size": 3,
+              "size": 5,
               "color": "#c4c4c4"
             },
             {
@@ -290,11 +286,11 @@
       ]
     },
     {
-      "stableId": "level-node-57",
+      "stableId": "level-node-203",
       "layerType": "component",
       "displayName": "Level Node",
       "x": 119,
-      "y": 687,
+      "y": 689,
       "scale": 1.35,
       "zIndex": 4,
       "visual": {
@@ -309,7 +305,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -323,8 +319,8 @@
             {
               "type": "depth-edge",
               "enabled": true,
-              "size": 3,
-              "color": "#d0c176"
+              "size": 5,
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -443,11 +439,11 @@
       ]
     },
     {
-      "stableId": "level-node-4",
+      "stableId": "level-node-204",
       "layerType": "component",
       "displayName": "Level Node",
       "x": 30,
-      "y": 689,
+      "y": 691,
       "scale": 1.35,
       "zIndex": 5,
       "visual": {
@@ -462,7 +458,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fffcaf",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -476,8 +472,8 @@
             {
               "type": "depth-edge",
               "enabled": true,
-              "size": 3,
-              "color": "#d3d08d"
+              "size": 5,
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -490,12 +486,12 @@
             },
             {
               "type": "inner",
-              "enabled": true,
+              "enabled": false,
               "x": 0,
-              "y": 2,
+              "y": 3,
               "blur": 0,
-              "color": "#ffffb3",
-              "opacity": 100
+              "color": "#ffffff",
+              "opacity": 0
             }
           ],
           "mask": {
@@ -596,13 +592,12 @@
       ]
     },
     {
-      "stableId": "shape-ellipse-169",
+      "stableId": "shape-ellipse-205",
       "layerType": "component",
       "displayName": "타원",
       "x": 76,
       "y": 733,
       "zIndex": 6,
-      "visible": false,
       "visual": {
         "model": {
           "shape": {
