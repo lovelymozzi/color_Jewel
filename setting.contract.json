@@ -12,7 +12,7 @@
   },
   "background": {
     "type": "solid",
-    "color": "rgba(153,153,153,0.63)",
+    "color": "rgba(153,153,153,0.15)",
     "color2": "#0e4a8c",
     "gradientAngle": 180,
     "imagePath": "",
@@ -231,7 +231,7 @@
       "layerType": "component",
       "displayName": "알약",
       "x": 110,
-      "y": 99,
+      "y": 140,
       "zIndex": 5,
       "visual": {
         "model": {
@@ -258,9 +258,9 @@
           "shadows": [
             {
               "type": "depth-edge",
-              "enabled": false,
-              "size": 0,
-              "color": "#1e4a80"
+              "enabled": true,
+              "size": 4,
+              "color": "#63a17e"
             },
             {
               "type": "outer",
@@ -289,12 +289,30 @@
           }
         }
       },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ],
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "RE START",
+          "staticContent": "RE PLAY",
           "bindingKey": "",
-          "fontSize": 24,
+          "fontSize": 20,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
           "color": "#ffffff",
@@ -326,7 +344,7 @@
       "layerType": "component",
       "displayName": "알약",
       "x": 110,
-      "y": 172,
+      "y": 207,
       "zIndex": 6,
       "visual": {
         "model": {
@@ -341,6 +359,119 @@
           "fill": {
             "type": "solid",
             "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 4,
+              "color": "#c4c4c4"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ],
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "HOME",
+          "bindingKey": "",
+          "fontSize": 20,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#536371",
+          "offsetX": 0,
+          "offsetY": 0,
+          "zIndex": 1,
+          "style": {
+            "stroke": {
+              "width": 0.5,
+              "color": "rgba(86,164,120,0)"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 50
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "shape-rect-119",
+      "layerType": "component",
+      "displayName": "사각형",
+      "x": 67,
+      "y": 64,
+      "zIndex": 6,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 323,
+            "height": 57,
+            "radius": 0,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#465668",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -387,23 +518,23 @@
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "HOME",
+          "staticContent": "PAUSE",
           "bindingKey": "",
-          "fontSize": 24,
+          "fontSize": 30,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#536371",
+          "color": "#dbdddf",
           "offsetX": 0,
           "offsetY": 0,
           "zIndex": 1,
           "style": {
             "stroke": {
-              "width": 0.5,
-              "color": "rgba(86,164,120,0)"
+              "width": 0,
+              "color": "#000000"
             },
             "depth": {
               "size": 0,
-              "color": "#000000"
+              "color": "rgba(0,0,0,0)"
             },
             "shadow": {
               "x": 0,
