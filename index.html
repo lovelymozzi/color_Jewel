@@ -798,10 +798,14 @@
         }
 
         .setting-scene-shell {
+            --setting-scene-exit-distance: 126px;
             position: relative;
             flex: none;
             z-index: 1;
             overflow: visible;
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
             pointer-events: none;
         }
 
@@ -810,7 +814,7 @@
         }
 
         .setting-overlay.closing .setting-scene-shell {
-            animation: setting-panel-exit 0.48s cubic-bezier(0.34, 0.02, 0.68, 1) both;
+            animation: setting-panel-exit 0.52s ease-out both;
         }
 
         .setting-scene-surface {
@@ -980,12 +984,8 @@
                 transform: translateX(0);
             }
 
-            28% {
-                transform: translateX(-10px);
-            }
-
             100% {
-                transform: translateX(126px);
+                transform: translateX(var(--setting-scene-exit-distance, 126px));
             }
         }
 
@@ -4417,6 +4417,7 @@
         let isSettingSceneOpen = false;
         let isSettingSceneClosing = false;
         let settingSceneCloseTimer = null;
+        let settingSceneCloseAnimationCleanup = null;
         let settingSceneAfterCloseAction = null;
         let stageClearSceneRenderer = null;
         let stageClearSceneContract = null;
@@ -4523,7 +4524,7 @@
             clearSettingScene();
         });
 
-        const SETTING_SCENE_CLOSE_ANIMATION_MS = 480;
+        const SETTING_SCENE_CLOSE_ANIMATION_MS = 620;
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 680;
@@ -6771,10 +6772,14 @@
             const { designWidth, designHeight, scale, scaledWidth, scaledHeight } =
                 getSettingSceneLayoutMetrics(contract);
             const contentBounds = getSettingSceneContentBounds(contract);
+            const mountWidth = settingSceneMountElement?.clientWidth || designWidth;
+            const scaledContentWidth = Math.ceil(contentBounds.width * scale);
+            const exitDistance = Math.ceil(mountWidth * 0.5 + scaledContentWidth * 0.5 + 24);
             const shell = document.createElement("div");
             shell.className = "setting-scene-shell";
             shell.style.width = `${scaledWidth}px`;
             shell.style.height = `${scaledHeight}px`;
+            shell.style.setProperty("--setting-scene-exit-distance", `${exitDistance}px`);
 
             const surface = document.createElement("div");
             surface.className = "setting-scene-surface";
@@ -6791,6 +6796,11 @@
             if (settingSceneCloseTimer) {
                 window.clearTimeout(settingSceneCloseTimer);
                 settingSceneCloseTimer = null;
+            }
+
+            if (settingSceneCloseAnimationCleanup) {
+                settingSceneCloseAnimationCleanup();
+                settingSceneCloseAnimationCleanup = null;
             }
 
             settingSceneUnsubscribers.forEach((off) => {
@@ -6858,14 +6868,30 @@
             isSettingSceneOpen = false;
             isSettingSceneClosing = true;
 
-            if (settingSceneMountElement) {
-                settingSceneMountElement.setAttribute("aria-hidden", "true");
-            }
-
             if (settingOverlayElement) {
                 settingOverlayElement.classList.remove("active");
                 settingOverlayElement.classList.add("closing");
-                settingOverlayElement.setAttribute("aria-hidden", "true");
+                settingOverlayElement.setAttribute("aria-hidden", "false");
+            }
+
+            const shellElement = settingSceneMountElement?.querySelector(".setting-scene-shell");
+            if (settingSceneCloseAnimationCleanup) {
+                settingSceneCloseAnimationCleanup();
+                settingSceneCloseAnimationCleanup = null;
+            }
+
+            if (shellElement) {
+                const handleCloseAnimationEnd = (event) => {
+                    if (event.target !== shellElement || event.animationName !== "setting-panel-exit") {
+                        return;
+                    }
+                    finalizeSettingSceneClear();
+                };
+
+                shellElement.addEventListener("animationend", handleCloseAnimationEnd);
+                settingSceneCloseAnimationCleanup = () => {
+                    shellElement.removeEventListener("animationend", handleCloseAnimationEnd);
+                };
             }
 
             if (settingSceneCloseTimer) {

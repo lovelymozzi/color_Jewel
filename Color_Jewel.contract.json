@@ -24,263 +24,17 @@
   },
   "groups": [
     {
-      "name": "Group",
+      "name": "Button",
       "layerStableIds": [
-        "level-node-4",
-        "level-node-18",
         "level-node-19",
-        "level-node-57"
+        "level-node-18",
+        "level-node-57",
+        "level-node-4"
       ]
     }
   ],
   "sceneAnimations": [],
   "layers": [
-    {
-      "stableId": "level-node-4",
-      "layerType": "component",
-      "displayName": "Level Node",
-      "x": 34,
-      "y": 689,
-      "scale": 1.1,
-      "zIndex": 1,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "rectangle",
-            "width": 51,
-            "height": 51,
-            "radius": 20,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#f2f2f3",
-            "color2": "#2e8b00",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#ffd700"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 5,
-              "color": "#c4c4c4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 5,
-              "blur": 12,
-              "color": "#000000",
-              "opacity": 35
-            },
-            {
-              "type": "inner",
-              "enabled": true,
-              "x": 0,
-              "y": 2,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 20
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        },
-        "images": [
-          {
-            "exportPath": "assets/magic.png",
-            "width": 32,
-            "height": 32,
-            "offsetX": 0,
-            "offsetY": 0,
-            "zIndex": 1,
-            "style": {
-              "shadow": {
-                "enabled": true,
-                "x": 0,
-                "y": 4,
-                "blur": 0,
-                "color": "#000000",
-                "opacity": 15
-              },
-              "tint": {
-                "mode": "off",
-                "color": "#ff3b30",
-                "strength": 100
-              }
-            }
-          },
-          {
-            "exportPath": "assets/circle1.png",
-            "width": 22,
-            "height": 22,
-            "offsetX": 19,
-            "offsetY": 17,
-            "zIndex": 2
-          }
-        ]
-      },
-      "effects": [
-        {
-          "type": "press",
-          "source": {
-            "provider": "internal",
-            "name": "press"
-          },
-          "enabled": true,
-          "target": "self",
-          "trigger": "pointer",
-          "params": {
-            "transitionMs": 100,
-            "brightness": 95,
-            "scale": 100,
-            "useDepthOffset": true
-          }
-        }
-      ],
-      "texts": [
-        {
-          "slotIndex": 0,
-          "staticContent": "2",
-          "bindingKey": "item.wand",
-          "fontSize": 16,
-          "fontWeight": "bold",
-          "fontFamily": "\"Lilita One\", cursive",
-          "color": "#ffffff",
-          "offsetX": 19,
-          "offsetY": 17,
-          "zIndex": 3,
-          "style": {
-            "stroke": {
-              "width": 0,
-              "color": "#ffffff"
-            },
-            "depth": {
-              "size": 0,
-              "color": "#000000"
-            },
-            "shadow": {
-              "x": 0,
-              "y": 1,
-              "blur": 2,
-              "color": "#000000",
-              "opacity": 40
-            }
-          }
-        }
-      ],
-      "events": [
-        {
-          "trigger": "click",
-          "eventName": "item.wand"
-        }
-      ]
-    },
-    {
-      "stableId": "level-node-18",
-      "layerType": "component",
-      "displayName": "Level Node",
-      "x": 211,
-      "y": 689,
-      "scale": 1.1,
-      "zIndex": 7,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "rectangle",
-            "width": 51,
-            "height": 51,
-            "radius": 20,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#f2f2f3",
-            "color2": "#2e8b00",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#ffd700"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 5,
-              "color": "#c4c4c4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 5,
-              "blur": 12,
-              "color": "#000000",
-              "opacity": 35
-            },
-            {
-              "type": "inner",
-              "enabled": true,
-              "x": 0,
-              "y": 2,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 20
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        },
-        "images": [
-          {
-            "exportPath": "assets/rock.png",
-            "width": 32,
-            "height": 32,
-            "offsetX": 0,
-            "offsetY": 0,
-            "zIndex": 2
-          }
-        ]
-      },
-      "effects": [
-        {
-          "type": "press",
-          "source": {
-            "provider": "internal",
-            "name": "press"
-          },
-          "enabled": true,
-          "target": "self",
-          "trigger": "pointer",
-          "params": {
-            "transitionMs": 100,
-            "brightness": 95,
-            "scale": 100,
-            "useDepthOffset": true
-          }
-        }
-      ]
-    },
     {
       "stableId": "level-node-19",
       "layerType": "component",
@@ -288,7 +42,7 @@
       "x": 300,
       "y": 689,
       "scale": 1.1,
-      "zIndex": 8,
+      "zIndex": 1,
       "visual": {
         "model": {
           "shape": {
@@ -380,7 +134,7 @@
       "displayName": "Pocket Area",
       "x": 32,
       "y": 599,
-      "zIndex": 9,
+      "zIndex": 2,
       "visual": {
         "model": {
           "shape": {
@@ -439,13 +193,106 @@
       }
     },
     {
+      "stableId": "level-node-18",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 211,
+      "y": 689,
+      "scale": 1.1,
+      "zIndex": 3,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f2f2f3",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#c4c4c4"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 20
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        },
+        "images": [
+          {
+            "exportPath": "assets/rock.png",
+            "width": 32,
+            "height": 32,
+            "offsetX": 0,
+            "offsetY": 0,
+            "zIndex": 2
+          }
+        ]
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ]
+    },
+    {
       "stableId": "level-node-57",
       "layerType": "component",
       "displayName": "Level Node",
       "x": 123,
       "y": 687,
       "scale": 1.1,
-      "zIndex": 6,
+      "zIndex": 4,
       "visual": {
         "model": {
           "shape": {
@@ -592,12 +439,165 @@
       ]
     },
     {
+      "stableId": "level-node-4",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 34,
+      "y": 689,
+      "scale": 1.1,
+      "zIndex": 5,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#f2f2f3",
+            "color2": "#2e8b00",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#ffd700"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 5,
+              "color": "#c4c4c4"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 5,
+              "blur": 12,
+              "color": "#000000",
+              "opacity": 35
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 3,
+              "blur": 0,
+              "color": "#ffffff",
+              "opacity": 0
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        },
+        "images": [
+          {
+            "exportPath": "assets/magic.png",
+            "width": 32,
+            "height": 32,
+            "offsetX": 0,
+            "offsetY": 0,
+            "zIndex": 1,
+            "style": {
+              "shadow": {
+                "enabled": true,
+                "x": 0,
+                "y": 4,
+                "blur": 0,
+                "color": "#000000",
+                "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
+              }
+            }
+          },
+          {
+            "exportPath": "assets/circle1.png",
+            "width": 22,
+            "height": 22,
+            "offsetX": 19,
+            "offsetY": 17,
+            "zIndex": 2
+          }
+        ]
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ],
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "2",
+          "bindingKey": "item.wand",
+          "fontSize": 16,
+          "fontWeight": "bold",
+          "fontFamily": "\"Lilita One\", cursive",
+          "color": "#ffffff",
+          "offsetX": 19,
+          "offsetY": 17,
+          "zIndex": 3,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#ffffff"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "#000000",
+              "opacity": 40
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "item.wand"
+        }
+      ]
+    },
+    {
       "stableId": "shape-ellipse-169",
       "layerType": "component",
       "displayName": "타원",
       "x": 72,
       "y": 725,
-      "zIndex": 7,
+      "zIndex": 6,
       "visual": {
         "model": {
           "shape": {

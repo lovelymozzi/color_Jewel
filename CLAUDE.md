@@ -32,7 +32,7 @@ renderer.hide();
 - **이벤트** — `renderer.on(name, fn)` 으로만 연결 (이름 임의 생성 금지):
   - `item.wand`  (click)
   - `item.wand`  (click)
-- **텍스트 바인딩** — `renderer.update({ ... })`: `item.wand`, `item.clean`
+- **텍스트 바인딩** — `renderer.update({ ... })`: `item.clean`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
 
 <!-- SCENE:New Scene BEGIN -->
