@@ -24,18 +24,91 @@
   },
   "groups": [
     {
-      "name": "Group",
+      "name": "sound_on",
       "layerStableIds": [
-        "shape-circle-111",
+        "shape-round-rect-122",
+        "pictoicon-sfx-on-png-123",
+        "shape-ellipse-125"
+      ]
+    },
+    {
+      "name": "bg",
+      "layerStableIds": [
         "shape-rect-112",
-        "shape-rect-113"
+        "-111",
+        "shape-rect-113",
+        "shape-rect-119"
       ]
     }
   ],
   "sceneAnimations": [],
   "layers": [
     {
-      "stableId": "shape-circle-111",
+      "stableId": "shape-rect-112",
+      "layerType": "component",
+      "displayName": "사각형",
+      "x": 67,
+      "y": 58,
+      "zIndex": 1,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 323,
+            "height": 786,
+            "radius": 0,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#536371",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "-111",
       "layerType": "component",
       "displayName": "원",
       "x": 67,
@@ -99,76 +172,12 @@
       }
     },
     {
-      "stableId": "shape-rect-112",
-      "layerType": "component",
-      "displayName": "사각형",
-      "x": 67,
-      "y": 58,
-      "zIndex": 3,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "rectangle",
-            "width": 323,
-            "height": 786,
-            "radius": 0,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#536371",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": false,
-              "size": 0,
-              "color": "#1e4a80"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
       "stableId": "shape-rect-113",
       "layerType": "component",
       "displayName": "사각형",
       "x": 125,
       "y": 0,
-      "zIndex": 4,
+      "zIndex": 3,
       "visual": {
         "model": {
           "shape": {
@@ -227,25 +236,25 @@
       }
     },
     {
-      "stableId": "shape-pill-114",
+      "stableId": "shape-rect-119",
       "layerType": "component",
-      "displayName": "알약",
-      "x": 110,
-      "y": 140,
-      "zIndex": 5,
+      "displayName": "사각형",
+      "x": 67,
+      "y": 64,
+      "zIndex": 4,
       "visual": {
         "model": {
           "shape": {
-            "type": "pill",
-            "width": 237,
-            "height": 48,
-            "radius": 12,
+            "type": "rectangle",
+            "width": 323,
+            "height": 57,
+            "radius": 0,
             "notch": 20,
             "hollowThickness": 8
           },
           "fill": {
             "type": "solid",
-            "color1": "#75c397",
+            "color1": "#465668",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -258,9 +267,9 @@
           "shadows": [
             {
               "type": "depth-edge",
-              "enabled": true,
-              "size": 4,
-              "color": "#63a17e"
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
             },
             {
               "type": "outer",
@@ -289,44 +298,26 @@
           }
         }
       },
-      "effects": [
-        {
-          "type": "press",
-          "source": {
-            "provider": "internal",
-            "name": "press"
-          },
-          "enabled": true,
-          "target": "self",
-          "trigger": "pointer",
-          "params": {
-            "transitionMs": 100,
-            "brightness": 95,
-            "scale": 100,
-            "useDepthOffset": true
-          }
-        }
-      ],
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "RE PLAY",
+          "staticContent": "PAUSE",
           "bindingKey": "",
-          "fontSize": 20,
+          "fontSize": 30,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#ffffff",
+          "color": "#dbdddf",
           "offsetX": 0,
           "offsetY": 0,
           "zIndex": 1,
           "style": {
             "stroke": {
-              "width": 0.5,
-              "color": "#56a478"
+              "width": 0,
+              "color": "#000000"
             },
             "depth": {
               "size": 0,
-              "color": "#000000"
+              "color": "rgba(0,0,0,0)"
             },
             "shadow": {
               "x": 0,
@@ -337,12 +328,6 @@
             }
           }
         }
-      ],
-      "events": [
-        {
-          "trigger": "click",
-          "eventName": "re play"
-        }
       ]
     },
     {
@@ -351,7 +336,7 @@
       "displayName": "알약",
       "x": 110,
       "y": 207,
-      "zIndex": 6,
+      "zIndex": 5,
       "visual": {
         "model": {
           "shape": {
@@ -465,25 +450,144 @@
       ]
     },
     {
-      "stableId": "shape-rect-119",
+      "stableId": "shape-pill-114",
       "layerType": "component",
-      "displayName": "사각형",
-      "x": 67,
-      "y": 64,
+      "displayName": "알약",
+      "x": 110,
+      "y": 140,
       "zIndex": 6,
       "visual": {
         "model": {
           "shape": {
-            "type": "rectangle",
-            "width": 323,
-            "height": 57,
-            "radius": 0,
+            "type": "pill",
+            "width": 237,
+            "height": 48,
+            "radius": 12,
             "notch": 20,
             "hollowThickness": 8
           },
           "fill": {
             "type": "solid",
-            "color1": "#465668",
+            "color1": "#75c397",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 4,
+              "color": "#63a17e"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ],
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "RE PLAY",
+          "bindingKey": "",
+          "fontSize": 20,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
+          "offsetX": 0,
+          "offsetY": 0,
+          "zIndex": 1,
+          "style": {
+            "stroke": {
+              "width": 0.5,
+              "color": "#56a478"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 50
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "re play"
+        }
+      ]
+    },
+    {
+      "stableId": "shape-round-rect-122",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 110,
+      "y": 304,
+      "zIndex": 7,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -526,38 +630,84 @@
             "outerPct": 76
           }
         }
-      },
-      "texts": [
-        {
-          "slotIndex": 0,
-          "staticContent": "PAUSE",
-          "bindingKey": "",
-          "fontSize": 30,
-          "fontWeight": "bold",
-          "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#dbdddf",
-          "offsetX": 0,
-          "offsetY": 0,
-          "zIndex": 1,
-          "style": {
-            "stroke": {
-              "width": 0,
-              "color": "#000000"
-            },
-            "depth": {
+      }
+    },
+    {
+      "stableId": "pictoicon-sfx-on-png-123",
+      "layerType": "image",
+      "displayName": "PictoIcon_Sfx_On.Png",
+      "x": 163,
+      "y": 310,
+      "zIndex": 8,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Sfx_On.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-125",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 119,
+      "y": 312,
+      "zIndex": 9,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
               "size": 0,
-              "color": "rgba(0,0,0,0)"
+              "color": "#1e4a80"
             },
-            "shadow": {
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
               "x": 0,
               "y": 1,
-              "blur": 2,
-              "color": "rgba(0,0,0,0)",
-              "opacity": 50
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
             }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
           }
         }
-      ]
+      }
     }
   ]
 }

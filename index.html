@@ -762,6 +762,56 @@
             transform-origin: top left;
         }
 
+        .setting-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 46;
+        }
+
+        .setting-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .setting-scene-host {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .setting-scene-shell {
+            position: relative;
+            flex: none;
+            pointer-events: none;
+        }
+
+        .setting-scene-surface {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            transform-origin: top left;
+        }
+
+        .setting-overlay.active .setting-scene-host,
+        .setting-overlay.active .setting-scene-shell,
+        .setting-overlay.active .setting-scene-surface {
+            pointer-events: auto;
+        }
+
         .stage-clear-panel {
             position: relative;
             display: flex;
@@ -1880,6 +1930,10 @@
             </div>
 
             <div id="sceneBottomUiMount"></div>
+
+            <div class="setting-overlay" id="settingOverlay" aria-hidden="true">
+                <div class="setting-scene-host" id="settingSceneMount" aria-hidden="true"></div>
+            </div>
 
             <div class="stage-clear-overlay" id="stageClearOverlay" aria-hidden="true">
                 <div class="stage-clear-scene-host" id="stageClearSceneMount" aria-hidden="true"></div>
@@ -4181,6 +4235,8 @@
         let bottomActionButton4Element = null;
         let bottomAdSlotElement = null;
         const tutorialLayerElement = document.getElementById("tutorialLayer");
+        const settingOverlayElement = document.getElementById("settingOverlay");
+        const settingSceneMountElement = document.getElementById("settingSceneMount");
         const stageClearOverlayElement = document.getElementById("stageClearOverlay");
         const stageClearSceneMountElement = document.getElementById("stageClearSceneMount");
         const pixelAdminElement = document.getElementById("pixelAdmin");
@@ -4246,6 +4302,11 @@
         let colorJewelSceneContractPromise = null;
         let colorJewelUiReadyPromise = null;
         let colorJewelPocketOverlayElement = null;
+        let settingSceneRenderer = null;
+        let settingSceneContract = null;
+        let settingSceneContractPromise = null;
+        let settingSceneUnsubscribers = [];
+        let isSettingSceneOpen = false;
         let stageClearSceneRenderer = null;
         let stageClearSceneContract = null;
         let stageClearSceneContractPromise = null;
@@ -4311,6 +4372,45 @@
             isMagicDragging: false,
             magicLastCell: null
         };
+
+        settingSceneMountElement?.addEventListener("click", (event) => {
+            if (!isSettingSceneOpen) {
+                return;
+            }
+
+            const shellElement = settingSceneMountElement.querySelector(".setting-scene-shell");
+            if (!shellElement || !settingSceneContract) {
+                clearSettingScene();
+                return;
+            }
+
+            const shellRect = shellElement.getBoundingClientRect();
+            if (!shellRect.width || !shellRect.height) {
+                clearSettingScene();
+                return;
+            }
+
+            const { designWidth, designHeight } = getSettingSceneLayoutMetrics(settingSceneContract);
+            const scaleX = shellRect.width / designWidth;
+            const scaleY = shellRect.height / designHeight;
+            const panelBounds = getSettingScenePanelBounds(settingSceneContract);
+            const relativeX = event.clientX - shellRect.left;
+            const relativeY = event.clientY - shellRect.top;
+            const isInsidePanel =
+                relativeX >= panelBounds.left * scaleX &&
+                relativeX <= panelBounds.right * scaleX &&
+                relativeY >= panelBounds.top * scaleY &&
+                relativeY <= panelBounds.bottom * scaleY;
+
+            if (isInsidePanel) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            clearSettingScene();
+        });
+
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 680;
@@ -6226,6 +6326,184 @@
             return stageClearSceneContractPromise;
         }
 
+        function getSettingContract() {
+            if (settingSceneContract) {
+                return Promise.resolve(settingSceneContract);
+            }
+
+            if (settingSceneContractPromise) {
+                return settingSceneContractPromise;
+            }
+
+            settingSceneContractPromise = fetch("./setting.contract.json", { cache: "no-store" })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`setting contract load failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((contract) => {
+                    settingSceneContract = contract;
+                    return contract;
+                })
+                .catch((error) => {
+                    settingSceneContractPromise = null;
+                    throw error;
+                });
+            return settingSceneContractPromise;
+        }
+
+        function getSettingSceneLayoutMetrics(contract) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const mountWidth = settingSceneMountElement?.clientWidth || designWidth;
+            const mountHeight = settingSceneMountElement?.clientHeight || designHeight;
+            const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
+
+            return {
+                designWidth,
+                designHeight,
+                scale,
+                scaledWidth: Math.round(designWidth * scale),
+                scaledHeight: Math.round(designHeight * scale)
+            };
+        }
+
+        function getSettingScenePanelBounds(contract) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const panelLayer =
+                contract?.layers?.find((layer) => layer?.stableId === "shape-rect-112") ||
+                contract?.layers?.[0];
+            const shape = panelLayer?.visual?.model?.shape;
+            const left = Number(panelLayer?.x ?? 0);
+            const top = Number(panelLayer?.y ?? 0);
+            const width = Number(shape?.width ?? designWidth);
+            const height = Number(shape?.height ?? designHeight);
+
+            if (![left, top, width, height].every(Number.isFinite)) {
+                return {
+                    left: 0,
+                    top: 0,
+                    right: designWidth,
+                    bottom: designHeight
+                };
+            }
+
+            return {
+                left,
+                top,
+                right: left + width,
+                bottom: top + height
+            };
+        }
+
+        function createSettingSceneSurface(contract) {
+            if (!settingSceneMountElement) {
+                return null;
+            }
+
+            const { designWidth, designHeight, scale, scaledWidth, scaledHeight } =
+                getSettingSceneLayoutMetrics(contract);
+            const shell = document.createElement("div");
+            shell.className = "setting-scene-shell";
+            shell.style.width = `${scaledWidth}px`;
+            shell.style.height = `${scaledHeight}px`;
+
+            const surface = document.createElement("div");
+            surface.className = "setting-scene-surface";
+            surface.style.width = `${designWidth}px`;
+            surface.style.height = `${designHeight}px`;
+            surface.style.transform = `scale(${scale})`;
+
+            shell.appendChild(surface);
+            settingSceneMountElement.appendChild(shell);
+            return surface;
+        }
+
+        function clearSettingScene() {
+            settingSceneUnsubscribers.forEach((off) => {
+                try {
+                    off?.();
+                } catch (error) {
+                    console.warn("[Setting] unsubscribe failed:", error);
+                }
+            });
+            settingSceneUnsubscribers = [];
+
+            if (settingSceneRenderer) {
+                settingSceneRenderer.hide();
+                settingSceneRenderer = null;
+            }
+
+            if (settingSceneMountElement) {
+                settingSceneMountElement.replaceChildren();
+                settingSceneMountElement.setAttribute("aria-hidden", "true");
+            }
+
+            if (settingOverlayElement) {
+                settingOverlayElement.classList.remove("active");
+                settingOverlayElement.setAttribute("aria-hidden", "true");
+            }
+
+            isSettingSceneOpen = false;
+        }
+
+        function restartGameFromSettingScene() {
+            clearSettingScene();
+            resetGame();
+        }
+
+        async function showSettingScene() {
+            if (!settingSceneMountElement || !settingOverlayElement || isSettingSceneOpen) {
+                return false;
+            }
+
+            try {
+                const [SceneRenderer, contract] = await Promise.all([
+                    getSceneRendererCtor(),
+                    getSettingContract()
+                ]);
+
+                clearSettingScene();
+
+                const surface = createSettingSceneSurface(contract);
+                if (!surface) {
+                    return false;
+                }
+
+                settingSceneRenderer = new SceneRenderer(surface, {
+                    basePath: "./src/"
+                });
+                settingSceneRenderer.loadSync(contract);
+                settingSceneRenderer.show();
+
+                const sceneRootElement = surface.firstElementChild;
+                if (sceneRootElement) {
+                    sceneRootElement.style.top = "0";
+                    sceneRootElement.style.left = "0";
+                    sceneRootElement.style.right = "auto";
+                    sceneRootElement.style.bottom = "auto";
+                    sceneRootElement.style.pointerEvents = "auto";
+                }
+
+                settingSceneUnsubscribers = [
+                    settingSceneRenderer.on("re play", restartGameFromSettingScene),
+                    settingSceneRenderer.on("shape-pill-115:click", restartGameFromSettingScene)
+                ];
+
+                settingOverlayElement.classList.add("active");
+                settingOverlayElement.setAttribute("aria-hidden", "false");
+                settingSceneMountElement.setAttribute("aria-hidden", "false");
+                isSettingSceneOpen = true;
+                return true;
+            } catch (error) {
+                clearSettingScene();
+                console.error("[Setting] setting scene mount failed:", error);
+                return false;
+            }
+        }
+
         function clearStageClearSceneEffects() {
             if (!stageClearSceneMountElement) {
                 return;
@@ -7379,6 +7657,10 @@
 
             bindDirectPointerActivation(bottomActionButton2Element, () => {
                 void useCleanAction();
+            });
+
+            bindDirectPointerActivation(bottomActionButton4Element, () => {
+                void showSettingScene();
             });
         }
 

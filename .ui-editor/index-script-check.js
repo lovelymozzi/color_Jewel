@@ -2213,6 +2213,8 @@
         let bottomActionButton4Element = null;
         let bottomAdSlotElement = null;
         const tutorialLayerElement = document.getElementById("tutorialLayer");
+        const settingOverlayElement = document.getElementById("settingOverlay");
+        const settingSceneMountElement = document.getElementById("settingSceneMount");
         const stageClearOverlayElement = document.getElementById("stageClearOverlay");
         const stageClearSceneMountElement = document.getElementById("stageClearSceneMount");
         const pixelAdminElement = document.getElementById("pixelAdmin");
@@ -2278,6 +2280,11 @@
         let colorJewelSceneContractPromise = null;
         let colorJewelUiReadyPromise = null;
         let colorJewelPocketOverlayElement = null;
+        let settingSceneRenderer = null;
+        let settingSceneContract = null;
+        let settingSceneContractPromise = null;
+        let settingSceneUnsubscribers = [];
+        let isSettingSceneOpen = false;
         let stageClearSceneRenderer = null;
         let stageClearSceneContract = null;
         let stageClearSceneContractPromise = null;
@@ -4258,6 +4265,155 @@
             return stageClearSceneContractPromise;
         }
 
+        function getSettingContract() {
+            if (settingSceneContract) {
+                return Promise.resolve(settingSceneContract);
+            }
+
+            if (settingSceneContractPromise) {
+                return settingSceneContractPromise;
+            }
+
+            settingSceneContractPromise = fetch("./setting.contract.json", { cache: "no-store" })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`setting contract load failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((contract) => {
+                    settingSceneContract = contract;
+                    return contract;
+                })
+                .catch((error) => {
+                    settingSceneContractPromise = null;
+                    throw error;
+                });
+            return settingSceneContractPromise;
+        }
+
+        function getSettingSceneLayoutMetrics(contract) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const mountWidth = settingSceneMountElement?.clientWidth || designWidth;
+            const mountHeight = settingSceneMountElement?.clientHeight || designHeight;
+            const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
+
+            return {
+                designWidth,
+                designHeight,
+                scale,
+                scaledWidth: Math.round(designWidth * scale),
+                scaledHeight: Math.round(designHeight * scale)
+            };
+        }
+
+        function createSettingSceneSurface(contract) {
+            if (!settingSceneMountElement) {
+                return null;
+            }
+
+            const { designWidth, designHeight, scale, scaledWidth, scaledHeight } =
+                getSettingSceneLayoutMetrics(contract);
+            const shell = document.createElement("div");
+            shell.className = "setting-scene-shell";
+            shell.style.width = `${scaledWidth}px`;
+            shell.style.height = `${scaledHeight}px`;
+
+            const surface = document.createElement("div");
+            surface.className = "setting-scene-surface";
+            surface.style.width = `${designWidth}px`;
+            surface.style.height = `${designHeight}px`;
+            surface.style.transform = `scale(${scale})`;
+
+            shell.appendChild(surface);
+            settingSceneMountElement.appendChild(shell);
+            return surface;
+        }
+
+        function clearSettingScene() {
+            settingSceneUnsubscribers.forEach((off) => {
+                try {
+                    off?.();
+                } catch (error) {
+                    console.warn("[Setting] unsubscribe failed:", error);
+                }
+            });
+            settingSceneUnsubscribers = [];
+
+            if (settingSceneRenderer) {
+                settingSceneRenderer.hide();
+                settingSceneRenderer = null;
+            }
+
+            if (settingSceneMountElement) {
+                settingSceneMountElement.replaceChildren();
+                settingSceneMountElement.setAttribute("aria-hidden", "true");
+            }
+
+            if (settingOverlayElement) {
+                settingOverlayElement.classList.remove("active");
+                settingOverlayElement.setAttribute("aria-hidden", "true");
+            }
+
+            isSettingSceneOpen = false;
+        }
+
+        function restartGameFromSettingScene() {
+            clearSettingScene();
+            resetGame();
+        }
+
+        async function showSettingScene() {
+            if (!settingSceneMountElement || !settingOverlayElement || isSettingSceneOpen) {
+                return false;
+            }
+
+            try {
+                const [SceneRenderer, contract] = await Promise.all([
+                    getSceneRendererCtor(),
+                    getSettingContract()
+                ]);
+
+                clearSettingScene();
+
+                const surface = createSettingSceneSurface(contract);
+                if (!surface) {
+                    return false;
+                }
+
+                settingSceneRenderer = new SceneRenderer(surface, {
+                    basePath: "./src/"
+                });
+                settingSceneRenderer.loadSync(contract);
+                settingSceneRenderer.show();
+
+                const sceneRootElement = surface.firstElementChild;
+                if (sceneRootElement) {
+                    sceneRootElement.style.top = "0";
+                    sceneRootElement.style.left = "0";
+                    sceneRootElement.style.right = "auto";
+                    sceneRootElement.style.bottom = "auto";
+                    sceneRootElement.style.pointerEvents = "auto";
+                }
+
+                settingSceneUnsubscribers = [
+                    settingSceneRenderer.on("re play", restartGameFromSettingScene),
+                    settingSceneRenderer.on("shape-pill-115:click", restartGameFromSettingScene)
+                ];
+
+                settingOverlayElement.classList.add("active");
+                settingOverlayElement.setAttribute("aria-hidden", "false");
+                settingSceneMountElement.setAttribute("aria-hidden", "false");
+                isSettingSceneOpen = true;
+                return true;
+            } catch (error) {
+                clearSettingScene();
+                console.error("[Setting] setting scene mount failed:", error);
+                return false;
+            }
+        }
+
         function clearStageClearSceneEffects() {
             if (!stageClearSceneMountElement) {
                 return;
@@ -5411,6 +5567,10 @@
 
             bindDirectPointerActivation(bottomActionButton2Element, () => {
                 void useCleanAction();
+            });
+
+            bindDirectPointerActivation(bottomActionButton4Element, () => {
+                void showSettingScene();
             });
         }
 
