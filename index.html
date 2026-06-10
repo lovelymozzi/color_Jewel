@@ -6137,11 +6137,38 @@
         }
 
         const ACTION_BUTTON_FALLBACK_LAYOUTS = Object.freeze({
-            "shape-ellipse-169-wand-clone": { xOffset: 38, yOffset: 36 },
-            "shape-ellipse-169-clean-clone": { xOffset: 38, yOffset: 36 },
             "pictoicon-tv-png-163": { xOffset: 38, yOffset: 32 },
             "pictoicon-tv-png-164": { xOffset: 33, yOffset: 34 }
         });
+
+        function getActionButtonCounterBadgeLayout(buttonElement) {
+            if (!buttonElement) {
+                return null;
+            }
+
+            const buttonStableId = buttonElement.dataset?.stableId;
+            const layer = colorJewelSceneContract?.layers?.find((entry) => entry?.stableId === buttonStableId);
+            const badgeImage = layer?.visual?.images?.find((image) =>
+                typeof image?.exportPath === "string" &&
+                image.exportPath.toLowerCase().includes("circle1.png")
+            );
+
+            if (layer && badgeImage) {
+                const layerScale = Number(layer.scale || 1);
+                const layerScaleX = Number(layer.scaleX == null ? 1 : layer.scaleX);
+                const layerScaleY = Number(layer.scaleY == null ? 1 : layer.scaleY);
+                const offsetX = Number(badgeImage.offsetX || 0) * layerScale * layerScaleX;
+                const offsetY = Number(badgeImage.offsetY || 0) * layerScale * layerScaleY;
+
+                return {
+                    left: `calc(50% + ${offsetX}px)`,
+                    top: `calc(50% + ${offsetY}px)`,
+                    transform: "translate(-50%, -50%)"
+                };
+            }
+
+            return null;
+        }
 
         function getActionButtonFallbackElement(stableId, anchorButtonElement = null) {
             if (
@@ -6182,10 +6209,25 @@
                 return;
             }
 
+            const counterBadgeLayout =
+                (stableId === "shape-ellipse-169-wand-clone" ||
+                    stableId === "shape-ellipse-169-clean-clone") &&
+                anchorButtonElement
+                    ? getActionButtonCounterBadgeLayout(anchorButtonElement)
+                    : null;
             const layout = ACTION_BUTTON_FALLBACK_LAYOUTS[stableId];
-            if (layout && anchorButtonElement) {
+            if (counterBadgeLayout) {
+                element.style.left = counterBadgeLayout.left;
+                element.style.top = counterBadgeLayout.top;
+                element.style.transform = counterBadgeLayout.transform || "";
+                element.style.width = "";
+                element.style.height = "";
+            } else if (layout && anchorButtonElement) {
                 element.style.left = `${layout.xOffset}px`;
                 element.style.top = `${layout.yOffset}px`;
+                element.style.transform = "";
+                element.style.width = "";
+                element.style.height = "";
             }
 
             element.style.display = isVisible ? "" : "none";

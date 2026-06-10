@@ -359,7 +359,7 @@
           },
           "tint": {
             "mode": "tint",
-            "color": "#75c397",
+            "color": "#ffa8a8",
             "strength": 100
           }
         }

@@ -39,9 +39,9 @@
       "stableId": "level-node-19",
       "layerType": "component",
       "displayName": "Level Node",
-      "x": 300,
-      "y": 689,
-      "scale": 1.1,
+      "x": 296,
+      "y": 691,
+      "scale": 1.35,
       "zIndex": 1,
       "visual": {
         "model": {
@@ -132,14 +132,14 @@
       "stableId": "time-display-56",
       "layerType": "component",
       "displayName": "Pocket Area",
-      "x": 32,
+      "x": 28,
       "y": 599,
       "zIndex": 2,
       "visual": {
         "model": {
           "shape": {
             "type": "rectangle",
-            "width": 327,
+            "width": 335,
             "height": 71,
             "radius": 12,
             "notch": 20,
@@ -196,9 +196,9 @@
       "stableId": "level-node-18",
       "layerType": "component",
       "displayName": "Level Node",
-      "x": 211,
-      "y": 689,
-      "scale": 1.1,
+      "x": 207,
+      "y": 691,
+      "scale": 1.35,
       "zIndex": 3,
       "visual": {
         "model": {
@@ -289,9 +289,9 @@
       "stableId": "level-node-57",
       "layerType": "component",
       "displayName": "Level Node",
-      "x": 123,
-      "y": 687,
-      "scale": 1.1,
+      "x": 119,
+      "y": 689,
+      "scale": 1.35,
       "zIndex": 4,
       "visual": {
         "model": {
@@ -442,9 +442,9 @@
       "stableId": "level-node-4",
       "layerType": "component",
       "displayName": "Level Node",
-      "x": 34,
-      "y": 689,
-      "scale": 1.1,
+      "x": 30,
+      "y": 691,
+      "scale": 1.35,
       "zIndex": 5,
       "visual": {
         "model": {
@@ -595,14 +595,14 @@
       "stableId": "shape-ellipse-169",
       "layerType": "component",
       "displayName": "타원",
-      "x": 72,
-      "y": 725,
+      "x": 76,
+      "y": 733,
       "zIndex": 6,
       "visual": {
         "model": {
           "shape": {
             "type": "circle",
-            "width": 23,
+            "width": 30,
             "height": 23,
             "radius": 12,
             "notch": 20,

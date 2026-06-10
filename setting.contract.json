@@ -1505,9 +1505,9 @@
       }
     },
     {
-      "stableId": "plain-text-184",
+      "stableId": "bgm-184",
       "layerType": "component",
-      "displayName": "Plain Text",
+      "displayName": "bgm",
       "x": 64,
       "y": 312,
       "zIndex": 25,
@@ -1599,9 +1599,9 @@
       ]
     },
     {
-      "stableId": "plain-text-185",
+      "stableId": "sfx-185",
       "layerType": "component",
-      "displayName": "Plain Text",
+      "displayName": "sfx",
       "x": 64,
       "y": 383,
       "zIndex": 26,
@@ -1693,9 +1693,9 @@
       ]
     },
     {
-      "stableId": "plain-text-187",
+      "stableId": "vibration-187",
       "layerType": "component",
-      "displayName": "Plain Text",
+      "displayName": "vibration",
       "x": 69,
       "y": 445,
       "zIndex": 27,
@@ -1819,8 +1819,8 @@
             {
               "type": "depth-edge",
               "enabled": false,
-              "size": 0,
-              "color": "#1e4a80"
+              "size": 4,
+              "color": "#677683"
             },
             {
               "type": "outer",
@@ -1835,9 +1835,9 @@
               "type": "inner",
               "enabled": false,
               "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
+              "y": 4,
+              "blur": 0,
+              "color": "#2a333c",
               "opacity": 15
             }
           ],
