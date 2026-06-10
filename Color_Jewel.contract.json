@@ -592,61 +592,77 @@
       ]
     },
     {
-      "stableId": "pictoicon-tv-png-163",
-      "layerType": "image",
-      "displayName": "PictoIcon_Tv.Png",
+      "stableId": "shape-ellipse-169",
+      "layerType": "component",
+      "displayName": "타원",
       "x": 72,
-      "y": 721,
-      "zIndex": 6,
-      "visible": false,
-      "visual": {
-        "exportPath": "assets/PictoIcon_Tv.Png",
-        "width": 23,
-        "height": 23,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#f24a63",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "pictoicon-tv-png-164",
-      "layerType": "image",
-      "displayName": "PictoIcon_Tv.Png",
-      "x": 156,
-      "y": 721,
+      "y": 725,
       "zIndex": 7,
-      "visible": false,
       "visual": {
-        "exportPath": "assets/PictoIcon_Tv.Png",
-        "width": 23,
-        "height": 26,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 23,
+            "height": 23,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
           },
-          "tint": {
-            "mode": "overlay",
-            "color": "#f24a63",
-            "strength": 100
+          "fill": {
+            "type": "solid",
+            "color1": "#f97f8a",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
           }
-        }
+        },
+        "images": [
+          {
+            "exportPath": "assets/PictoIcon_Player_Play.Png",
+            "width": 12,
+            "height": 12,
+            "offsetX": 2,
+            "offsetY": 0,
+            "zIndex": 2
+          }
+        ]
       }
     }
   ]

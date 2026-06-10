@@ -6079,6 +6079,95 @@
             return message;
         }
 
+        function setSceneLayerDisplay(stableId, isVisible) {
+            const element = colorJewelSceneRenderer?.getElement?.(stableId);
+            if (!element) {
+                return;
+            }
+
+            element.style.display = isVisible ? "" : "none";
+        }
+
+        const ACTION_BUTTON_FALLBACK_LAYOUTS = Object.freeze({
+            "shape-ellipse-169": { xOffset: 38, yOffset: 36 },
+            "shape-ellipse-169-clean-clone": { xOffset: 38, yOffset: 36 },
+            "pictoicon-tv-png-163": { xOffset: 38, yOffset: 32 },
+            "pictoicon-tv-png-164": { xOffset: 33, yOffset: 34 }
+        });
+
+        function getActionButtonFallbackElement(stableId) {
+            if (stableId === "shape-ellipse-169-clean-clone") {
+                const sourceElement = colorJewelSceneRenderer?.getElement?.("shape-ellipse-169");
+                const parentElement = sourceElement?.parentElement;
+                if (!sourceElement || !parentElement) {
+                    return null;
+                }
+
+                let cloneElement = parentElement.querySelector('[data-stable-id="shape-ellipse-169-clean-clone"]');
+                if (!cloneElement) {
+                    cloneElement = sourceElement.cloneNode(true);
+                    cloneElement.dataset.stableId = "shape-ellipse-169-clean-clone";
+                    cloneElement.style.display = "none";
+                    cloneElement.style.pointerEvents = "none";
+                    parentElement.appendChild(cloneElement);
+                }
+
+                return cloneElement;
+            }
+
+            return colorJewelSceneRenderer?.getElement?.(stableId) || null;
+        }
+
+        function setActionButtonFallbackIconState(stableId, isVisible, anchorButtonElement = null) {
+            const element = getActionButtonFallbackElement(stableId);
+            if (!element) {
+                return;
+            }
+
+            const layout = ACTION_BUTTON_FALLBACK_LAYOUTS[stableId];
+            if (layout && anchorButtonElement) {
+                const buttonLeft = Number.parseFloat(anchorButtonElement.style.left || "");
+                const buttonTop = Number.parseFloat(anchorButtonElement.style.top || "");
+                if (Number.isFinite(buttonLeft) && Number.isFinite(buttonTop)) {
+                    element.style.left = `${buttonLeft + layout.xOffset}px`;
+                    element.style.top = `${buttonTop + layout.yOffset}px`;
+                }
+            }
+
+            element.style.display = isVisible ? "" : "none";
+            element.style.pointerEvents = "none";
+            element.style.zIndex = isVisible ? "99" : "";
+
+            const iconImage = element.querySelector("img");
+            if (iconImage) {
+                iconImage.style.filter = isVisible
+                    ? "drop-shadow(0 1px 0 rgba(255,255,255,0.72)) drop-shadow(0 1px 3px rgba(0,0,0,0.18))"
+                    : "";
+            }
+        }
+
+        function syncActionButtonCounterBadge(buttonElement, count, tvStableId) {
+            if (!buttonElement) {
+                setActionButtonFallbackIconState(tvStableId, count <= 0);
+                return;
+            }
+
+            const countBadgeImage = [...buttonElement.querySelectorAll("img")]
+                .find((image) => image.currentSrc?.includes("circle1.png") || image.src?.includes("circle1.png"));
+            const countBadgeText = buttonElement.querySelector(".text-0");
+            const shouldShowCountBadge = count > 0;
+
+            if (countBadgeImage) {
+                countBadgeImage.style.display = shouldShowCountBadge ? "" : "none";
+            }
+
+            if (countBadgeText) {
+                countBadgeText.style.display = shouldShowCountBadge ? "" : "none";
+            }
+
+            setActionButtonFallbackIconState(tvStableId, !shouldShowCountBadge, buttonElement);
+        }
+
         function updateActionButtonState() {
             colorJewelSceneRenderer?.update({
                 item: {
@@ -6107,11 +6196,16 @@
                     return;
                 }
 
-                button.style.opacity = count <= 0 ? "0.62" : "1";
+                button.style.opacity = "1";
                 button.setAttribute("title", `${label} ${Math.max(0, count)}회`);
                 button.setAttribute("aria-disabled", count <= 0 ? "true" : "false");
                 button.setAttribute("aria-pressed", armed ? "true" : "false");
             });
+
+            setActionButtonFallbackIconState("pictoicon-tv-png-163", false);
+            setActionButtonFallbackIconState("pictoicon-tv-png-164", false);
+            syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169");
+            syncActionButtonCounterBadge(bottomActionButton2Element, actionCharges.clean, "shape-ellipse-169-clean-clone");
         }
 
         function setActionOverlay(nextOverlay) {
