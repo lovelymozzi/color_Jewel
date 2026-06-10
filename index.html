@@ -7637,7 +7637,6 @@
                 "wheel",
                 (event) => {
                     if (!boardWrapElement.contains(event.target)) return;
-                    if (!(event.ctrlKey || event.metaKey)) return;
 
                     event.preventDefault();
                     zoomBoardByDelta(event.deltaY, 0.0018, {
@@ -7669,8 +7668,6 @@
             boardWrapElement.addEventListener(
                 "wheel",
                 (event) => {
-                    if (!(event.ctrlKey || event.metaKey)) return;
-
                     event.preventDefault();
                     zoomBoardByDelta(event.deltaY, 0.0018, {
                         anchorClientX: event.clientX,
