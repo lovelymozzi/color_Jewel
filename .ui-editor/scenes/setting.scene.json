@@ -266,7 +266,13 @@
         "maskEnabled": false,
         "maskInnerPct": 28,
         "maskOuterPct": 76
-      }
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "re play"
+        }
+      ]
     },
     {
       "id": 115,
@@ -312,7 +318,7 @@
         "innerShadowOpacity": 15,
         "texts": [
           {
-            "content": "HOME",
+            "content": "RE START",
             "fontSize": 20,
             "fontWeight": "bold",
             "fontFamily": "\"Baloo 2\", cursive",
@@ -344,7 +350,13 @@
         "maskEnabled": false,
         "maskInnerPct": 28,
         "maskOuterPct": 76
-      }
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": ""
+        }
+      ]
     },
     {
       "id": 119,

@@ -337,6 +337,12 @@
             }
           }
         }
+      ],
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "re play"
+        }
       ]
     },
     {
@@ -423,7 +429,7 @@
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "HOME",
+          "staticContent": "RE START",
           "bindingKey": "",
           "fontSize": 20,
           "fontWeight": "bold",
@@ -449,6 +455,12 @@
               "opacity": 50
             }
           }
+        }
+      ],
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "shape-pill-115:click"
         }
       ]
     },
