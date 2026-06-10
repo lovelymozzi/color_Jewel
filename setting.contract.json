@@ -1,0 +1,420 @@
+{
+  "contractVersion": 1,
+  "sceneId": "setting",
+  "sceneName": "setting",
+  "canvas": {
+    "width": 390,
+    "height": 844
+  },
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "background": {
+    "type": "solid",
+    "color": "rgba(153,153,153,0.63)",
+    "color2": "#0e4a8c",
+    "gradientAngle": 180,
+    "imagePath": "",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [
+    {
+      "name": "Group",
+      "layerStableIds": [
+        "shape-circle-111",
+        "shape-rect-112",
+        "shape-rect-113"
+      ]
+    }
+  ],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "shape-circle-111",
+      "layerType": "component",
+      "displayName": "원",
+      "x": 67,
+      "y": 0,
+      "zIndex": 2,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 116,
+            "height": 111,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#536371",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-rect-112",
+      "layerType": "component",
+      "displayName": "사각형",
+      "x": 67,
+      "y": 58,
+      "zIndex": 3,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 323,
+            "height": 786,
+            "radius": 0,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#536371",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-rect-113",
+      "layerType": "component",
+      "displayName": "사각형",
+      "x": 125,
+      "y": 0,
+      "zIndex": 4,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 265,
+            "height": 80,
+            "radius": 0,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#536371",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-pill-114",
+      "layerType": "component",
+      "displayName": "알약",
+      "x": 110,
+      "y": 99,
+      "zIndex": 5,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "pill",
+            "width": 237,
+            "height": 48,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "RE START",
+          "bindingKey": "",
+          "fontSize": 24,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
+          "offsetX": 0,
+          "offsetY": 0,
+          "zIndex": 1,
+          "style": {
+            "stroke": {
+              "width": 0.5,
+              "color": "#56a478"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 50
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "shape-pill-115",
+      "layerType": "component",
+      "displayName": "알약",
+      "x": 110,
+      "y": 172,
+      "zIndex": 6,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "pill",
+            "width": 237,
+            "height": 48,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "HOME",
+          "bindingKey": "",
+          "fontSize": 24,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#536371",
+          "offsetX": 0,
+          "offsetY": 0,
+          "zIndex": 1,
+          "style": {
+            "stroke": {
+              "width": 0.5,
+              "color": "rgba(86,164,120,0)"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 50
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

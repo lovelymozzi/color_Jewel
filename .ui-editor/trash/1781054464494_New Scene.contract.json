@@ -1,0 +1,93 @@
+{
+  "contractVersion": 1,
+  "sceneId": "new-scene",
+  "sceneName": "New Scene",
+  "canvas": {
+    "width": 390,
+    "height": 844
+  },
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "background": {
+    "type": "solid",
+    "color": "#16213e",
+    "color2": "#0e4a8c",
+    "gradientAngle": 180,
+    "imagePath": "",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "shape-circle-85",
+      "layerType": "component",
+      "displayName": "원",
+      "x": 155,
+      "y": 382,
+      "zIndex": 1,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 116,
+            "height": 111,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#9aa5b1",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    }
+  ]
+}

@@ -172,12 +172,14 @@
             pointer-events: none;
         }
 
-        .scene-pocket-tray {
+        .tray.scene-pocket-tray {
             position: absolute;
             display: grid;
             grid-template-columns: repeat(12, var(--scene-pocket-slot-size, 18px));
             gap: var(--scene-pocket-slot-gap, 4px);
             width: max-content;
+            max-width: none;
+            justify-content: start;
             pointer-events: none;
         }
 
@@ -222,19 +224,24 @@
             filter: grayscale(1);
         }
 
-        .scene-pocket-tray .tray-slot.empty-target::before {
-            opacity: 0.94;
-        }
-
+        .scene-pocket-tray .tray-slot.empty-target::before,
         .scene-pocket-tray .tray-slot.next-open-slot::before {
-            opacity: 0.82;
+            background:
+                radial-gradient(circle at 50% 34%, rgba(241, 243, 246, 0.94) 0 28%, rgba(198, 203, 210, 0.26) 28% 44%, transparent 44%),
+                linear-gradient(180deg, rgba(178, 183, 191, 0.96), rgba(160, 165, 172, 0.98));
+            box-shadow:
+                inset 0 1px 0 rgba(248, 249, 251, 0.96),
+                inset 0 -2px 2px rgba(123, 129, 136, 0.38),
+                0 1px 2px rgba(70, 98, 134, 0.1);
+            opacity: 1;
+            filter: none;
         }
 
         .scene-pocket-tray .tray-slot.next-open-slot::after {
             content: "";
             position: absolute;
             inset: -2px;
-            border: 1.4px dashed rgba(171, 182, 201, 0.96);
+            border: 1.4px dashed rgba(160, 165, 172, 0.96);
             border-radius: 999px;
             pointer-events: none;
         }
@@ -324,13 +331,18 @@
             cursor: default;
         }
 
+        .tray-slot.empty-target,
         .tray-slot.next-open-slot {
-            background: rgba(255, 255, 255, 0.22);
-            border: 1.5px dashed rgba(198, 203, 214, 0.98);
+            background: transparent;
             box-shadow: none;
+        }
+
+        .tray-slot.next-open-slot {
+            border: 0;
             cursor: default;
         }
 
+        .tray-slot.empty-target::before,
         .tray-slot.next-open-slot::before {
             content: "";
             position: absolute;
@@ -341,11 +353,12 @@
             transform: translate(-50%, -50%) rotate(180deg);
             clip-path: var(--socket-shape);
             background:
-                linear-gradient(180deg, rgba(210, 214, 222, 0.18), rgba(210, 214, 222, 0.28)),
+                radial-gradient(circle at 50% 32%, rgba(241, 243, 246, 0.82) 0 28%, rgba(196, 201, 208, 0.18) 28% 44%, transparent 44%),
+                linear-gradient(180deg, rgba(176, 181, 189, 0.3), rgba(160, 165, 172, 0.42)),
                 url("src/assets/jewel.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: grayscale(1) brightness(1.04) saturate(0.08);
-            opacity: 0.34;
+            filter: grayscale(1) brightness(1.03) saturate(0.06);
+            opacity: 0.46;
             pointer-events: none;
         }
 
@@ -364,24 +377,6 @@
             background-blend-mode: color-burn, normal;
             filter: grayscale(1) brightness(1.02) saturate(0.06);
             opacity: 0.2;
-            pointer-events: none;
-        }
-
-        .tray-slot.empty-target::before {
-            content: "";
-            position: absolute;
-            width: var(--gem-size);
-            aspect-ratio: 1;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
-            clip-path: var(--socket-shape);
-            background:
-                linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
-                url("src/assets/jewel.png") center / contain no-repeat;
-            background-blend-mode: color-burn, normal;
-            filter: brightness(1.02) saturate(1);
-            opacity: 0.42;
             pointer-events: none;
         }
 
@@ -1115,7 +1110,7 @@
         }
 
         .tray-slot.next-open-slot {
-            border: 1.5px dashed rgba(198, 203, 214, 0.98);
+            border: 1.5px dashed rgba(160, 165, 172, 0.98);
             box-shadow: none;
         }
 

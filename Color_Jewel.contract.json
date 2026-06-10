@@ -55,7 +55,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f0f0f0",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -70,7 +70,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 5,
-              "color": "#d6d6d6"
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -208,7 +208,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f0f0f0",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -223,7 +223,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 5,
-              "color": "#d6d6d6"
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -301,7 +301,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f0f0f0",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -316,7 +316,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 5,
-              "color": "#d6d6d6"
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -393,7 +393,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f0f0f0",
+            "color1": "#f2f2f3",
             "color2": "#2558a0",
             "angle": 180,
             "depthIntensity": 50,
@@ -408,7 +408,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 5,
-              "color": "#d6d6d6"
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",
@@ -458,7 +458,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f0f0f0",
+            "color1": "#f2f2f3",
             "color2": "#2e8b00",
             "angle": 180,
             "depthIntensity": 50,
@@ -473,7 +473,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 5,
-              "color": "#d6d6d6"
+              "color": "#c4c4c4"
             },
             {
               "type": "outer",

@@ -165,6 +165,7 @@
       "x": -354,
       "y": -277,
       "zIndex": 3,
+      "visible": false,
       "visual": {
         "model": {
           "shape": {
@@ -246,7 +247,7 @@
       "layerType": "component",
       "displayName": "Stage clear",
       "x": 69,
-      "y": 28,
+      "y": 31,
       "zIndex": 24,
       "visual": {
         "model": {
@@ -311,15 +312,15 @@
           "bindingKey": "",
           "fontSize": 37,
           "fontWeight": "bold",
-          "fontFamily": "\"Lilita One\", cursive",
-          "color": "#fcffd6",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
           "offsetX": 0,
           "offsetY": 0,
           "zIndex": 3,
           "style": {
             "stroke": {
               "width": 0.5,
-              "color": "#e84941"
+              "color": "#56a478"
             },
             "depth": {
               "size": 0,
@@ -358,7 +359,7 @@
           },
           "tint": {
             "mode": "tint",
-            "color": "#ff3b30",
+            "color": "#75c397",
             "strength": 100
           }
         }
