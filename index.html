@@ -780,6 +780,11 @@
             pointer-events: auto;
         }
 
+        .setting-overlay.closing {
+            opacity: 1;
+            pointer-events: none;
+        }
+
         .setting-scene-host {
             position: absolute;
             inset: 0;
@@ -796,6 +801,14 @@
             position: relative;
             flex: none;
             pointer-events: none;
+        }
+
+        .setting-overlay.active .setting-scene-shell {
+            animation: setting-panel-enter 0.68s cubic-bezier(0.2, 1.08, 0.24, 1) both;
+        }
+
+        .setting-overlay.closing .setting-scene-shell {
+            animation: setting-panel-exit 0.48s cubic-bezier(0.34, 0.02, 0.68, 1) both;
         }
 
         .setting-scene-surface {
@@ -937,6 +950,43 @@
 
             100% {
                 transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes setting-panel-enter {
+            0% {
+                opacity: 0;
+                transform: translateX(124px) scale(0.97);
+            }
+
+            62% {
+                opacity: 1;
+                transform: translateX(-18px) scale(1.01);
+            }
+
+            80% {
+                transform: translateX(7px) scale(0.998);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes setting-panel-exit {
+            0% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+
+            28% {
+                transform: translateX(-10px) scale(1.004);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(126px) scale(0.975);
             }
         }
 
@@ -4307,6 +4357,9 @@
         let settingSceneContractPromise = null;
         let settingSceneUnsubscribers = [];
         let isSettingSceneOpen = false;
+        let isSettingSceneClosing = false;
+        let settingSceneCloseTimer = null;
+        let settingSceneAfterCloseAction = null;
         let stageClearSceneRenderer = null;
         let stageClearSceneContract = null;
         let stageClearSceneContractPromise = null;
@@ -4374,7 +4427,7 @@
         };
 
         settingSceneMountElement?.addEventListener("click", (event) => {
-            if (!isSettingSceneOpen) {
+            if (!isSettingSceneOpen || isSettingSceneClosing) {
                 return;
             }
 
@@ -4411,6 +4464,7 @@
             clearSettingScene();
         });
 
+        const SETTING_SCENE_CLOSE_ANIMATION_MS = 480;
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 680;
@@ -6421,7 +6475,12 @@
             return surface;
         }
 
-        function clearSettingScene() {
+        function finalizeSettingSceneClear() {
+            if (settingSceneCloseTimer) {
+                window.clearTimeout(settingSceneCloseTimer);
+                settingSceneCloseTimer = null;
+            }
+
             settingSceneUnsubscribers.forEach((off) => {
                 try {
                     off?.();
@@ -6443,19 +6502,74 @@
 
             if (settingOverlayElement) {
                 settingOverlayElement.classList.remove("active");
+                settingOverlayElement.classList.remove("closing");
                 settingOverlayElement.setAttribute("aria-hidden", "true");
             }
 
             isSettingSceneOpen = false;
+            isSettingSceneClosing = false;
+
+            const afterCloseAction = settingSceneAfterCloseAction;
+            settingSceneAfterCloseAction = null;
+            if (typeof afterCloseAction === "function") {
+                afterCloseAction();
+            }
+        }
+
+        function clearSettingScene(options = {}) {
+            const { immediate = false, afterClose = null } = options;
+            if (typeof afterClose === "function") {
+                settingSceneAfterCloseAction = afterClose;
+            }
+
+            if (immediate) {
+                finalizeSettingSceneClear();
+                return;
+            }
+
+            if (!isSettingSceneOpen || isSettingSceneClosing) {
+                if (!isSettingSceneClosing) {
+                    finalizeSettingSceneClear();
+                }
+                return;
+            }
+
+            settingSceneUnsubscribers.forEach((off) => {
+                try {
+                    off?.();
+                } catch (error) {
+                    console.warn("[Setting] unsubscribe failed:", error);
+                }
+            });
+            settingSceneUnsubscribers = [];
+
+            isSettingSceneOpen = false;
+            isSettingSceneClosing = true;
+
+            if (settingSceneMountElement) {
+                settingSceneMountElement.setAttribute("aria-hidden", "true");
+            }
+
+            if (settingOverlayElement) {
+                settingOverlayElement.classList.remove("active");
+                settingOverlayElement.classList.add("closing");
+                settingOverlayElement.setAttribute("aria-hidden", "true");
+            }
+
+            if (settingSceneCloseTimer) {
+                window.clearTimeout(settingSceneCloseTimer);
+            }
+            settingSceneCloseTimer = window.setTimeout(() => {
+                finalizeSettingSceneClear();
+            }, SETTING_SCENE_CLOSE_ANIMATION_MS);
         }
 
         function restartGameFromSettingScene() {
-            clearSettingScene();
-            resetGame();
+            clearSettingScene({ afterClose: resetGame });
         }
 
         async function showSettingScene() {
-            if (!settingSceneMountElement || !settingOverlayElement || isSettingSceneOpen) {
+            if (!settingSceneMountElement || !settingOverlayElement || isSettingSceneOpen || isSettingSceneClosing) {
                 return false;
             }
 
@@ -6465,7 +6579,7 @@
                     getSettingContract()
                 ]);
 
-                clearSettingScene();
+                clearSettingScene({ immediate: true });
 
                 const surface = createSettingSceneSurface(contract);
                 if (!surface) {
@@ -6492,13 +6606,14 @@
                     settingSceneRenderer.on("shape-pill-115:click", restartGameFromSettingScene)
                 ];
 
+                settingOverlayElement.classList.remove("closing");
                 settingOverlayElement.classList.add("active");
                 settingOverlayElement.setAttribute("aria-hidden", "false");
                 settingSceneMountElement.setAttribute("aria-hidden", "false");
                 isSettingSceneOpen = true;
                 return true;
             } catch (error) {
-                clearSettingScene();
+                clearSettingScene({ immediate: true });
                 console.error("[Setting] setting scene mount failed:", error);
                 return false;
             }

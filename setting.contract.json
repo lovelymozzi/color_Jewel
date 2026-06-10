@@ -39,6 +39,30 @@
         "shape-rect-113",
         "shape-rect-119"
       ]
+    },
+    {
+      "name": "sound_off",
+      "layerStableIds": [
+        "shape-round-rect-147",
+        "shape-ellipse-149",
+        "pictoicon-sfx-off-png-150"
+      ]
+    },
+    {
+      "name": "bgm_on",
+      "layerStableIds": [
+        "shape-round-rect-152",
+        "pictoicon-music-on-png-155",
+        "shape-ellipse-154"
+      ]
+    },
+    {
+      "name": "bgm_off",
+      "layerStableIds": [
+        "shape-round-rect-157",
+        "pictoicon-music-off-png-160",
+        "shape-ellipse-159"
+      ]
     }
   ],
   "sceneAnimations": [],
@@ -331,9 +355,9 @@
       ]
     },
     {
-      "stableId": "shape-pill-115",
+      "stableId": "re-start-115",
       "layerType": "component",
-      "displayName": "알약",
+      "displayName": "re start",
       "x": 110,
       "y": 207,
       "zIndex": 5,
@@ -409,12 +433,37 @@
             "scale": 100,
             "useDepthOffset": true
           }
+        },
+        {
+          "type": "css-animation",
+          "source": {
+            "provider": "animate.css",
+            "name": "bounce-in",
+            "className": "animate__bounceIn"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "mount",
+          "timing": {
+            "durationMs": 800,
+            "delayMs": 0,
+            "iteration": 1,
+            "loopDelayMs": 600
+          },
+          "params": {
+            "presetId": "bounce-in",
+            "group": "Appear",
+            "phase": "enter",
+            "className": "animate__bounceIn",
+            "baseClass": "animate__animated",
+            "loop": false
+          }
         }
       ],
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "RE START",
+          "staticContent": "RESTART",
           "bindingKey": "",
           "fontSize": 20,
           "fontWeight": "bold",
@@ -445,14 +494,14 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "shape-pill-115:click"
+          "eventName": "re-start-115:click"
         }
       ]
     },
     {
-      "stableId": "shape-pill-114",
+      "stableId": "re-play-114",
       "layerType": "component",
-      "displayName": "알약",
+      "displayName": "re play",
       "x": 110,
       "y": 140,
       "zIndex": 6,
@@ -528,12 +577,37 @@
             "scale": 100,
             "useDepthOffset": true
           }
+        },
+        {
+          "type": "css-animation",
+          "source": {
+            "provider": "animate.css",
+            "name": "bounce-in",
+            "className": "animate__bounceIn"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "mount",
+          "timing": {
+            "durationMs": 800,
+            "delayMs": 0,
+            "iteration": 1,
+            "loopDelayMs": 600
+          },
+          "params": {
+            "presetId": "bounce-in",
+            "group": "Appear",
+            "phase": "enter",
+            "className": "animate__bounceIn",
+            "baseClass": "animate__animated",
+            "loop": false
+          }
         }
       ],
       "texts": [
         {
           "slotIndex": 0,
-          "staticContent": "RE PLAY",
+          "staticContent": "REPLAY",
           "bindingKey": "",
           "fontSize": 20,
           "fontWeight": "bold",
@@ -652,6 +726,429 @@
       "x": 119,
       "y": 312,
       "zIndex": 9,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-147",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 110,
+      "y": 302,
+      "zIndex": 10,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#2e3746",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-ellipse-149",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 163,
+      "y": 310,
+      "zIndex": 11,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-sfx-off-png-150",
+      "layerType": "image",
+      "displayName": "PictoIcon_Sfx_Off.Png",
+      "x": 120,
+      "y": 310,
+      "zIndex": 12,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Sfx_Off.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-round-rect-152",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 304,
+      "zIndex": 13,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-music-on-png-155",
+      "layerType": "image",
+      "displayName": "PictoIcon_Music_On.Png",
+      "x": 304,
+      "y": 313,
+      "zIndex": 14,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Music_On.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-154",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 261,
+      "y": 312,
+      "zIndex": 15,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-157",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 305,
+      "zIndex": 16,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#2e3746",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-music-off-png-160",
+      "layerType": "image",
+      "displayName": "PictoIcon_Music_Off.Png",
+      "x": 260,
+      "y": 314,
+      "zIndex": 17,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Music_Off.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-159",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 304,
+      "y": 313,
+      "zIndex": 18,
       "visual": {
         "model": {
           "shape": {

@@ -48,7 +48,7 @@ renderer.hide();
 <!-- SCENE:setting BEGIN -->
 #### `setting`  ·  contract: `./setting.contract.json`
 - **이벤트** — `renderer.on(name, fn)` 으로만 연결 (이름 임의 생성 금지):
-  - `shape-pill-115:click`  (click)
+  - `re-start-115:click`  (click)
   - `re play`  (click)
 <!-- SCENE:setting END -->
 
