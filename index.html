@@ -6089,27 +6089,37 @@
         }
 
         const ACTION_BUTTON_FALLBACK_LAYOUTS = Object.freeze({
-            "shape-ellipse-169": { xOffset: 38, yOffset: 36 },
+            "shape-ellipse-169-wand-clone": { xOffset: 38, yOffset: 36 },
             "shape-ellipse-169-clean-clone": { xOffset: 38, yOffset: 36 },
             "pictoicon-tv-png-163": { xOffset: 38, yOffset: 32 },
             "pictoicon-tv-png-164": { xOffset: 33, yOffset: 34 }
         });
 
-        function getActionButtonFallbackElement(stableId) {
-            if (stableId === "shape-ellipse-169-clean-clone") {
+        function getActionButtonFallbackElement(stableId, anchorButtonElement = null) {
+            if (
+                stableId === "shape-ellipse-169-wand-clone" ||
+                stableId === "shape-ellipse-169-clean-clone"
+            ) {
                 const sourceElement = colorJewelSceneRenderer?.getElement?.("shape-ellipse-169");
-                const parentElement = sourceElement?.parentElement;
-                if (!sourceElement || !parentElement) {
+                const pressSurface =
+                    anchorButtonElement?.firstElementChild instanceof HTMLElement
+                        ? anchorButtonElement.firstElementChild
+                        : anchorButtonElement;
+                if (!sourceElement || !pressSurface) {
                     return null;
                 }
 
-                let cloneElement = parentElement.querySelector('[data-stable-id="shape-ellipse-169-clean-clone"]');
+                let cloneElement = anchorButtonElement.querySelector(`[data-fallback-stable-id="${stableId}"]`);
                 if (!cloneElement) {
                     cloneElement = sourceElement.cloneNode(true);
-                    cloneElement.dataset.stableId = "shape-ellipse-169-clean-clone";
+                    cloneElement.dataset.fallbackStableId = stableId;
+                    cloneElement.removeAttribute("data-stable-id");
                     cloneElement.style.display = "none";
+                    cloneElement.style.position = "absolute";
                     cloneElement.style.pointerEvents = "none";
-                    parentElement.appendChild(cloneElement);
+                    pressSurface.appendChild(cloneElement);
+                } else if (cloneElement.parentElement !== pressSurface) {
+                    pressSurface.appendChild(cloneElement);
                 }
 
                 return cloneElement;
@@ -6119,19 +6129,15 @@
         }
 
         function setActionButtonFallbackIconState(stableId, isVisible, anchorButtonElement = null) {
-            const element = getActionButtonFallbackElement(stableId);
+            const element = getActionButtonFallbackElement(stableId, anchorButtonElement);
             if (!element) {
                 return;
             }
 
             const layout = ACTION_BUTTON_FALLBACK_LAYOUTS[stableId];
             if (layout && anchorButtonElement) {
-                const buttonLeft = Number.parseFloat(anchorButtonElement.style.left || "");
-                const buttonTop = Number.parseFloat(anchorButtonElement.style.top || "");
-                if (Number.isFinite(buttonLeft) && Number.isFinite(buttonTop)) {
-                    element.style.left = `${buttonLeft + layout.xOffset}px`;
-                    element.style.top = `${buttonTop + layout.yOffset}px`;
-                }
+                element.style.left = `${layout.xOffset}px`;
+                element.style.top = `${layout.yOffset}px`;
             }
 
             element.style.display = isVisible ? "" : "none";
@@ -6202,9 +6208,10 @@
                 button.setAttribute("aria-pressed", armed ? "true" : "false");
             });
 
+            setSceneLayerDisplay("shape-ellipse-169", false);
             setActionButtonFallbackIconState("pictoicon-tv-png-163", false);
             setActionButtonFallbackIconState("pictoicon-tv-png-164", false);
-            syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169");
+            syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169-wand-clone");
             syncActionButtonCounterBadge(bottomActionButton2Element, actionCharges.clean, "shape-ellipse-169-clean-clone");
         }
 

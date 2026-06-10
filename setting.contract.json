@@ -63,6 +63,22 @@
         "pictoicon-music-off-png-160",
         "shape-ellipse-159"
       ]
+    },
+    {
+      "name": "Haptics_off",
+      "layerStableIds": [
+        "shape-round-rect-173",
+        "haptics-off-png-178",
+        "shape-ellipse-174"
+      ]
+    },
+    {
+      "name": "Haptics_on",
+      "layerStableIds": [
+        "shape-round-rect-180",
+        "haptics-png-183",
+        "shape-ellipse-182"
+      ]
     }
   ],
   "sceneAnimations": [],
@@ -1149,6 +1165,288 @@
       "x": 304,
       "y": 292,
       "zIndex": 18,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-173",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 110,
+      "y": 349,
+      "zIndex": 19,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#2e3746",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "haptics-off-png-178",
+      "layerType": "image",
+      "displayName": "Haptics_off.png",
+      "x": 120,
+      "y": 357,
+      "zIndex": 20,
+      "visual": {
+        "exportPath": "assets/Haptics_off.png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-174",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 163,
+      "y": 357,
+      "zIndex": 21,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-180",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 110,
+      "y": 349,
+      "zIndex": 22,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#75c397",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "haptics-png-183",
+      "layerType": "image",
+      "displayName": "Haptics.png",
+      "x": 161,
+      "y": 357,
+      "zIndex": 23,
+      "visual": {
+        "exportPath": "assets/Haptics.png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-182",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 119,
+      "y": 357,
+      "zIndex": 24,
       "visual": {
         "model": {
           "shape": {
