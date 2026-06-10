@@ -11,7 +11,7 @@
     "height": 844
   },
   "background": {
-    "type": "solid",
+    "type": "none",
     "color": "rgba(153,153,153,0.15)",
     "color2": "#0e4a8c",
     "gradientAngle": 180,
@@ -37,7 +37,7 @@
         "shape-rect-112",
         "-111",
         "shape-rect-113",
-        "shape-rect-119"
+        "pause-119"
       ]
     },
     {
@@ -94,7 +94,7 @@
         "model": {
           "shape": {
             "type": "rectangle",
-            "width": 323,
+            "width": 380,
             "height": 786,
             "radius": 0,
             "notch": 20,
@@ -222,7 +222,7 @@
         "model": {
           "shape": {
             "type": "rectangle",
-            "width": 265,
+            "width": 324,
             "height": 80,
             "radius": 0,
             "notch": 20,
@@ -276,9 +276,9 @@
       }
     },
     {
-      "stableId": "shape-rect-119",
+      "stableId": "pause-119",
       "layerType": "component",
-      "displayName": "사각형",
+      "displayName": "pause",
       "x": 67,
       "y": 64,
       "zIndex": 4,
@@ -389,7 +389,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#ffffff",
+            "color1": "#7a75c2",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -404,7 +404,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 4,
-              "color": "#c4c4c4"
+              "color": "#5a568f"
             },
             {
               "type": "outer",
@@ -417,12 +417,12 @@
             },
             {
               "type": "inner",
-              "enabled": false,
+              "enabled": true,
               "x": 0,
-              "y": 1,
-              "blur": 4,
+              "y": 3,
+              "blur": 0,
               "color": "#ffffff",
-              "opacity": 15
+              "opacity": 35
             }
           ],
           "mask": {
@@ -484,7 +484,7 @@
           "fontSize": 20,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#536371",
+          "color": "#ffffff",
           "offsetX": 0,
           "offsetY": 0,
           "zIndex": 1,
@@ -534,9 +534,9 @@
           "fill": {
             "type": "solid",
             "color1": "#75c397",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
+            "color2": "#cde3fe",
+            "angle": 360,
+            "depthIntensity": 26,
             "rayCount": 8
           },
           "border": {
@@ -554,19 +554,19 @@
               "type": "outer",
               "enabled": false,
               "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
+              "y": -3,
+              "blur": 0,
+              "color": "#ffffff",
               "opacity": 30
             },
             {
               "type": "inner",
-              "enabled": false,
+              "enabled": true,
               "x": 0,
-              "y": 1,
-              "blur": 4,
+              "y": 3,
+              "blur": 0,
               "color": "#ffffff",
-              "opacity": 15
+              "opacity": 35
             }
           ],
           "mask": {
@@ -1229,6 +1229,7 @@
       "x": 110,
       "y": 349,
       "zIndex": 19,
+      "visible": false,
       "visual": {
         "model": {
           "shape": {
@@ -1293,6 +1294,7 @@
       "x": 120,
       "y": 357,
       "zIndex": 20,
+      "visible": false,
       "visual": {
         "exportPath": "assets/Haptics_off.png",
         "width": 32,
@@ -1306,6 +1308,7 @@
       "x": 163,
       "y": 357,
       "zIndex": 21,
+      "visible": false,
       "visual": {
         "model": {
           "shape": {

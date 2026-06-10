@@ -769,19 +769,19 @@
             align-items: center;
             justify-content: center;
             background: transparent;
-            opacity: 0;
+            opacity: 1;
+            visibility: hidden;
             pointer-events: none;
-            transition: opacity 0.2s ease;
             z-index: 46;
         }
 
         .setting-overlay.active {
-            opacity: 1;
+            visibility: visible;
             pointer-events: auto;
         }
 
         .setting-overlay.closing {
-            opacity: 1;
+            visibility: visible;
             pointer-events: none;
         }
 
@@ -800,6 +800,8 @@
         .setting-scene-shell {
             position: relative;
             flex: none;
+            z-index: 1;
+            overflow: visible;
             pointer-events: none;
         }
 
@@ -815,6 +817,8 @@
             position: absolute;
             left: 0;
             top: 0;
+            z-index: 2;
+            overflow: visible;
             pointer-events: none;
             transform-origin: top left;
         }
@@ -955,38 +959,33 @@
 
         @keyframes setting-panel-enter {
             0% {
-                opacity: 0;
-                transform: translateX(124px) scale(0.97);
+                transform: translateX(124px);
             }
 
             62% {
-                opacity: 1;
-                transform: translateX(-18px) scale(1.01);
+                transform: translateX(-18px);
             }
 
             80% {
-                transform: translateX(7px) scale(0.998);
+                transform: translateX(7px);
             }
 
             100% {
-                opacity: 1;
-                transform: translateX(0) scale(1);
+                transform: translateX(0);
             }
         }
 
         @keyframes setting-panel-exit {
             0% {
-                opacity: 1;
-                transform: translateX(0) scale(1);
+                transform: translateX(0);
             }
 
             28% {
-                transform: translateX(-10px) scale(1.004);
+                transform: translateX(-10px);
             }
 
             100% {
-                opacity: 0;
-                transform: translateX(126px) scale(0.975);
+                transform: translateX(126px);
             }
         }
 
@@ -6203,8 +6202,8 @@
                 }
 
                 button.style.opacity = "1";
-                button.setAttribute("title", `${label} ${Math.max(0, count)}회`);
-                button.setAttribute("aria-disabled", count <= 0 ? "true" : "false");
+                button.setAttribute("title", count <= 0 ? `${label} 광고 버튼` : `${label} ${Math.max(0, count)}회`);
+                button.setAttribute("aria-disabled", "false");
                 button.setAttribute("aria-pressed", armed ? "true" : "false");
             });
 
@@ -6650,24 +6649,96 @@
                 designWidth,
                 designHeight,
                 scale,
-                scaledWidth: Math.round(designWidth * scale),
-                scaledHeight: Math.round(designHeight * scale)
+                scaledWidth: Math.ceil(designWidth * scale),
+                scaledHeight: Math.ceil(designHeight * scale)
+            };
+        }
+
+        function getSettingSceneContentBounds(contract) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const bounds = (contract?.layers || [])
+                .map((layer) => {
+                    const shape = layer?.visual?.model?.shape;
+                    const left = Number(layer?.x ?? 0);
+                    const top = Number(layer?.y ?? 0);
+                    const width = Number(shape?.width ?? 0);
+                    const height = Number(shape?.height ?? 0);
+
+                    if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+                        return null;
+                    }
+
+                    return {
+                        left,
+                        top,
+                        right: left + width,
+                        bottom: top + height
+                    };
+                })
+                .filter(Boolean);
+
+            if (!bounds.length) {
+                return {
+                    left: 0,
+                    top: 0,
+                    right: designWidth,
+                    bottom: designHeight,
+                    width: designWidth,
+                    height: designHeight
+                };
+            }
+
+            const union = bounds.reduce(
+                (acc, layerBounds) => ({
+                    left: Math.min(acc.left, layerBounds.left),
+                    top: Math.min(acc.top, layerBounds.top),
+                    right: Math.max(acc.right, layerBounds.right),
+                    bottom: Math.max(acc.bottom, layerBounds.bottom)
+                }),
+                {
+                    left: designWidth,
+                    top: designHeight,
+                    right: 0,
+                    bottom: 0
+                }
+            );
+
+            return {
+                ...union,
+                width: Math.max(designWidth, union.right),
+                height: Math.max(designHeight, union.bottom)
             };
         }
 
         function getSettingScenePanelBounds(contract) {
             const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
             const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
-            const panelLayer =
-                contract?.layers?.find((layer) => layer?.stableId === "shape-rect-112") ||
-                contract?.layers?.[0];
-            const shape = panelLayer?.visual?.model?.shape;
-            const left = Number(panelLayer?.x ?? 0);
-            const top = Number(panelLayer?.y ?? 0);
-            const width = Number(shape?.width ?? designWidth);
-            const height = Number(shape?.height ?? designHeight);
+            const panelLayerIds = ["shape-rect-112", "shape-rect-113", "-111"];
+            const panelBounds = panelLayerIds
+                .map((stableId) => contract?.layers?.find((layer) => layer?.stableId === stableId))
+                .filter(Boolean)
+                .map((layer) => {
+                    const shape = layer?.visual?.model?.shape;
+                    const left = Number(layer?.x ?? 0);
+                    const top = Number(layer?.y ?? 0);
+                    const width = Number(shape?.width ?? 0);
+                    const height = Number(shape?.height ?? 0);
 
-            if (![left, top, width, height].every(Number.isFinite)) {
+                    if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+                        return null;
+                    }
+
+                    return {
+                        left,
+                        top,
+                        right: left + width,
+                        bottom: top + height
+                    };
+                })
+                .filter(Boolean);
+
+            if (!panelBounds.length) {
                 return {
                     left: 0,
                     top: 0,
@@ -6676,12 +6747,20 @@
                 };
             }
 
-            return {
-                left,
-                top,
-                right: left + width,
-                bottom: top + height
-            };
+            return panelBounds.reduce(
+                (bounds, layerBounds) => ({
+                    left: Math.min(bounds.left, layerBounds.left),
+                    top: Math.min(bounds.top, layerBounds.top),
+                    right: Math.max(bounds.right, layerBounds.right),
+                    bottom: Math.max(bounds.bottom, layerBounds.bottom)
+                }),
+                {
+                    left: designWidth,
+                    top: designHeight,
+                    right: 0,
+                    bottom: 0
+                }
+            );
         }
 
         function createSettingSceneSurface(contract) {
@@ -6691,6 +6770,7 @@
 
             const { designWidth, designHeight, scale, scaledWidth, scaledHeight } =
                 getSettingSceneLayoutMetrics(contract);
+            const contentBounds = getSettingSceneContentBounds(contract);
             const shell = document.createElement("div");
             shell.className = "setting-scene-shell";
             shell.style.width = `${scaledWidth}px`;
@@ -6698,8 +6778,8 @@
 
             const surface = document.createElement("div");
             surface.className = "setting-scene-surface";
-            surface.style.width = `${designWidth}px`;
-            surface.style.height = `${designHeight}px`;
+            surface.style.width = `${contentBounds.width}px`;
+            surface.style.height = `${contentBounds.height}px`;
             surface.style.transform = `scale(${scale})`;
 
             shell.appendChild(surface);
@@ -6826,11 +6906,22 @@
 
                 const sceneRootElement = surface.firstElementChild;
                 if (sceneRootElement) {
+                    const contentBounds = getSettingSceneContentBounds(contract);
                     sceneRootElement.style.top = "0";
                     sceneRootElement.style.left = "0";
                     sceneRootElement.style.right = "auto";
                     sceneRootElement.style.bottom = "auto";
+                    sceneRootElement.style.width = `${contentBounds.width}px`;
+                    sceneRootElement.style.height = `${contentBounds.height}px`;
+                    sceneRootElement.style.opacity = "1";
+                    sceneRootElement.style.overflow = "visible";
                     sceneRootElement.style.pointerEvents = "auto";
+                    sceneRootElement.style.transition = "none";
+                    sceneRootElement.querySelectorAll("[data-group]").forEach((groupElement) => {
+                        groupElement.style.width = `${contentBounds.width}px`;
+                        groupElement.style.height = `${contentBounds.height}px`;
+                        groupElement.style.overflow = "visible";
+                    });
                 }
 
                 settingSceneUnsubscribers = [
@@ -9612,11 +9703,6 @@
                 return;
             }
 
-            if (actionCharges.magic <= 0) {
-                setStatus("매직 사용 횟수를 모두 썼어요.");
-                return;
-            }
-
             if (isMagicTargetingMode()) {
                 cancelMagicTargeting();
                 return;
@@ -9643,11 +9729,6 @@
 
             if (isMagicTargetingMode()) {
                 cancelMagicTargeting();
-            }
-
-            if (actionCharges.clean <= 0) {
-                setStatus("빗자루 사용 횟수를 모두 썼어요.");
-                return;
             }
 
             const broomPlan = buildBroomMovePlan();

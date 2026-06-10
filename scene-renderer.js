@@ -1137,15 +1137,7 @@ export class SceneRenderer {
                 el.textContent = tpl ? tpl.replaceAll('{value}', String(value)) : String(value);
             });
             const imgs = this._boundImages[key];
-            if (imgs) imgs.forEach(el => {
-                const url = this._resolveAssetPath(String(value));
-                if (el.tagName === 'IMG') { el.src = url; return; }
-                // 틴트 div: background-image 와 mask 의 이미지 URL 교체 (색상은 dataset.tintCol 유지)
-                const col = el.dataset.tintCol || 'transparent';
-                el.style.backgroundImage = `linear-gradient(${col},${col}),url("${url}")`;
-                const msk = `url("${url}") center / contain no-repeat`;
-                el.style.webkitMask = msk; el.style.mask = msk;
-            });
+            if (imgs) imgs.forEach(img => { img.src = this._resolveAssetPath(String(value)); });
         }
         return this;
     }
@@ -1603,49 +1595,48 @@ export class SceneRenderer {
             img.style.height = ih;
             img.style.objectFit = 'contain';
             const imageStyle = layer.image?.style || layer.visual?.style || normalizeImageStyleModel(layer);
-            const _shadowFilter = imageShadowCss(imageStyle);
-            const _pressEffect = findEffect(layer.effects, 'press') || normalizePressEffect(layer);
-            // 색 채우기(재색칠): img 위에 별도 오버레이를 겹치면 안티앨리어싱 가장자리에 알파가 더해져
-            // 실루엣이 미세하게 굵어지고, 틴트된 두 이미지가 겹칠 때 1px 경계선(seam)이 보인다.
-            // → 레이어를 쌓지 않고 단일 div 의 background-blend-mode 로 합성 후, 이미지 알파로 마스킹한다.
-            //   불투명 background-color 위에서 합성 → 마스크 전 알파=1 → ×mask = 원본 이미지 알파(정확) → seam 없음.
-            //   tint(색조): blend 'color'(명암 유지) · overlay(덧입히기): blend 'normal'(불투명 페인트).
-            const _tint = imageStyle?.tint;
-            const _tintMode = _tint?.mode || 'off';
-            const _tintActive = _tintMode !== 'off' && (_tint.strength ?? 100) > 0;
-            let visual;
-            if (_tintActive) {
-                const _color = _tint.color || '#ff3b30';
-                const _col = _color.charAt(0) === '#' ? hexToRgba(_color, _tint.strength ?? 100) : _color;
-                const _blend = _tintMode === 'tint' ? 'color' : 'normal';
-                const _msk = `url("${_imgSrc}") center / contain no-repeat`;
-                visual = document.createElement('div');
-                visual.style.cssText =
-                    `width:${iw};height:${ih};` +
-                    `background-color:${_color};` +
-                    `background-image:linear-gradient(${_col},${_col}),url("${_imgSrc}");` +
-                    `background-repeat:no-repeat,no-repeat;background-position:center,center;background-size:100% 100%,contain;` +
-                    `background-blend-mode:${_blend},normal;` +
-                    `-webkit-mask:${_msk};mask:${_msk};` +
-                    (_shadowFilter ? `filter:${_shadowFilter};` : '');
-                visual.dataset.tintCol = _col; // 바인딩(imageKey) 런타임 src 교체 시 재구성용
-                applyPressEffect(visual, _pressEffect, { baseFilter: _shadowFilter || '' });
-            } else {
-                img.style.filter = _shadowFilter;
-                applyPressEffect(img, _pressEffect, { baseFilter: img.style.filter || '' });
-                visual = img;
-            }
-            // 동적 이미지 바인딩: 실제 표시 엘리먼트(visual)를 등록 (updateBindings 에서 img/div 모두 처리)
             if (layer.image?.imageKey) {
                 if (!this._boundImages[layer.image.imageKey]) this._boundImages[layer.image.imageKey] = [];
-                this._boundImages[layer.image.imageKey].push(visual);
+                this._boundImages[layer.image.imageKey].push(img);
             }
+            // 색 채우기(재색칠): 별도 레이어/마스크를 겹치면 안티앨리어싱 가장자리의 알파가 어긋나
+            // 틴트된 이미지끼리 겹칠 때 1px 경계선(seam)이 생긴다.
+            // → SVG 필터로 픽셀 자체를 재색칠한다. 알파(실루엣)는 손대지 않으므로 원본과 동일 → seam 없음.
+            //   tint(색조): feColorMatrix 로 명암(luminance)×색상 → 흰색은 색상, 검정은 검정(명암 유지).
+            //   overlay(덧입히기): feFlood 단색을 SourceAlpha 로 클리핑 → 불투명 페인트.
+            //   strength: feComposite arithmetic 으로 원본과 보간(알파 보존).
+            const _tintFilter = (() => {
+                const tint = imageStyle?.tint;
+                const mode = tint?.mode || 'off';
+                const s = (tint?.strength ?? 100) / 100;
+                if (mode === 'off' || s <= 0) return '';
+                let r = 255, g = 59, b = 48;
+                const col = tint.color || '#ff3b30';
+                const hx = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(col);
+                if (hx) { r = parseInt(hx[1], 16); g = parseInt(hx[2], 16); b = parseInt(hx[3], 16); }
+                else { const rm = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(col); if (rm) { r = +rm[1]; g = +rm[2]; b = +rm[3]; } }
+                const k2 = (1 - s).toFixed(4), k3 = s.toFixed(4);
+                let body;
+                if (mode === 'overlay') {
+                    body = `<feFlood flood-color="rgb(${r},${g},${b})" result="f"/>`
+                         + `<feComposite in="f" in2="SourceAlpha" operator="in" result="c"/>`
+                         + `<feComposite in="SourceGraphic" in2="c" operator="arithmetic" k1="0" k2="${k2}" k3="${k3}" k4="0"/>`;
+                } else { // tint: luminance × color (명암 유지)
+                    const lum = c => `${(0.2126 * c).toFixed(5)} ${(0.7152 * c).toFixed(5)} ${(0.0722 * c).toFixed(5)} 0 0`;
+                    body = `<feColorMatrix type="matrix" values="${lum(r / 255)} ${lum(g / 255)} ${lum(b / 255)} 0 0 0 1 0" result="t"/>`
+                         + `<feComposite in="SourceGraphic" in2="t" operator="arithmetic" k1="0" k2="${k2}" k3="${k3}" k4="0"/>`;
+                }
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg"><filter id="t" color-interpolation-filters="sRGB">${body}</filter></svg>`;
+                return `url("data:image/svg+xml,${encodeURIComponent(svg)}#t")`;
+            })();
+            const _shadowFilter = imageShadowCss(imageStyle);
+            img.style.filter = [_tintFilter, _shadowFilter].filter(Boolean).join(' ');
+            applyPressEffect(img, findEffect(layer.effects, 'press') || normalizePressEffect(layer), { baseFilter: img.style.filter || '' });
             if (layer.texts && layer.texts.length > 0) {
                 const wrapDiv = document.createElement('div');
                 wrapDiv.style.cssText = `position:relative;width:${iw};height:${ih};`;
-                visual.style.position = 'absolute'; visual.style.top = '0'; visual.style.left = '0';
-                if (visual !== img) { visual.style.width = '100%'; visual.style.height = '100%'; }
-                wrapDiv.appendChild(visual);
+                img.style.position = 'absolute'; img.style.top = '0'; img.style.left = '0';
+                wrapDiv.appendChild(img);
                 layer.texts.forEach(t => {
                     const span = document.createElement('span');
                     span.textContent = t.staticContent || '';
@@ -1662,9 +1653,9 @@ export class SceneRenderer {
                 playParticleEffect(wrapDiv, particleEffect);
                 return _flipWrap(wrapDiv);
             }
-            applyCssAnimationEffect(visual, cssAnimation);
-            playParticleEffect(visual, particleEffect);
-            return _flipWrap(visual);
+            applyCssAnimationEffect(img, cssAnimation);
+            playParticleEffect(img, particleEffect);
+            return _flipWrap(img);
         }
         return document.createElement('div');
     }
