@@ -4375,6 +4375,7 @@
         let lastTouchActivationAt = 0;
         let solvedStageFailSafeTimer = null;
         let pixelAdminAutoSaveTimer = null;
+        let lastCorrectPlacementHapticAt = 0;
         const pixelAdminState = {
             isOpen: false,
             currentMapId: null,
@@ -6206,6 +6207,40 @@
             soundController?.playFirework?.(startDelayMs, accent);
         }
 
+        const CORRECT_PLACEMENT_HAPTIC_MS = 16;
+        const CORRECT_PLACEMENT_HAPTIC_COOLDOWN_MS = 48;
+
+        function canUseMobilePlacementHaptics() {
+            if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
+                return false;
+            }
+
+            const hasCoarsePointer = typeof window.matchMedia === "function" && (
+                window.matchMedia("(pointer: coarse)").matches ||
+                window.matchMedia("(any-pointer: coarse)").matches
+            );
+            const userAgent = navigator.userAgent || "";
+            return hasCoarsePointer || /Android|iPhone|iPad|iPod/i.test(userAgent);
+        }
+
+        function triggerCorrectPlacementHaptic() {
+            if (!canUseMobilePlacementHaptics()) {
+                return false;
+            }
+
+            const now = performance.now();
+            if (now - lastCorrectPlacementHapticAt < CORRECT_PLACEMENT_HAPTIC_COOLDOWN_MS) {
+                return false;
+            }
+
+            lastCorrectPlacementHapticAt = now;
+            try {
+                return navigator.vibrate(CORRECT_PLACEMENT_HAPTIC_MS);
+            } catch (error) {
+                return false;
+            }
+        }
+
         function getConnectedGemCluster(startRow, startCol) {
             const colorId = boardState[startRow][startCol];
             if (!colorId || isLockedCorrectGem(startRow, startCol)) return [];
@@ -6924,13 +6959,18 @@
             return MATCH_SPARKLE_MS - (expiresAt - now);
         }
 
-        function markCorrectPlacementSparkle(row, col) {
+        function markCorrectPlacementSparkle(row, col, options = {}) {
+            const { triggerHaptic = false } = options;
             if (!TARGET_MAP[row][col] || boardState[row][col] !== TARGET_MAP[row][col]) {
                 return;
             }
 
             sparkleCells.set(toCellKey(row, col), performance.now() + MATCH_SPARKLE_MS);
             scheduleSparkleCleanup();
+
+            if (triggerHaptic) {
+                triggerCorrectPlacementHaptic();
+            }
         }
 
         function getCompletedColorIds() {
@@ -7335,10 +7375,12 @@
                 if (step.displacedGem) {
                     swapBoardToTray(step.targetCell.row, step.targetCell.col, step.sourceIndex);
                 } else {
-                    moveTrayToBoard(step.sourceIndex, step.targetCell.row, step.targetCell.col);
+                    moveTrayToBoard(step.sourceIndex, step.targetCell.row, step.targetCell.col, {
+                        triggerSparkle: false
+                    });
                 }
 
-                markCorrectPlacementSparkle(step.targetCell.row, step.targetCell.col);
+                markCorrectPlacementSparkle(step.targetCell.row, step.targetCell.col, { triggerHaptic: true });
                 render();
                 void playPlaceSound();
 
@@ -7382,7 +7424,7 @@
 
             boardState = nextBoardState;
             translatedCells.forEach((cell) => {
-                markCorrectPlacementSparkle(cell.row, cell.col);
+                markCorrectPlacementSparkle(cell.row, cell.col, { triggerHaptic: true });
             });
         }
 
@@ -7405,7 +7447,7 @@
 
                 const cell = translatedCells[index];
                 boardState[cell.row][cell.col] = gems[index];
-                markCorrectPlacementSparkle(cell.row, cell.col);
+                markCorrectPlacementSparkle(cell.row, cell.col, { triggerHaptic: true });
                 render();
                 void playPlaceSound();
                 if (index < translatedCells.length - 1) {
@@ -7467,7 +7509,7 @@
 
                 const targetCell = targetCells[index];
                 boardState[targetCell.row][targetCell.col] = gems[index];
-                markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+                markCorrectPlacementSparkle(targetCell.row, targetCell.col, { triggerHaptic: true });
                 render();
                 void playPlaceSound();
 
@@ -7499,7 +7541,7 @@
                 const targetCell = targetCells[index];
                 trayState[sourceIndex] = 0;
                 boardState[targetCell.row][targetCell.col] = gems[index];
-                markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+                markCorrectPlacementSparkle(targetCell.row, targetCell.col, { triggerHaptic: true });
                 render();
                 void playPlaceSound();
 
@@ -8730,10 +8772,13 @@
             boardState[row][col] = 0;
         }
 
-        function moveTrayToBoard(index, row, col) {
+        function moveTrayToBoard(index, row, col, options = {}) {
+            const { triggerHaptic = false, triggerSparkle = true } = options;
             boardState[row][col] = trayState[index];
             trayState[index] = 0;
-            markCorrectPlacementSparkle(row, col);
+            if (triggerSparkle) {
+                markCorrectPlacementSparkle(row, col, { triggerHaptic });
+            }
         }
 
         function swapBoardToTray(row, col, index) {
@@ -9224,7 +9269,7 @@
                 } else {
                     boardState[targetCell.row][targetCell.col] = targetCell.color;
                 }
-                markCorrectPlacementSparkle(targetCell.row, targetCell.col);
+                markCorrectPlacementSparkle(targetCell.row, targetCell.col, { triggerHaptic: true });
                 resolvedTargetKeys.add(toCellKey(targetCell.row, targetCell.col));
                 setActionOverlay({
                     type: "magic",
@@ -9776,7 +9821,7 @@
                 const anchorTrayIndex =
                     trayIndices.find((index) => index === activeSelection.anchor) ?? trayIndices[0] ?? null;
                 if (anchorTrayIndex != null) {
-                    moveTrayToBoard(anchorTrayIndex, row, col);
+                    moveTrayToBoard(anchorTrayIndex, row, col, { triggerHaptic: true });
                     void playPlaceSound();
                     commitMove(
                         "포켓 묶음에서 보석 1개를 빈 칸으로 옮겼어요.",
@@ -9792,7 +9837,7 @@
                 }
             }
 
-            moveTrayToBoard(trayIndices[0], row, col);
+            moveTrayToBoard(trayIndices[0], row, col, { triggerHaptic: true });
             void playPlaceSound();
             commitMove(
                 "포켓의 보석을 빈 칸으로 옮겼어요.",

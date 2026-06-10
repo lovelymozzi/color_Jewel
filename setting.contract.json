@@ -647,7 +647,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 110,
-      "y": 304,
+      "y": 283,
       "zIndex": 7,
       "visual": {
         "model": {
@@ -711,7 +711,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_On.Png",
       "x": 163,
-      "y": 310,
+      "y": 289,
       "zIndex": 8,
       "visual": {
         "exportPath": "assets/PictoIcon_Sfx_On.Png",
@@ -724,7 +724,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 119,
-      "y": 312,
+      "y": 291,
       "zIndex": 9,
       "visual": {
         "model": {
@@ -788,7 +788,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 110,
-      "y": 302,
+      "y": 281,
       "zIndex": 10,
       "visual": {
         "model": {
@@ -852,7 +852,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 163,
-      "y": 310,
+      "y": 289,
       "zIndex": 11,
       "visual": {
         "model": {
@@ -916,7 +916,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_Off.Png",
       "x": 120,
-      "y": 310,
+      "y": 289,
       "zIndex": 12,
       "visual": {
         "exportPath": "assets/PictoIcon_Sfx_Off.Png",
@@ -929,7 +929,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
-      "y": 304,
+      "y": 283,
       "zIndex": 13,
       "visual": {
         "model": {
@@ -993,7 +993,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Music_On.Png",
       "x": 304,
-      "y": 313,
+      "y": 292,
       "zIndex": 14,
       "visual": {
         "exportPath": "assets/PictoIcon_Music_On.Png",
@@ -1006,7 +1006,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 261,
-      "y": 312,
+      "y": 291,
       "zIndex": 15,
       "visual": {
         "model": {
@@ -1070,7 +1070,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
-      "y": 305,
+      "y": 284,
       "zIndex": 16,
       "visual": {
         "model": {
@@ -1134,7 +1134,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Music_Off.Png",
       "x": 260,
-      "y": 314,
+      "y": 293,
       "zIndex": 17,
       "visual": {
         "exportPath": "assets/PictoIcon_Music_Off.Png",
@@ -1147,7 +1147,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 304,
-      "y": 313,
+      "y": 292,
       "zIndex": 18,
       "visual": {
         "model": {
