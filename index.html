@@ -814,7 +814,7 @@
         }
 
         .setting-overlay.closing .setting-scene-shell {
-            animation: setting-panel-exit 0.52s ease-out both;
+            animation: setting-panel-exit 0.68s cubic-bezier(0.22, 0.74, 0.2, 1) both;
         }
 
         .setting-scene-surface {
@@ -981,6 +981,14 @@
 
         @keyframes setting-panel-exit {
             0% {
+                transform: translateX(0);
+            }
+
+            18% {
+                transform: translateX(-10px);
+            }
+
+            32% {
                 transform: translateX(0);
             }
 
@@ -4524,7 +4532,7 @@
             clearSettingScene();
         });
 
-        const SETTING_SCENE_CLOSE_ANIMATION_MS = 620;
+        const SETTING_SCENE_CLOSE_ANIMATION_MS = 760;
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 680;
