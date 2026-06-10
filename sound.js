@@ -4,10 +4,24 @@
     function createColorJewelSoundController(options = {}) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const volumeMultiplier = Number(options.volumeMultiplier || 1);
+        let sfxEnabled = options.sfxEnabled !== false;
+        let bgmEnabled = options.bgmEnabled !== false;
         let audioContext = null;
         let audioNoiseBuffer = null;
         let audioFallbackUnlocked = false;
         const audioFallbackCache = new Map();
+        let bgmLoopTimer = null;
+        let bgmLoopSequenceIndex = 0;
+        let bgmOutputContext = null;
+        let bgmOutputGain = null;
+
+        const BGM_PHRASE_MS = 3600;
+        const BGM_SEQUENCE = [
+            { root: 220, accent: 329.63 },
+            { root: 246.94, accent: 369.99 },
+            { root: 196, accent: 293.66 },
+            { root: 174.61, accent: 261.63 }
+        ];
 
         function getAudioContext() {
             if (!AudioContextClass) return null;
@@ -30,6 +44,30 @@
             audioContext = new AudioContextClass();
             audioNoiseBuffer = null;
             return audioContext;
+        }
+
+        function clearBgmLoopTimer() {
+            if (bgmLoopTimer) {
+                window.clearTimeout(bgmLoopTimer);
+                bgmLoopTimer = null;
+            }
+        }
+
+        function ensureBgmOutput(context) {
+            if (!context) {
+                return null;
+            }
+
+            if (bgmOutputGain && bgmOutputContext === context) {
+                return bgmOutputGain;
+            }
+
+            bgmOutputGain?.disconnect?.();
+            bgmOutputContext = context;
+            bgmOutputGain = context.createGain();
+            bgmOutputGain.gain.setValueAtTime(bgmEnabled ? 1 : 0.0001, context.currentTime);
+            bgmOutputGain.connect(context.destination);
+            return bgmOutputGain;
         }
 
         function getNoiseBuffer(context) {
@@ -252,6 +290,84 @@
             }
         }
 
+        function playBgmPhrase(context, phraseIndex = 0) {
+            const phrase = BGM_SEQUENCE[phraseIndex % BGM_SEQUENCE.length];
+            const startTime = context.currentTime + 0.02;
+            const bgmDestination = ensureBgmOutput(context) || context.destination;
+            const progression = [
+                { offset: 0.0, frequency: phrase.root, duration: 0.92, volume: 0.0048 },
+                { offset: 0.22, frequency: phrase.accent, duration: 0.5, volume: 0.0028 },
+                { offset: 0.9, frequency: phrase.root * 1.5, duration: 0.66, volume: 0.0032 },
+                { offset: 1.46, frequency: phrase.accent, duration: 0.42, volume: 0.0024 },
+                { offset: 2.04, frequency: phrase.root * 0.75, duration: 0.84, volume: 0.0038 }
+            ];
+
+            progression.forEach(({ offset, frequency, duration, volume }) => {
+                playTone(context, {
+                    startTime: startTime + offset,
+                    type: "sine",
+                    startFrequency: frequency,
+                    endFrequency: frequency * 1.01,
+                    duration,
+                    volume,
+                    attack: 0.02,
+                    filterType: "lowpass",
+                    filterFrequency: 920,
+                    filterQ: 0.24,
+                    destination: bgmDestination
+                });
+            });
+        }
+
+        function scheduleNextBgmPhrase(delayMs = BGM_PHRASE_MS) {
+            clearBgmLoopTimer();
+            if (!bgmEnabled) {
+                return;
+            }
+
+            bgmLoopTimer = window.setTimeout(() => {
+                if (!bgmEnabled) {
+                    return;
+                }
+
+                requestAudioPlayback((context) => {
+                    playBgmPhrase(context, bgmLoopSequenceIndex);
+                    bgmLoopSequenceIndex = (bgmLoopSequenceIndex + 1) % BGM_SEQUENCE.length;
+                    scheduleNextBgmPhrase();
+                });
+            }, Math.max(0, delayMs));
+        }
+
+        function setSfxEnabled(nextValue) {
+            sfxEnabled = nextValue !== false;
+            return sfxEnabled;
+        }
+
+        function setBgmEnabled(nextValue) {
+            bgmEnabled = nextValue !== false;
+            if (bgmOutputGain && bgmOutputContext) {
+                const now = bgmOutputContext.currentTime;
+                const currentValue = Math.max(0.0001, Number(bgmOutputGain.gain.value || 0.0001));
+                bgmOutputGain.gain.cancelScheduledValues(now);
+                bgmOutputGain.gain.setValueAtTime(currentValue, now);
+                bgmOutputGain.gain.linearRampToValueAtTime(bgmEnabled ? 1 : 0.0001, now + 0.08);
+            }
+            if (bgmEnabled) {
+                scheduleNextBgmPhrase(0);
+            } else {
+                clearBgmLoopTimer();
+            }
+            return bgmEnabled;
+        }
+
+        function isSfxEnabled() {
+            return sfxEnabled;
+        }
+
+        function isBgmEnabled() {
+            return bgmEnabled;
+        }
+
         function playTone(context, options) {
             const {
                 startTime = context.currentTime,
@@ -263,7 +379,8 @@
                 attack = 0.003,
                 filterType = "lowpass",
                 filterFrequency = 1800,
-                filterQ = 0.9
+                filterQ = 0.9,
+                destination = context.destination
             } = options;
             const oscillator = context.createOscillator();
             const filter = context.createBiquadFilter();
@@ -284,7 +401,7 @@
 
             oscillator.connect(filter);
             filter.connect(gain);
-            gain.connect(context.destination);
+            gain.connect(destination);
 
             oscillator.onended = () => {
                 oscillator.disconnect();
@@ -302,7 +419,8 @@
                 volume = 0.012,
                 filterType = "bandpass",
                 filterFrequency = 1800,
-                filterQ = 1.2
+                filterQ = 1.2,
+                destination = context.destination
             } = options;
             const source = context.createBufferSource();
             const filter = context.createBiquadFilter();
@@ -321,7 +439,7 @@
 
             source.connect(filter);
             filter.connect(gain);
-            gain.connect(context.destination);
+            gain.connect(destination);
 
             source.onended = () => {
                 source.disconnect();
@@ -335,9 +453,15 @@
         function warmup() {
             audioFallbackUnlocked = true;
             requestAudioPlayback(() => {});
+            if (bgmEnabled && !bgmLoopTimer) {
+                scheduleNextBgmPhrase(0);
+            }
         }
 
         function playPickup(clusterSize = 1) {
+            if (!sfxEnabled) {
+                return;
+            }
             requestAudioPlayback((context) => {
                 const now = context.currentTime;
                 const accent = Math.min(clusterSize, 4);
@@ -368,6 +492,9 @@
         }
 
         function playPlace(clusterSize = 1) {
+            if (!sfxEnabled) {
+                return;
+            }
             requestAudioPlayback((context) => {
                 const now = context.currentTime;
                 const accent = Math.min(clusterSize, 4);
@@ -448,6 +575,9 @@
         }
 
         function playButton() {
+            if (!sfxEnabled) {
+                return;
+            }
             requestAudioPlayback((context) => {
                 playButtonPressNow(context);
             }, () => {
@@ -456,6 +586,9 @@
         }
 
         function playComplete(startDelayMs = 0) {
+            if (!sfxEnabled) {
+                return;
+            }
             requestAudioPlayback((context) => {
                 const startTime = context.currentTime + startDelayMs / 1000;
                 const notes = [880, 1174, 1568, 2093];
@@ -497,6 +630,9 @@
         }
 
         function playFirework(startDelayMs = 0, accent = 0) {
+            if (!sfxEnabled) {
+                return;
+            }
             requestAudioPlayback((context) => {
                 const startTime = context.currentTime + startDelayMs / 1000;
                 const liftPitch = 210 + accent * 18;
@@ -612,6 +748,10 @@
 
         return {
             warmup,
+            setSfxEnabled,
+            setBgmEnabled,
+            isSfxEnabled,
+            isBgmEnabled,
             playPickup,
             playPlace,
             playButton,

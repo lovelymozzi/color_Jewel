@@ -65,7 +65,7 @@
       ]
     },
     {
-      "name": "Haptics_off",
+      "name": "haptics_off",
       "layerStableIds": [
         "shape-round-rect-173",
         "haptics-off-png-178",
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "name": "Haptics_on",
+      "name": "haptics_on",
       "layerStableIds": [
         "shape-round-rect-180",
         "haptics-png-183",
@@ -286,7 +286,7 @@
         "model": {
           "shape": {
             "type": "rectangle",
-            "width": 323,
+            "width": 385,
             "height": 57,
             "radius": 0,
             "notch": 20,
@@ -347,7 +347,7 @@
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
           "color": "#dbdddf",
-          "offsetX": 0,
+          "offsetX": -30,
           "offsetY": 0,
           "zIndex": 1,
           "style": {
@@ -662,8 +662,8 @@
       "stableId": "shape-round-rect-122",
       "layerType": "component",
       "displayName": "둥근 사각형",
-      "x": 110,
-      "y": 283,
+      "x": 252,
+      "y": 374,
       "zIndex": 7,
       "visual": {
         "model": {
@@ -726,8 +726,8 @@
       "stableId": "pictoicon-sfx-on-png-123",
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_On.Png",
-      "x": 163,
-      "y": 289,
+      "x": 305,
+      "y": 380,
       "zIndex": 8,
       "visual": {
         "exportPath": "assets/PictoIcon_Sfx_On.Png",
@@ -739,8 +739,8 @@
       "stableId": "shape-ellipse-125",
       "layerType": "component",
       "displayName": "타원",
-      "x": 119,
-      "y": 291,
+      "x": 261,
+      "y": 382,
       "zIndex": 9,
       "visual": {
         "model": {
@@ -803,8 +803,8 @@
       "stableId": "shape-round-rect-147",
       "layerType": "component",
       "displayName": "둥근 사각형",
-      "x": 110,
-      "y": 281,
+      "x": 252,
+      "y": 374,
       "zIndex": 10,
       "visual": {
         "model": {
@@ -867,8 +867,8 @@
       "stableId": "shape-ellipse-149",
       "layerType": "component",
       "displayName": "타원",
-      "x": 163,
-      "y": 289,
+      "x": 305,
+      "y": 382,
       "zIndex": 11,
       "visual": {
         "model": {
@@ -931,8 +931,8 @@
       "stableId": "pictoicon-sfx-off-png-150",
       "layerType": "image",
       "displayName": "PictoIcon_Sfx_Off.Png",
-      "x": 120,
-      "y": 289,
+      "x": 262,
+      "y": 382,
       "zIndex": 12,
       "visual": {
         "exportPath": "assets/PictoIcon_Sfx_Off.Png",
@@ -945,7 +945,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
-      "y": 283,
+      "y": 307,
       "zIndex": 13,
       "visual": {
         "model": {
@@ -1009,7 +1009,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Music_On.Png",
       "x": 304,
-      "y": 292,
+      "y": 316,
       "zIndex": 14,
       "visual": {
         "exportPath": "assets/PictoIcon_Music_On.Png",
@@ -1022,7 +1022,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 261,
-      "y": 291,
+      "y": 315,
       "zIndex": 15,
       "visual": {
         "model": {
@@ -1086,7 +1086,7 @@
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 252,
-      "y": 284,
+      "y": 307,
       "zIndex": 16,
       "visual": {
         "model": {
@@ -1150,7 +1150,7 @@
       "layerType": "image",
       "displayName": "PictoIcon_Music_Off.Png",
       "x": 260,
-      "y": 293,
+      "y": 316,
       "zIndex": 17,
       "visual": {
         "exportPath": "assets/PictoIcon_Music_Off.Png",
@@ -1163,7 +1163,7 @@
       "layerType": "component",
       "displayName": "타원",
       "x": 304,
-      "y": 292,
+      "y": 315,
       "zIndex": 18,
       "visual": {
         "model": {
@@ -1226,10 +1226,9 @@
       "stableId": "shape-round-rect-173",
       "layerType": "component",
       "displayName": "둥근 사각형",
-      "x": 110,
-      "y": 349,
+      "x": 252,
+      "y": 440,
       "zIndex": 19,
-      "visible": false,
       "visual": {
         "model": {
           "shape": {
@@ -1291,10 +1290,9 @@
       "stableId": "haptics-off-png-178",
       "layerType": "image",
       "displayName": "Haptics_off.png",
-      "x": 120,
-      "y": 357,
+      "x": 262,
+      "y": 448,
       "zIndex": 20,
-      "visible": false,
       "visual": {
         "exportPath": "assets/Haptics_off.png",
         "width": 32,
@@ -1305,10 +1303,9 @@
       "stableId": "shape-ellipse-174",
       "layerType": "component",
       "displayName": "타원",
-      "x": 163,
-      "y": 357,
+      "x": 305,
+      "y": 448,
       "zIndex": 21,
-      "visible": false,
       "visual": {
         "model": {
           "shape": {
@@ -1370,8 +1367,8 @@
       "stableId": "shape-round-rect-180",
       "layerType": "component",
       "displayName": "둥근 사각형",
-      "x": 110,
-      "y": 349,
+      "x": 252,
+      "y": 440,
       "zIndex": 22,
       "visual": {
         "model": {
@@ -1434,8 +1431,8 @@
       "stableId": "haptics-png-183",
       "layerType": "image",
       "displayName": "Haptics.png",
-      "x": 161,
-      "y": 357,
+      "x": 303,
+      "y": 448,
       "zIndex": 23,
       "visual": {
         "exportPath": "assets/Haptics.png",
@@ -1447,8 +1444,8 @@
       "stableId": "shape-ellipse-182",
       "layerType": "component",
       "displayName": "타원",
-      "x": 119,
-      "y": 357,
+      "x": 261,
+      "y": 448,
       "zIndex": 24,
       "visual": {
         "model": {
@@ -1463,6 +1460,352 @@
           "fill": {
             "type": "solid",
             "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "plain-text-184",
+      "layerType": "component",
+      "displayName": "Plain Text",
+      "x": 64,
+      "y": 312,
+      "zIndex": 25,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 160,
+            "height": 40,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "none",
+            "color1": "#4a90d9",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "BGM",
+          "bindingKey": "",
+          "fontSize": 20,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
+          "offsetX": -12,
+          "offsetY": 0,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 60
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "plain-text-185",
+      "layerType": "component",
+      "displayName": "Plain Text",
+      "x": 64,
+      "y": 383,
+      "zIndex": 26,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 160,
+            "height": 40,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "none",
+            "color1": "#4a90d9",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "SFX",
+          "bindingKey": "",
+          "fontSize": 20,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
+          "offsetX": -12,
+          "offsetY": 0,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 60
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "plain-text-187",
+      "layerType": "component",
+      "displayName": "Plain Text",
+      "x": 69,
+      "y": 445,
+      "zIndex": 27,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 160,
+            "height": 40,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "none",
+            "color1": "#4a90d9",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      },
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "VIBRATION",
+          "bindingKey": "",
+          "fontSize": 20,
+          "fontWeight": "bold",
+          "fontFamily": "\"Baloo 2\", cursive",
+          "color": "#ffffff",
+          "offsetX": 12,
+          "offsetY": 0,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 2,
+              "blur": 4,
+              "color": "rgba(0,0,0,0)",
+              "opacity": 60
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stableId": "shape-round-rect-190",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 98,
+      "y": 283,
+      "zIndex": 7,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 262,
+            "height": 231,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#465668",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,

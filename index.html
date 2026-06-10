@@ -3039,6 +3039,12 @@
         const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
+        const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
+        const DEFAULT_APP_SETTINGS = Object.freeze({
+            soundEffectsOn: true,
+            bgmOn: true,
+            hapticsOn: true
+        });
         const LIFECYCLE_DEBUG_LIMIT = 96;
         const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
 
@@ -3230,6 +3236,39 @@
                     })
                     .filter(Boolean)
             );
+        }
+
+        function normalizeAppSettings(rawSettings) {
+            return {
+                soundEffectsOn: rawSettings?.soundEffectsOn !== false,
+                bgmOn: rawSettings?.bgmOn !== false,
+                hapticsOn: rawSettings?.hapticsOn !== false
+            };
+        }
+
+        function readPersistedAppSettings() {
+            try {
+                const rawValue = window.localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+                if (!rawValue) {
+                    return { ...DEFAULT_APP_SETTINGS };
+                }
+
+                return normalizeAppSettings(JSON.parse(rawValue));
+            } catch (error) {
+                return { ...DEFAULT_APP_SETTINGS };
+            }
+        }
+
+        function persistAppSettings(nextSettings) {
+            try {
+                window.localStorage.setItem(
+                    APP_SETTINGS_STORAGE_KEY,
+                    JSON.stringify(normalizeAppSettings(nextSettings))
+                );
+                return true;
+            } catch (error) {
+                return false;
+            }
         }
 
         function readPixelAdminStageStorage() {
@@ -4443,6 +4482,7 @@
         let solvedStageFailSafeTimer = null;
         let pixelAdminAutoSaveTimer = null;
         let lastCorrectPlacementHapticAt = 0;
+        let appSettings = readPersistedAppSettings();
         const pixelAdminState = {
             isOpen: false,
             currentMapId: null,
@@ -6385,8 +6425,55 @@
         jewelTemplateImage.src = JEWEL_TEMPLATE_SRC;
 
         const soundController = window.ColorJewelSound?.createController?.({
-            volumeMultiplier: SOUND_VOLUME_MULTIPLIER
+            volumeMultiplier: SOUND_VOLUME_MULTIPLIER,
+            sfxEnabled: appSettings.soundEffectsOn,
+            bgmEnabled: appSettings.bgmOn
         }) || null;
+
+        function syncAudioPreferenceState() {
+            soundController?.setSfxEnabled?.(appSettings.soundEffectsOn);
+            soundController?.setBgmEnabled?.(appSettings.bgmOn);
+        }
+
+        function setSettingSceneGroupVisibility(groupName, isVisible) {
+            const groupElement = settingSceneRenderer?.getGroup?.(groupName);
+            if (!groupElement) {
+                return;
+            }
+
+            groupElement.style.display = isVisible ? "" : "none";
+            groupElement.setAttribute("aria-hidden", String(!isVisible));
+        }
+
+        function syncSettingScenePreferenceGroups() {
+            setSettingSceneGroupVisibility("sound_on", appSettings.soundEffectsOn);
+            setSettingSceneGroupVisibility("sound_off", !appSettings.soundEffectsOn);
+            setSettingSceneGroupVisibility("bgm_on", appSettings.bgmOn);
+            setSettingSceneGroupVisibility("bgm_off", !appSettings.bgmOn);
+            setSettingSceneGroupVisibility("haptics_on", appSettings.hapticsOn);
+            setSettingSceneGroupVisibility("haptics_off", !appSettings.hapticsOn);
+        }
+
+        function applyAppSettings(nextSettings, options = {}) {
+            const { persist = true } = options;
+            appSettings = normalizeAppSettings(nextSettings);
+            syncAudioPreferenceState();
+            syncSettingScenePreferenceGroups();
+            if (persist) {
+                persistAppSettings(appSettings);
+            }
+            return appSettings;
+        }
+
+        function updateAppSettings(partialSettings, options = {}) {
+            return applyAppSettings(
+                {
+                    ...appSettings,
+                    ...partialSettings
+                },
+                options
+            );
+        }
 
         function queueAudioContextWarmup() {
             soundController?.warmup?.();
@@ -6416,6 +6503,10 @@
         const CORRECT_PLACEMENT_HAPTIC_COOLDOWN_MS = 48;
 
         function canUseMobilePlacementHaptics() {
+            if (!appSettings.hapticsOn) {
+                return false;
+            }
+
             if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
                 return false;
             }
@@ -6443,6 +6534,31 @@
                 return navigator.vibrate(CORRECT_PLACEMENT_HAPTIC_MS);
             } catch (error) {
                 return false;
+            }
+        }
+
+        function setSoundEffectsEnabled(isEnabled) {
+            const previousValue = appSettings.soundEffectsOn;
+            updateAppSettings({ soundEffectsOn: isEnabled });
+            if (!previousValue && isEnabled) {
+                triggerButtonPressSound();
+            }
+        }
+
+        function setBgmEnabled(isEnabled) {
+            if (isEnabled) {
+                queueAudioContextWarmup();
+            }
+            updateAppSettings({ bgmOn: isEnabled });
+            if (appSettings.soundEffectsOn) {
+                triggerButtonPressSound();
+            }
+        }
+
+        function setHapticsEnabled(isEnabled) {
+            updateAppSettings({ hapticsOn: isEnabled });
+            if (appSettings.soundEffectsOn) {
+                triggerButtonPressSound();
             }
         }
 
@@ -6914,6 +7030,24 @@
             clearSettingScene({ afterClose: resetGame });
         }
 
+        function registerSettingSceneToggleHandler(groupName, handler) {
+            const groupElement = settingSceneRenderer?.getGroup?.(groupName);
+            if (!groupElement) {
+                return;
+            }
+
+            const handleClick = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handler();
+            };
+
+            groupElement.addEventListener("click", handleClick);
+            settingSceneUnsubscribers.push(() => {
+                groupElement.removeEventListener("click", handleClick);
+            });
+        }
+
         async function showSettingScene() {
             if (!settingSceneMountElement || !settingOverlayElement || isSettingSceneOpen || isSettingSceneClosing) {
                 return false;
@@ -6962,6 +7096,17 @@
                     settingSceneRenderer.on("re play", () => clearSettingScene()),
                     settingSceneRenderer.on("re-start-115:click", restartGameFromSettingScene)
                 ];
+
+                registerSettingSceneToggleHandler("sound_on", () => setSoundEffectsEnabled(false));
+                registerSettingSceneToggleHandler("sound_off", () => {
+                    queueAudioContextWarmup();
+                    setSoundEffectsEnabled(true);
+                });
+                registerSettingSceneToggleHandler("bgm_on", () => setBgmEnabled(false));
+                registerSettingSceneToggleHandler("bgm_off", () => setBgmEnabled(true));
+                registerSettingSceneToggleHandler("haptics_on", () => setHapticsEnabled(false));
+                registerSettingSceneToggleHandler("haptics_off", () => setHapticsEnabled(true));
+                syncSettingScenePreferenceGroups();
 
                 settingOverlayElement.classList.remove("closing");
                 settingOverlayElement.classList.add("active");
