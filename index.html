@@ -6,14 +6,14 @@
     <title>Jewel Pocket Puzzle</title>
     <style>
         :root {
-            --bg-1: #ffffff;
-            --bg-2: #ffffff;
+            --bg-1: #fffef6;
+            --bg-2: #fffef6;
             --panel: rgba(255, 255, 255, 0.96);
             --ink: #1f2937;
             --line: rgba(148, 163, 184, 0.32);
             --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
             --body-bg: #000000;
-            --app-bg: #ffffff;
+            --app-bg: #fffef6;
             --grid-bg: rgba(148, 163, 184, 0.08);
             --grid-line: rgba(226, 232, 240, 0.9);
             --app-shell-width: min(100vw, 390px);
@@ -158,6 +158,7 @@
             inset: 0;
             z-index: 18;
             pointer-events: none;
+            overflow: hidden;
         }
 
         .scene-ui-surface {
@@ -226,10 +227,10 @@
             height: 100%;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             border-radius: 0;
             clip-path: var(--socket-shape);
-            background: url("src/assets/jewel.png") center / contain no-repeat;
+            background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             box-shadow: none;
             opacity: 0.56;
             filter: none;
@@ -241,10 +242,10 @@
             height: 100%;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             border-radius: 0;
             clip-path: var(--socket-shape);
-            background: url("src/assets/jewel.png") center / contain no-repeat;
+            background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             box-shadow: none;
             opacity: 0.28;
             filter: none;
@@ -335,11 +336,11 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
-                url("src/assets/jewel.png") center / contain no-repeat;
+                url("src/assets/jewel_soket.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1.02) saturate(1);
             opacity: 0.42;
@@ -372,9 +373,9 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             clip-path: var(--socket-shape);
-            background: url("src/assets/jewel.png") center / contain no-repeat;
+            background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             filter: none;
             opacity: 0.56;
             pointer-events: none;
@@ -387,9 +388,9 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             clip-path: var(--socket-shape);
-            background: url("src/assets/jewel.png") center / contain no-repeat;
+            background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             filter: none;
             opacity: 0.28;
             pointer-events: none;
@@ -552,11 +553,11 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
-                url("src/assets/jewel.png") center / contain no-repeat;
+                url("src/assets/jewel_soket.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1) saturate(1);
             opacity: 0.5;
@@ -575,11 +576,11 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) rotate(180deg);
+            transform: translate(-50%, -50%);
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
-                url("src/assets/jewel.png") center / contain no-repeat;
+                url("src/assets/jewel_soket.png") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
             filter: brightness(1) saturate(1);
             opacity: 0.5;
@@ -3331,7 +3332,8 @@
         }
 
         function getFirstPlayableMapIndex() {
-            return MAP_DEFINITIONS.length > 1 ? 1 : 0;
+            const tutorialIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === "tutorial");
+            return tutorialIndex >= 0 ? tutorialIndex : 0;
         }
 
         function clearPersistedGameProgress() {
@@ -3970,8 +3972,8 @@
             Object.entries(COLOR_PALETTE).map(([colorId, colorMeta]) => [colorId, { ...colorMeta }])
         );
         const DEFAULT_THEME_VARS = {
-            "--body-bg": "#000000",
-            "--app-bg": "#FFFFFF",
+            "--body-bg": "#fffef6",
+            "--app-bg": "#fffef6",
             "--grid-bg": "rgba(148, 163, 184, 0.08)",
             "--grid-line": "rgba(226, 232, 240, 0.9)"
         };
@@ -4249,6 +4251,148 @@
                 activeSceneViewportHeight;
         }
 
+        function getViewportMetrics() {
+            const visualViewport = window.visualViewport;
+            const width = Math.round(
+                Number(visualViewport?.width) ||
+                Number(window.innerWidth) ||
+                Number(document.documentElement?.clientWidth) ||
+                0
+            );
+            const height = Math.round(
+                Number(visualViewport?.height) ||
+                Number(window.innerHeight) ||
+                Number(document.documentElement?.clientHeight) ||
+                0
+            );
+
+            return {
+                width,
+                height
+            };
+        }
+
+        function getSceneLayerBounds(layer) {
+            const shape = layer?.visual?.model?.shape;
+            const baseWidth = Number(shape?.width ?? 0);
+            const baseHeight = Number(shape?.height ?? 0);
+            const layerScale = Number(layer?.scale ?? 1);
+            const layerScaleX = Number(layer?.scaleX ?? 1);
+            const layerScaleY = Number(layer?.scaleY ?? 1);
+            const width = baseWidth * layerScale * layerScaleX;
+            const height = baseHeight * layerScale * layerScaleY;
+            const left = Number(layer?.x ?? 0);
+            const top = Number(layer?.y ?? 0);
+
+            if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+                return null;
+            }
+
+            return {
+                left,
+                top,
+                right: left + width,
+                bottom: top + height,
+                width,
+                height
+            };
+        }
+
+        function getColorJewelBottomUiBounds(contract = colorJewelSceneContract) {
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const fallbackTop = Math.round(designHeight * 0.7);
+            const relevantIds = new Set([
+                "time-display-56",
+                "level-node-4",
+                "level-node-57",
+                "level-node-18",
+                "level-node-19"
+            ]);
+            const bounds = (contract?.layers || [])
+                .filter((layer) => relevantIds.has(layer?.stableId))
+                .map(getSceneLayerBounds)
+                .filter(Boolean);
+
+            if (!bounds.length) {
+                return {
+                    top: fallbackTop,
+                    bottom: designHeight,
+                    height: Math.max(0, designHeight - fallbackTop)
+                };
+            }
+
+            const union = bounds.reduce(
+                (acc, layerBounds) => ({
+                    top: Math.min(acc.top, layerBounds.top),
+                    bottom: Math.max(acc.bottom, layerBounds.bottom)
+                }),
+                {
+                    top: designHeight,
+                    bottom: 0
+                }
+            );
+
+            return {
+                top: union.top,
+                bottom: union.bottom,
+                height: Math.max(0, union.bottom - union.top)
+            };
+        }
+
+        function getColorJewelSceneLayoutMetrics({
+            contract = colorJewelSceneContract,
+            mountWidth = sceneBottomUiMountElement?.clientWidth || 0,
+            mountHeight = sceneBottomUiMountElement?.clientHeight || 0,
+            compactLayout = mountWidth <= 540
+        } = {}) {
+            const designWidth = contract?.viewport?.width || contract?.canvas?.width || 390;
+            const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
+            const bottomUiBounds = getColorJewelBottomUiBounds(contract);
+            const widthScale = mountWidth > 0 ? mountWidth / designWidth : 1;
+            const heightScale = mountHeight > 0 ? mountHeight / designHeight : 1;
+            const scale = compactLayout
+                ? Math.max(0.72, widthScale)
+                : Math.min(1, widthScale, heightScale);
+            const reservedHeight = Math.ceil(
+                Math.max(
+                    180,
+                    (designHeight - bottomUiBounds.top) * scale + Math.max(12, Math.round(scale * 16))
+                )
+            );
+
+            return {
+                designWidth,
+                designHeight,
+                scale,
+                reservedHeight,
+                bottomUiBounds
+            };
+        }
+
+        function syncColorJewelSceneLayout() {
+            if (!colorJewelSceneRootElement || !sceneBottomUiMountElement) {
+                return null;
+            }
+
+            const { width: viewportWidth, height: viewportHeight } = getViewportMetrics();
+            const compactLayout = viewportWidth <= 540;
+            const metrics = getColorJewelSceneLayoutMetrics({
+                mountWidth: sceneBottomUiMountElement.clientWidth || viewportWidth,
+                mountHeight: sceneBottomUiMountElement.clientHeight || viewportHeight,
+                compactLayout
+            });
+
+            colorJewelSceneRootElement.style.position = "absolute";
+            colorJewelSceneRootElement.style.left = "50%";
+            colorJewelSceneRootElement.style.right = "auto";
+            colorJewelSceneRootElement.style.top = "auto";
+            colorJewelSceneRootElement.style.bottom = "0";
+            colorJewelSceneRootElement.style.transformOrigin = "50% 100%";
+            colorJewelSceneRootElement.style.transform = `translateX(-50%) scale(${metrics.scale})`;
+
+            return metrics;
+        }
+
         function attachColorJewelPocketOverlay(contract) {
             const pocketElement = colorJewelSceneRenderer?.getElement("time-display-56");
             if (!pocketElement) {
@@ -4300,6 +4444,7 @@
                 }
 
                 applyActiveSceneViewport(contract);
+                colorJewelSceneRootElement = null;
                 sceneBottomUiMountElement.replaceChildren();
 
                 const surface = document.createElement("div");
@@ -4314,6 +4459,7 @@
                 const sceneRootElement = surface.firstElementChild;
                 if (sceneRootElement) {
                     sceneRootElement.style.pointerEvents = "none";
+                    colorJewelSceneRootElement = sceneRootElement;
                 }
 
                 bottomActionButton1Element = colorJewelSceneRenderer.getElement("level-node-4");
@@ -4333,6 +4479,7 @@
 
                 attachColorJewelPocketOverlay(contract);
                 updateActionButtonState();
+                syncColorJewelSceneLayout();
                 return true;
             }).catch((error) => {
                 colorJewelUiReadyPromise = null;
@@ -4455,6 +4602,7 @@
         let colorJewelSceneContract = null;
         let colorJewelSceneContractPromise = null;
         let colorJewelUiReadyPromise = null;
+        let colorJewelSceneRootElement = null;
         let colorJewelPocketOverlayElement = null;
         let currentLevelInitialState = null;
         let settingSceneRenderer = null;
@@ -8839,21 +8987,28 @@
         function updateResponsiveLayout() {
             const root = document.documentElement;
             const rootStyles = getComputedStyle(root);
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+            const { width: viewportWidth, height: viewportHeight } = getViewportMetrics();
             const aspectWidth = activeSceneViewportWidth;
             const aspectHeight = activeSceneViewportHeight;
             const maxShellWidth = activeSceneViewportWidth;
-            const maxWidthFromHeight = Math.floor((viewportHeight * aspectWidth) / aspectHeight);
-            let appShellWidth = Math.min(viewportWidth, maxShellWidth, maxWidthFromHeight);
-            let appShellHeight = Math.floor((appShellWidth * aspectHeight) / aspectWidth);
+            const compactLayout = viewportWidth <= 540;
+            let appShellWidth;
+            let appShellHeight;
 
-            if (appShellHeight > viewportHeight) {
+            if (compactLayout) {
+                appShellWidth = viewportWidth;
                 appShellHeight = viewportHeight;
-                appShellWidth = Math.floor((appShellHeight * aspectWidth) / aspectHeight);
+            } else {
+                const maxWidthFromHeight = Math.floor((viewportHeight * aspectWidth) / aspectHeight);
+                appShellWidth = Math.min(viewportWidth, maxShellWidth, maxWidthFromHeight);
+                appShellHeight = Math.floor((appShellWidth * aspectHeight) / aspectWidth);
+
+                if (appShellHeight > viewportHeight) {
+                    appShellHeight = viewportHeight;
+                    appShellWidth = Math.floor((appShellHeight * aspectWidth) / aspectHeight);
+                }
             }
 
-            const compactLayout = viewportWidth <= 540;
             const viewportGap = parseFloat(rootStyles.getPropertyValue("--viewport-gap")) || 12;
             const trayGap = parseFloat(rootStyles.getPropertyValue("--tray-gap")) || 6;
             const pocketBottomOffset = parseFloat(rootStyles.getPropertyValue("--pocket-bottom-offset")) || 12;
@@ -8886,7 +9041,7 @@
             const nextActionBarHeight =
                 actionRows * actionButtonSize +
                 Math.max(0, actionRows - 1) * actionButtonGap;
-            const pocketReservedHeight = Math.ceil(
+            const fallbackReservedHeight = Math.ceil(
                 pocketBottomOffset +
                 adBannerHeight +
                 adBannerGap +
@@ -8895,6 +9050,15 @@
                 pocketDockHeight +
                 16
             );
+            const sceneLayoutMetrics = colorJewelSceneContract
+                ? getColorJewelSceneLayoutMetrics({
+                    contract: colorJewelSceneContract,
+                    mountWidth: appShellWidth,
+                    mountHeight: appShellHeight,
+                    compactLayout
+                })
+                : null;
+            const pocketReservedHeight = sceneLayoutMetrics?.reservedHeight || fallbackReservedHeight;
             const availableBoardHeight = Math.max(120, appShellHeight - viewportGap * 2 - pocketReservedHeight);
             const availableBoardWidth = Math.max(120, appShellWidth - viewportGap * 2);
             const nextBoardCellSize = Math.max(
@@ -8937,6 +9101,7 @@
             }
 
             requestAnimationFrame(() => {
+                syncColorJewelSceneLayout();
                 applyBoardTransform();
             });
         }
@@ -10679,6 +10844,16 @@
             if (pixelAdminState.isOpen) {
                 renderPixelAdmin();
             }
+        });
+
+        window.visualViewport?.addEventListener("resize", () => {
+            updateResponsiveLayout();
+            scheduleTutorialOverlayRender();
+        });
+
+        window.visualViewport?.addEventListener("scroll", () => {
+            updateResponsiveLayout();
+            scheduleTutorialOverlayRender();
         });
 
         async function bootGame() {
