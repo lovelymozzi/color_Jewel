@@ -1,0 +1,56 @@
+{
+  "contractVersion": 1,
+  "sceneId": "title",
+  "sceneName": "title",
+  "canvas": {
+    "width": 393,
+    "height": 852
+  },
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "background": {
+    "type": "linear-gradient",
+    "color": "#fffef6",
+    "color2": "#f7e3ab",
+    "gradientAngle": 180,
+    "imagePath": "",
+    "tileSize": 64,
+    "stretchMode": "cover",
+    "scrollEnabled": false,
+    "scrollDirection": "right",
+    "scrollDuration": 4
+  },
+  "groups": [],
+  "fxGroups": [],
+  "sceneAnimations": [],
+  "layers": [
+    {
+      "stableId": "title-png-4",
+      "layerType": "image",
+      "displayName": "title.png",
+      "x": 21,
+      "y": 102,
+      "zIndex": 1,
+      "visual": {
+        "exportPath": "assets/title.png",
+        "width": 348,
+        "height": 365
+      }
+    },
+    {
+      "stableId": "animation-5-png-6",
+      "layerType": "image",
+      "displayName": "animation (5).png",
+      "x": 163,
+      "y": 665,
+      "zIndex": 2,
+      "visual": {
+        "exportPath": "assets/animation (5).png",
+        "width": 64,
+        "height": 64
+      }
+    }
+  ]
+}

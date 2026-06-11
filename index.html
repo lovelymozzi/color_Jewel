@@ -253,6 +253,25 @@
             filter: none;
         }
 
+        .scene-pocket-tray .tray-slot.selected::before {
+            inset: auto;
+            width: 100%;
+            height: 100%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
+            border-radius: 0;
+            clip-path: var(--socket-shape);
+            background: url("src/assets/jewel_soket.png") center / contain no-repeat;
+            box-shadow: none;
+            opacity: 0.56;
+            filter: none;
+        }
+
+        .scene-pocket-tray .tray-slot.selected::after {
+            display: none;
+        }
+
         .scene-pocket-tray .tray-slot.next-open-slot::after {
             content: "";
             position: absolute;
@@ -735,6 +754,62 @@
 
         .stage-clear-overlay.active {
             opacity: 1;
+        }
+
+        .title-loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            opacity: 1;
+            visibility: hidden;
+            pointer-events: none;
+            z-index: 52;
+        }
+
+        .title-loading-overlay.active {
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .title-scene-host {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .title-scene-shell {
+            position: relative;
+            flex: none;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .title-scene-surface {
+            position: absolute;
+            left: 0;
+            top: 0;
+            overflow: hidden;
+            pointer-events: none;
+            transform-origin: top left;
+        }
+
+        .title-scene-loader {
+            overflow: visible !important;
+            transform: translate(-16px, -16px);
+        }
+
+        .title-scene-loader > img {
+            width: 96px !important;
+            height: 96px !important;
         }
 
         .stage-clear-scene-host {
@@ -1989,6 +2064,10 @@
 
             <div id="sceneBottomUiMount"></div>
 
+            <div class="title-loading-overlay" id="titleLoadingOverlay" aria-hidden="true">
+                <div class="title-scene-host" id="titleSceneMount" aria-hidden="true"></div>
+            </div>
+
             <div class="setting-overlay" id="settingOverlay" aria-hidden="true">
                 <div class="setting-scene-host" id="settingSceneMount" aria-hidden="true"></div>
             </div>
@@ -3049,6 +3128,8 @@
         const SCENE_CONTRACT_VERSION = "20260611-1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
+            "assets/title.png",
+            "assets/animation (5).png",
             "assets/magic.png",
             "assets/clean.png",
             "assets/rock.png"
@@ -4214,13 +4295,17 @@
                 return colorJewelSceneContractPromise;
             }
 
-            colorJewelSceneContractPromise = fetch(`./Color_Jewel.contract.json?v=${SCENE_CONTRACT_VERSION}`, { cache: "no-store" })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Color_Jewel contract load failed: ${response.status}`);
-                    }
-                    return response.json();
-                })
+            colorJewelSceneContractPromise = (
+                window.location.protocol === "file:"
+                    ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.COLOR_JEWEL_CONTRACT)))
+                    : fetch(`./Color_Jewel.contract.json?v=${SCENE_CONTRACT_VERSION}`, { cache: "no-store" })
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error(`Color_Jewel contract load failed: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+            )
                 .then((contract) => {
                     patchContractAssetPaths(contract);
                     colorJewelSceneContract = contract;
@@ -4594,6 +4679,8 @@
         let bottomActionButton4Element = null;
         let bottomAdSlotElement = null;
         const tutorialLayerElement = document.getElementById("tutorialLayer");
+        const titleLoadingOverlayElement = document.getElementById("titleLoadingOverlay");
+        const titleSceneMountElement = document.getElementById("titleSceneMount");
         const settingOverlayElement = document.getElementById("settingOverlay");
         const settingSceneMountElement = document.getElementById("settingSceneMount");
         const stageClearOverlayElement = document.getElementById("stageClearOverlay");
@@ -4663,6 +4750,7 @@
         let colorJewelSceneRootElement = null;
         let colorJewelPocketOverlayElement = null;
         let currentLevelInitialState = null;
+        let titleSceneRenderer = null;
         let settingSceneRenderer = null;
         let settingSceneContract = null;
         let settingSceneContractPromise = null;
@@ -7103,13 +7191,17 @@
                 return stageClearSceneContractPromise;
             }
 
-            stageClearSceneContractPromise = fetch("./Stage_Clear.contract.json", { cache: "no-store" })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Stage_Clear contract load failed: ${response.status}`);
-                    }
-                    return response.json();
-                })
+            stageClearSceneContractPromise = (
+                window.location.protocol === "file:"
+                    ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.STAGE_CLEAR_CONTRACT)))
+                    : fetch("./Stage_Clear.contract.json", { cache: "no-store" })
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error(`Stage_Clear contract load failed: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+            )
                 .then((contract) => {
                     stageClearSceneContract = contract;
                     return contract;
@@ -7130,13 +7222,17 @@
                 return settingSceneContractPromise;
             }
 
-            settingSceneContractPromise = fetch("./setting.contract.json", { cache: "no-store" })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`setting contract load failed: ${response.status}`);
-                    }
-                    return response.json();
-                })
+            settingSceneContractPromise = (
+                window.location.protocol === "file:"
+                    ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.SETTING_CONTRACT)))
+                    : fetch("./setting.contract.json", { cache: "no-store" })
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error(`setting contract load failed: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+            )
                 .then((contract) => {
                     settingSceneContract = contract;
                     return contract;
@@ -11107,7 +11203,102 @@
         });
 
         async function bootGame() {
+            let titleMinimumVisiblePromise = Promise.resolve();
+
             try {
+                if (window.location.protocol === "file:") {
+                    window.location.replace("http://127.0.0.1:8000/");
+                    return;
+                }
+
+                if (titleLoadingOverlayElement && titleSceneMountElement) {
+                    try {
+                        const [SceneRenderer, titleContract] = await Promise.all([
+                            getSceneRendererCtor(),
+                            window.location.protocol === "file:"
+                                ? import("./scene-contracts.js")
+                                    .then((module) => JSON.parse(JSON.stringify(module.TITLE_CONTRACT)))
+                                : fetch("./title.contract.json", { cache: "no-store" })
+                                    .then((response) => {
+                                        if (!response.ok) {
+                                            throw new Error(`title contract load failed: ${response.status}`);
+                                        }
+                                        return response.json();
+                                    })
+                        ]);
+
+                        patchContractAssetPaths(titleContract);
+
+                        const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
+                        const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
+                        const mountWidth = titleSceneMountElement.clientWidth || designWidth;
+                        const mountHeight = titleSceneMountElement.clientHeight || designHeight;
+                        const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
+                        const scaledWidth = Math.round(designWidth * scale);
+                        const scaledHeight = Math.round(designHeight * scale);
+
+                        titleSceneMountElement.replaceChildren();
+
+                        const shell = document.createElement("div");
+                        shell.className = "title-scene-shell";
+                        shell.style.width = `${scaledWidth}px`;
+                        shell.style.height = `${scaledHeight}px`;
+
+                        const surface = document.createElement("div");
+                        surface.className = "title-scene-surface";
+                        surface.style.width = `${designWidth}px`;
+                        surface.style.height = `${designHeight}px`;
+                        surface.style.transform = `scale(${scale})`;
+
+                        shell.appendChild(surface);
+                        titleSceneMountElement.appendChild(shell);
+
+                        titleSceneRenderer = new SceneRenderer(surface, {
+                            basePath: "./src/"
+                        });
+                        titleSceneRenderer.loadSync(titleContract);
+                        titleSceneRenderer.show();
+
+                        const titleSceneRootElement = surface.firstElementChild;
+                        if (titleSceneRootElement) {
+                            titleSceneRootElement.style.top = "0";
+                            titleSceneRootElement.style.left = "0";
+                            titleSceneRootElement.style.right = "auto";
+                            titleSceneRootElement.style.bottom = "auto";
+                            titleSceneRootElement.style.pointerEvents = "none";
+                        }
+
+                        const titleLoaderElement = titleSceneRenderer.getElement("animation-5-png-6");
+                        titleLoaderElement?.classList.add("title-scene-loader");
+                        const titleLoaderImageElement = titleLoaderElement?.querySelector("img") || null;
+
+                        titleLoadingOverlayElement.classList.add("active");
+                        titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
+                        titleSceneMountElement.setAttribute("aria-hidden", "false");
+                        titleMinimumVisiblePromise = new Promise((resolve) => {
+                            const beginMinimumVisibleTimer = () => {
+                                window.setTimeout(resolve, 2500);
+                            };
+
+                            if (!titleLoaderImageElement) {
+                                beginMinimumVisibleTimer();
+                                return;
+                            }
+
+                            if (titleLoaderImageElement.complete) {
+                                beginMinimumVisibleTimer();
+                                return;
+                            }
+
+                            titleLoaderImageElement.addEventListener("load", beginMinimumVisibleTimer, { once: true });
+                            titleLoaderImageElement.addEventListener("error", beginMinimumVisibleTimer, { once: true });
+                        });
+                        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                    } catch (error) {
+                        console.warn("[Boot] title scene skipped:", error);
+                    }
+                }
+
                 await ensureColorJewelSceneUi();
                 initializeBottomActionButtons();
                 const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
@@ -11120,6 +11311,23 @@
                 }
             } catch (error) {
                 console.error("[Boot] UI initialization failed:", error);
+            } finally {
+                await titleMinimumVisiblePromise;
+
+                if (titleSceneRenderer) {
+                    titleSceneRenderer.hide();
+                    titleSceneRenderer = null;
+                }
+
+                if (titleSceneMountElement) {
+                    titleSceneMountElement.replaceChildren();
+                    titleSceneMountElement.setAttribute("aria-hidden", "true");
+                }
+
+                if (titleLoadingOverlayElement) {
+                    titleLoadingOverlayElement.classList.remove("active");
+                    titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
+                }
             }
         }
 
