@@ -897,3 +897,23 @@ ConnectionAbortedError: [WinError 10053] 현재 연결은 사용자의 호스트 시스템의 소
 ::1 - - [11/Jun/2026 20:47:35] "GET /src/assets/rock.png?v=1781178454841 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 20:47:35] "GET /src/assets/clean.png?v=1781178454841 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 20:47:35] "GET /src/assets/magic.png?v=1781178454841 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:57] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:57] "GET /sound.js HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:57] "GET /scene-renderer.js HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:57] "GET /title.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] code 404, message File not found
+::1 - - [11/Jun/2026 20:48:58] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 20:48:58] "GET /src/assets/title.png?v=1781178537820 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] "GET /src/assets/animation%20(5).png?v=1781178537820 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] "GET /src/assets/rock.png?v=1781178537820 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] "GET /src/assets/clean.png?v=1781178537820 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:48:58] "GET /src/assets/magic.png?v=1781178537820 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:20] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:20] "GET /title.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/animation%20(5).png?v=1781178560896 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/title.png?v=1781178560896 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/rock.png?v=1781178560896 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/clean.png?v=1781178560896 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/magic.png?v=1781178560896 HTTP/1.1" 200 -

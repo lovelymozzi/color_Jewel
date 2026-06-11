@@ -763,15 +763,18 @@
             align-items: center;
             justify-content: center;
             background: transparent;
-            opacity: 1;
+            opacity: 0;
             visibility: hidden;
             pointer-events: none;
             z-index: 52;
+            transition: opacity 0.24s ease, visibility 0s linear 0.24s;
         }
 
         .title-loading-overlay.active {
+            opacity: 1;
             visibility: visible;
             pointer-events: auto;
+            transition-delay: 0s;
         }
 
         .title-scene-host {
@@ -11314,6 +11317,14 @@
             } finally {
                 await titleMinimumVisiblePromise;
 
+                if (titleLoadingOverlayElement?.classList.contains("active")) {
+                    titleLoadingOverlayElement.classList.remove("active");
+                    await sleep(240);
+                    titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
+                } else if (titleLoadingOverlayElement) {
+                    titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
+                }
+
                 if (titleSceneRenderer) {
                     titleSceneRenderer.hide();
                     titleSceneRenderer = null;
@@ -11322,11 +11333,6 @@
                 if (titleSceneMountElement) {
                     titleSceneMountElement.replaceChildren();
                     titleSceneMountElement.setAttribute("aria-hidden", "true");
-                }
-
-                if (titleLoadingOverlayElement) {
-                    titleLoadingOverlayElement.classList.remove("active");
-                    titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
                 }
             }
         }
