@@ -166,7 +166,7 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 3,
-              "color": "#fef4cc"
+              "color": "#e5c57b"
             },
             {
               "type": "outer",
@@ -181,7 +181,7 @@
               "type": "inner",
               "enabled": true,
               "x": 0,
-              "y": 2,
+              "y": 3,
               "blur": 0,
               "color": "#fefcee",
               "opacity": 100

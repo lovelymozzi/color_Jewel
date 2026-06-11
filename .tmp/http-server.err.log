@@ -281,3 +281,15 @@ ConnectionAbortedError: [WinError 10053] 현재 연결은 사용자의 호스트 시스템의 소
 ::1 - - [11/Jun/2026 12:25:34] "GET /src/assets/PictoIcon_Sfx_On.Png HTTP/1.1" 304 -
 ::1 - - [11/Jun/2026 12:25:34] "GET /src/assets/PictoIcon_Music_Off.Png HTTP/1.1" 304 -
 ::1 - - [11/Jun/2026 12:25:34] "GET /src/assets/Haptics.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:31:57] "GET /Color_Jewel.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:31:57] "GET /src/assets/PictoIcon_Setting_1.webp HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:31:57] "GET /src/assets/PictoIcon_Player_Play.Png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:32:53] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:32:55] "GET /sound.js HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:32:55] "GET /Color_Jewel.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:32:55] "GET /scene-renderer.js HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:32:55] "GET /src/assets/jewel_soket.png HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:33:30] "GET / HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:33:31] "GET /Color_Jewel.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 13:33:39] "GET / HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 13:33:40] "GET /Color_Jewel.contract.json HTTP/1.1" 200 -

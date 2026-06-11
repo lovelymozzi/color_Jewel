@@ -1300,12 +1300,11 @@ export class SceneRenderer {
         root.style.cssText = `position:relative;width:${w}px;height:${contentH}px;overflow:hidden;opacity:0;transition:opacity 0.3s ease;z-index:5;`;
         this._applyBackground(root, c.background);
 
-        // 그룹 래퍼 생성
+        // 그룹 래퍼 생성 (편집/AI 단위 — getGroup show/hide 용. 효과는 아래 fx번들이 담당한다.)
         const layerGroupMap = {};
         const groupList = [];
         (c.groups || []).forEach((g, idx) => {
-            const memberLayers = c.layers.filter(l => g.layerStableIds.includes(l.stableId));
-            const maxZ = memberLayers.reduce((mx, l) => Math.max(mx, l.zIndex || 0), 0);
+            const maxZ = c.layers.filter(l => g.layerStableIds.includes(l.stableId)).reduce((mx, l) => Math.max(mx, l.zIndex || 0), 0);
             const gDiv = document.createElement('div');
             gDiv.dataset.group = g.name;
             gDiv.style.cssText = `position:absolute;top:0;left:0;width:${w}px;height:${contentH}px;pointer-events:none;z-index:${maxZ};transform-origin:center center;`;
@@ -1314,10 +1313,44 @@ export class SceneRenderer {
             g.layerStableIds.forEach(sid => { layerGroupMap[sid] = idx; });
         });
 
+        // fx번들 래퍼 생성 (효과 한 몸 — 눌림/나타남). groupId와 독립적이며 그룹의 부분집합일 수 있다.
+        // 효과를 한 요소에 걸어야 멤버가 같은 중심으로 함께 변형되므로 멤버를 이 래퍼의 자식으로 모은다.
+        // 래퍼는 캔버스 전체 크기라 transform-origin을 멤버 bbox 중심으로 잡아야 scale이 묶음 중앙 기준으로 동작한다.
+        const fxBySid = {};
+        const fxList = [];
+        (c.fxGroups || []).forEach(fx => {
+            const hasPress = !!(fx.press && fx.press.enabled);
+            const hasAnim = !!(fx.cssAnimation && fx.cssAnimation.enabled);
+            if (!hasPress && !hasAnim) return;
+            const memberLayers = c.layers.filter(l => fx.layerStableIds.includes(l.stableId));
+            if (!memberLayers.length) return;
+            const maxZ = memberLayers.reduce((mx, l) => Math.max(mx, l.zIndex || 0), 0);
+            const fxDiv = document.createElement('div');
+            fxDiv.dataset.fxGroup = fx.name || '';
+            fxDiv.style.cssText = `position:absolute;top:0;left:0;width:${w}px;height:${contentH}px;pointer-events:none;z-index:${maxZ};transform-origin:center center;`;
+            let nX = Infinity, nY = Infinity, xX = -Infinity, xY = -Infinity;
+            memberLayers.forEach(l => {
+                const bw = (l.visual?.width || l.visual?.model?.shape?.width || 0) * (l.scale || 1) * (l.scaleX || 1);
+                const bh = (l.visual?.height || l.visual?.model?.shape?.height || 0) * (l.scale || 1) * (l.scaleY || 1);
+                const lx = l.x || 0, ly = l.y || 0;
+                nX = Math.min(nX, lx); nY = Math.min(nY, ly);
+                xX = Math.max(xX, lx + bw); xY = Math.max(xY, ly + bh);
+            });
+            if (isFinite(nX) && xX > nX) fxDiv.style.transformOrigin = `${(nX + xX) / 2}px ${(nY + xY) / 2}px`;
+            if (hasPress) applyPressEffect(fxDiv, { enabled: true, params: { scale: fx.press.scale ?? 95, brightness: fx.press.brightness ?? 95, transitionMs: fx.press.transitionMs ?? 100 } }, {});
+            if (hasAnim) applyCssAnimationEffect(fxDiv, normalizeCssAnimationEffect({ cssAnimation: fx.cssAnimation }));
+            fxList.push({ fxDiv, memberSids: new Set(fx.layerStableIds) });
+            fx.layerStableIds.forEach(sid => { fxBySid[sid] = fxDiv; });
+        });
+
         const appendLayer = (l, target) => {
-            const gIdx = layerGroupMap[l.stableId];
             const layerEl = this._buildLayerEl(l);
-            if (gIdx !== undefined && groupList[gIdx]) {
+            const fxDiv = fxBySid[l.stableId];
+            const gIdx = layerGroupMap[l.stableId];
+            if (fxDiv) {
+                layerEl.style.pointerEvents = 'auto';
+                fxDiv.appendChild(layerEl);
+            } else if (gIdx !== undefined && groupList[gIdx]) {
                 layerEl.style.pointerEvents = 'auto';
                 groupList[gIdx].gDiv.appendChild(layerEl);
             } else {
@@ -1337,6 +1370,18 @@ export class SceneRenderer {
 
         const sorted = [...c.layers].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
         sorted.forEach(l => appendLayer(l, root));
+
+        // fx번들 래퍼 배치: 멤버가 한 그룹에 속하면 그 그룹 래퍼 안에(중첩), 아니면 root 직속.
+        fxList.forEach(({ fxDiv, memberSids }) => {
+            if (fxDiv.children.length === 0) return;
+            let parent = root;
+            const gIdxs = new Set([...memberSids].map(sid => layerGroupMap[sid]).filter(v => v !== undefined));
+            if (gIdxs.size === 1) {
+                const gi = [...gIdxs][0];
+                if (groupList[gi]) parent = groupList[gi].gDiv;
+            }
+            parent.appendChild(fxDiv);
+        });
 
         // 그룹 래퍼 배치
         groupList.forEach(({ gDiv }) => {
