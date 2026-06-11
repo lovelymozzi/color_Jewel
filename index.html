@@ -1281,7 +1281,7 @@
         .magic-area-focus {
             position: absolute;
             box-sizing: border-box;
-            border-radius: 20px;
+            border-radius: 8px;
             background: transparent;
             box-shadow: 0 10px 24px rgba(81, 53, 138, 0.2);
             animation: none;
@@ -4553,7 +4553,7 @@
         const TRAY_ROW_COUNT = POCKET_SIZE / TOP_POCKET_COUNT;
         const INITIAL_MAX_CLUSTER_SIZE = 12;
         const CLUSTER_STEP_MS = 46;
-        const MAGIC_AREA_SIZE = 6;
+        const MAGIC_AREA_SIZE = 5;
         const ORTHOGONAL_DIRECTIONS = Object.freeze([
             { row: -1, col: 0 },
             { row: 1, col: 0 },
@@ -8741,10 +8741,13 @@
                     const button = document.createElement("button");
                     button.type = "button";
                     button.className = "cell";
+                    button.dataset.row = String(row);
+                    button.dataset.col = String(col);
 
                     if (!target) {
                         button.classList.add("void");
                         button.disabled = true;
+                        button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 빈 영역`);
                         boardElement.appendChild(button);
                         continue;
                     }
@@ -8755,8 +8758,6 @@
                     button.style.setProperty("--tile-dark", shadeColor(COLOR_PALETTE[target].color, -18));
                     button.style.setProperty("--tile-shadow", shadeColor(COLOR_PALETTE[target].color, -34));
                     button.style.setProperty("--tile-light", shadeColor(COLOR_PALETTE[target].color, 12));
-                    button.dataset.row = String(row);
-                    button.dataset.col = String(col);
                     button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
 
                     if (gem === 0 && !isCleanedSocketCell(row, col)) button.classList.add("empty-target");
@@ -9876,7 +9877,7 @@
 
         function getBoardCellFromClientPoint(clientX, clientY) {
             const target = document.elementFromPoint(clientX, clientY);
-            const cell = target?.closest?.(".board-cell");
+            const cell = target?.closest?.("[data-row][data-col]");
             if (!cell || !boardElement?.contains(cell)) {
                 return null;
             }
@@ -10319,7 +10320,7 @@
                 bounds: initialBounds
             });
             render();
-            setStatus("매직으로 맞출 6x6 영역을 선택해 주세요.");
+            setStatus(`매직으로 맞출 ${MAGIC_AREA_SIZE}x${MAGIC_AREA_SIZE} 영역을 선택해 주세요.`);
         }
 
         function cancelMagicTargeting(message = "매직 영역 선택을 취소했어요.") {
