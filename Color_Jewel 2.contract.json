@@ -257,7 +257,7 @@
         },
         "images": [
           {
-            "exportPath": "assets/rock.png",
+            "exportPath": "assets/rock.png?v=20260611-1",
             "width": 32,
             "height": 32,
             "offsetX": 0,
@@ -350,7 +350,7 @@
         },
         "images": [
           {
-            "exportPath": "assets/clean.png",
+            "exportPath": "assets/clean.png?v=20260611-1",
             "width": 35,
             "height": 35,
             "offsetX": 0,
@@ -503,7 +503,7 @@
         },
         "images": [
           {
-            "exportPath": "assets/magic.png",
+            "exportPath": "assets/magic.png?v=20260611-1",
             "width": 32,
             "height": 32,
             "offsetX": 0,

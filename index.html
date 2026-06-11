@@ -34,6 +34,8 @@
             --tray-gap: 8px;
             --gem-size: 84%;
             --socket-shape: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
+            --socket-offset-y: 2px;
+            --socket-outline-size-boost: 6px;
             --gem-screen-overlay:
                 linear-gradient(180deg,
                     rgba(255, 255, 255, 0.48) 0 16%,
@@ -227,7 +229,7 @@
             height: 100%;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             border-radius: 0;
             clip-path: var(--socket-shape);
             background: url("src/assets/jewel_soket.png") center / contain no-repeat;
@@ -242,7 +244,7 @@
             height: 100%;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             border-radius: 0;
             clip-path: var(--socket-shape);
             background: url("src/assets/jewel_soket.png") center / contain no-repeat;
@@ -254,13 +256,12 @@
         .scene-pocket-tray .tray-slot.next-open-slot::after {
             content: "";
             position: absolute;
-            width: calc(100% + 4px);
-            height: calc(100% + 4px);
+            width: calc(100% + 4px + var(--socket-outline-size-boost));
+            height: calc(100% + 4px + var(--socket-outline-size-boost));
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
-            border: 1.4px dashed #75c397;
-            border-radius: 6px;
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
+            background: url("src/assets/jewel_soket_outline.png") center / contain no-repeat;
             box-sizing: border-box;
             opacity: 1;
             z-index: 2;
@@ -336,7 +337,7 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
@@ -373,7 +374,7 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             clip-path: var(--socket-shape);
             background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             filter: none;
@@ -388,7 +389,7 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             clip-path: var(--socket-shape);
             background: url("src/assets/jewel_soket.png") center / contain no-repeat;
             filter: none;
@@ -399,13 +400,12 @@
         .tray-slot.next-open-slot::after {
             content: "";
             position: absolute;
-            width: calc(var(--gem-size) + 6px);
-            height: calc(var(--gem-size) + 6px);
+            width: calc(var(--gem-size) + 6px + var(--socket-outline-size-boost));
+            height: calc(var(--gem-size) + 6px + var(--socket-outline-size-boost));
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
-            border: 1.6px dashed #75c397;
-            border-radius: 8px;
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
+            background: url("src/assets/jewel_soket_outline.png") center / contain no-repeat;
             box-sizing: border-box;
             opacity: 1;
             z-index: 2;
@@ -553,7 +553,7 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
@@ -576,7 +576,7 @@
             aspect-ratio: 1;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             clip-path: var(--socket-shape);
             background:
                 linear-gradient(180deg, rgba(172, 142, 108, 0.036), rgba(172, 142, 108, 0.072)),
@@ -894,7 +894,7 @@
             position: absolute;
             width: 28px;
             height: 28px;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             animation: firework-pop 1.26s ease-out forwards;
         }
 
@@ -907,7 +907,7 @@
             border-radius: 50%;
             background:
                 radial-gradient(circle, rgba(255,255,255,0.98) 0 24%, var(--burst-color, #E0C56D) 24% 58%, rgba(255,255,255,0) 72%);
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, calc(-50% + var(--socket-offset-y)));
             box-shadow:
                 0 0 18px rgba(255, 255, 255, 0.8),
                 0 0 38px var(--burst-glow, rgba(255, 83, 40, 0.7));
@@ -1168,7 +1168,7 @@
         }
 
         .pocket-action-button.icon-magic {
-            --button-icon-image: transparent url("src/assets/magic.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/magic.png?v=20260611-1");
             --button-icon-size: 56%;
             --button-icon-offset-x: -1px;
         }
@@ -1179,14 +1179,14 @@
         }
 
         .pocket-action-button.icon-clean {
-            --button-icon-image: transparent url("src/assets/clean.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/clean.png?v=20260611-1");
             --button-icon-size: 62%;
             --button-icon-offset-x: 1px;
             --button-icon-offset-y: -1px;
         }
 
         .pocket-action-button.icon-rock {
-            --button-icon-image: transparent url("src/assets/rock.png?v=20260605-1");
+            --button-icon-image: transparent url("src/assets/rock.png?v=20260611-1");
             --button-icon-size: 56%;
             --button-icon-offset-x: 1px;
         }
@@ -3046,6 +3046,7 @@
             bgmOn: true,
             hapticsOn: true
         });
+        const SCENE_CONTRACT_VERSION = "20260611-1";
         const LIFECYCLE_DEBUG_LIMIT = 96;
         const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
 
@@ -4157,7 +4158,7 @@
                 return colorJewelSceneContractPromise;
             }
 
-            colorJewelSceneContractPromise = fetch("./Color_Jewel.contract.json", { cache: "no-store" })
+            colorJewelSceneContractPromise = fetch(`./Color_Jewel.contract.json?v=${SCENE_CONTRACT_VERSION}`, { cache: "no-store" })
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error(`Color_Jewel contract load failed: ${response.status}`);

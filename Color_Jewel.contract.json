@@ -175,7 +175,7 @@
               "y": 7,
               "blur": 4,
               "color": "#000000",
-              "opacity": 0
+              "opacity": 13
             },
             {
               "type": "inner",
@@ -261,12 +261,27 @@
         },
         "images": [
           {
-            "exportPath": "assets/rock.png",
-            "width": 32,
-            "height": 32,
+            "exportPath": "assets/rock.png?v=20260611-1",
+            "width": 35,
+            "height": 35,
             "offsetX": 0,
             "offsetY": 0,
-            "zIndex": 2
+            "zIndex": 2,
+            "style": {
+              "shadow": {
+                "enabled": true,
+                "x": 0,
+                "y": 3,
+                "blur": 0,
+                "color": "#000000",
+                "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
+              }
+            }
           }
         ]
       },
@@ -364,7 +379,7 @@
               "shadow": {
                 "enabled": true,
                 "x": 0,
-                "y": 4,
+                "y": 3,
                 "blur": 0,
                 "color": "#000000",
                 "opacity": 15
@@ -517,7 +532,7 @@
               "shadow": {
                 "enabled": true,
                 "x": 0,
-                "y": 4,
+                "y": 3,
                 "blur": 0,
                 "color": "#000000",
                 "opacity": 15

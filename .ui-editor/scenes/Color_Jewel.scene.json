@@ -121,7 +121,7 @@
         "outerShadowY": 7,
         "outerShadowBlur": 4,
         "outerShadowColor": "#000000",
-        "outerShadowOpacity": 0,
+        "outerShadowOpacity": 13,
         "innerShadowEnabled": true,
         "innerShadowX": 0,
         "innerShadowY": 3,
@@ -190,16 +190,16 @@
         "images": [
           {
             "exportPath": "assets/rock.png",
-            "width": 32,
-            "height": 32,
+            "width": 35,
+            "height": 35,
             "offsetX": 0,
             "offsetY": 0,
-            "shadowEnabled": false,
+            "shadowEnabled": true,
             "shadowX": 0,
-            "shadowY": 4,
-            "shadowBlur": 8,
+            "shadowY": 3,
+            "shadowBlur": 0,
             "shadowColor": "#000000",
-            "shadowOpacity": 50,
+            "shadowOpacity": 15,
             "zIndex": 2
           }
         ],
@@ -290,7 +290,7 @@
             "offsetY": 0,
             "shadowEnabled": true,
             "shadowX": 0,
-            "shadowY": 4,
+            "shadowY": 3,
             "shadowBlur": 0,
             "shadowColor": "#000000",
             "shadowOpacity": 15,
@@ -398,7 +398,7 @@
             "offsetY": 0,
             "shadowEnabled": true,
             "shadowX": 0,
-            "shadowY": 4,
+            "shadowY": 3,
             "shadowBlur": 0,
             "shadowColor": "#000000",
             "shadowOpacity": 15,
@@ -413,7 +413,7 @@
             "zIndex": 2
           }
         ],
-        "selectedImageIndex": 1,
+        "selectedImageIndex": 0,
         "pressEnabled": true,
         "pressTransition": 100,
         "pressBrightness": 95,
