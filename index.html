@@ -4753,6 +4753,11 @@
         let colorJewelSceneRootElement = null;
         let colorJewelPocketOverlayElement = null;
         let currentLevelInitialState = null;
+        let preparedNextMapIndex = -1;
+        let preparedNextMapVersion = 0;
+        let preparedNextMapConfig = null;
+        let preparedNextLevelInitialState = null;
+        let preparedNextMapTimer = null;
         let titleSceneRenderer = null;
         let settingSceneRenderer = null;
         let settingSceneContract = null;
@@ -4872,9 +4877,10 @@
         const SETTING_SCENE_CLOSE_ANIMATION_MS = 760;
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
-        const FULL_BOARD_CELEBRATION_MAX_MS = 680;
-        const STAGE_CLEAR_FADE_OUT_MS = 240;
-        const STAGE_CLEAR_TOTAL_MS = 1560;
+        const FULL_BOARD_CELEBRATION_MAX_MS = 120;
+        const STAGE_CLEAR_CONFETTI_MS = 1800;
+        const STAGE_CLEAR_FADE_OUT_MS = 180;
+        const STAGE_CLEAR_TOTAL_MS = STAGE_CLEAR_CONFETTI_MS + 140;
         const STAGE_CLEAR_FIREWORK_SEQUENCE = [
             { left: 18, top: 22, delay: 0, accent: 0 },
             { left: 82, top: 20, delay: 120, accent: 1 },
@@ -4900,9 +4906,16 @@
 
         function syncActiveMap(nextMapIndex = 0) {
             currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
-            persistCurrentMapId(MAP_DEFINITIONS[currentMapIndex].id);
-            applyMapTheme(MAP_DEFINITIONS[currentMapIndex].id);
-            ACTIVE_MAP = buildMapConfig(MAP_DEFINITIONS[currentMapIndex]);
+            const currentDefinition = MAP_DEFINITIONS[currentMapIndex];
+            const currentOverrideVersion = getStageOverrideVersion(currentDefinition);
+            persistCurrentMapId(currentDefinition.id);
+            applyMapTheme(currentDefinition.id);
+            ACTIVE_MAP =
+                preparedNextMapIndex === currentMapIndex &&
+                preparedNextMapVersion === currentOverrideVersion &&
+                preparedNextMapConfig?.id === currentDefinition.id
+                    ? preparedNextMapConfig
+                    : buildMapConfig(currentDefinition);
             TARGET_MAP = ACTIVE_MAP.targetMap;
             ROWS = ACTIVE_MAP.rows;
             COLS = ACTIVE_MAP.cols;
@@ -4932,6 +4945,76 @@
             TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
             boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
             syncPixelAdminWithActiveMap();
+
+            if (preparedNextMapTimer) {
+                window.clearTimeout(preparedNextMapTimer);
+                preparedNextMapTimer = null;
+            }
+
+            const upcomingMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            const upcomingDefinition = MAP_DEFINITIONS[upcomingMapIndex];
+            const upcomingOverrideVersion = getStageOverrideVersion(upcomingDefinition);
+            const isUpcomingPrepared =
+                preparedNextMapIndex === upcomingMapIndex &&
+                preparedNextMapVersion === upcomingOverrideVersion &&
+                preparedNextMapConfig?.id === upcomingDefinition.id &&
+                preparedNextLevelInitialState?.mapId === upcomingDefinition.id;
+
+            if (!isUpcomingPrepared) {
+                preparedNextMapTimer = window.setTimeout(() => {
+                    preparedNextMapTimer = null;
+
+                    const preservedActiveMap = ACTIVE_MAP;
+                    const preservedTargetMap = TARGET_MAP;
+                    const preservedRows = ROWS;
+                    const preservedCols = COLS;
+                    const preservedTargetPositions = TARGET_POSITIONS;
+                    const preservedTargetColorCounts = TARGET_COLOR_COUNTS;
+                    const preservedInitialLayoutOrder = INITIAL_LAYOUT_ORDER;
+                    const preservedTargetNeighborPairs = TARGET_NEIGHBOR_PAIRS;
+                    const preservedTotalTargetCells = TOTAL_TARGET_CELLS;
+                    const preparedConfig = buildMapConfig(upcomingDefinition);
+                    const preparedLayoutIndex = new Map(
+                        preparedConfig.initialLayoutOrder.map((position, index) => [`${position.row}-${position.col}`, index])
+                    );
+
+                    preparedNextMapIndex = upcomingMapIndex;
+                    preparedNextMapVersion = upcomingOverrideVersion;
+                    preparedNextMapConfig = preparedConfig;
+                    ACTIVE_MAP = preparedConfig;
+                    TARGET_MAP = preparedConfig.targetMap;
+                    ROWS = preparedConfig.rows;
+                    COLS = preparedConfig.cols;
+                    TARGET_POSITIONS = preparedConfig.targetPositions;
+                    TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
+                    INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
+                    TARGET_NEIGHBOR_PAIRS = preparedConfig.targetPositions.flatMap((position) => {
+                        const neighbors = [];
+                        [
+                            { row: position.row + 1, col: position.col },
+                            { row: position.row, col: position.col + 1 }
+                        ].forEach((neighbor) => {
+                            if (!preparedConfig.targetMap[neighbor.row]?.[neighbor.col]) return;
+                            neighbors.push([
+                                preparedLayoutIndex.get(`${position.row}-${position.col}`),
+                                preparedLayoutIndex.get(`${neighbor.row}-${neighbor.col}`)
+                            ]);
+                        });
+                        return neighbors;
+                    });
+                    TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
+                    preparedNextLevelInitialState = buildCurrentLevelInitialState();
+                    ACTIVE_MAP = preservedActiveMap;
+                    TARGET_MAP = preservedTargetMap;
+                    ROWS = preservedRows;
+                    COLS = preservedCols;
+                    TARGET_POSITIONS = preservedTargetPositions;
+                    TARGET_COLOR_COUNTS = preservedTargetColorCounts;
+                    INITIAL_LAYOUT_ORDER = preservedInitialLayoutOrder;
+                    TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
+                    TOTAL_TARGET_CELLS = preservedTotalTargetCells;
+                }, 0);
+            }
         }
 
         function getCurrentMapDefinition() {
@@ -7689,10 +7772,7 @@
             const designHeight = contract?.viewport?.height || contract?.canvas?.height || 844;
             const mountWidth = stageClearSceneMountElement?.clientWidth || designWidth;
             const mountHeight = stageClearSceneMountElement?.clientHeight || designHeight;
-            const insetPadding = Math.max(12, Math.min(24, Math.floor(Math.min(mountWidth, mountHeight) * 0.04)));
-            const availableWidth = Math.max(1, mountWidth - insetPadding * 2);
-            const availableHeight = Math.max(1, mountHeight - insetPadding * 2);
-            const scale = Math.min(1, availableWidth / designWidth, availableHeight / designHeight);
+            const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
 
             return {
                 designWidth,
@@ -7802,18 +7882,44 @@
             solvedStageFailSafeTimer = null;
         }
 
-        function advanceToNextStage(sessionVersion = gameSessionVersion) {
+        function advanceToNextStage(sessionVersion = gameSessionVersion, options = {}) {
+            const { preserveStageClearOverlay = false } = options;
             if (!isCurrentGameSession(sessionVersion)) {
                 return false;
             }
 
+            const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
+            const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
             clearPersistedGameProgress();
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
-            clearStageClearTimers();
+            if (preserveStageClearOverlay) {
+                stageClearTimers.forEach((timerId) => window.clearTimeout(timerId));
+                stageClearTimers = [];
+            } else {
+                clearStageClearTimers();
+            }
             isStageTransitioning = false;
-            syncActiveMap(currentMapIndex + 1);
-            resetGame({ regenerateLevelStart: true });
+            syncActiveMap(nextMapIndex);
+            currentLevelInitialState =
+                preparedNextMapIndex === nextMapIndex &&
+                preparedNextMapVersion === nextOverrideVersion &&
+                preparedNextLevelInitialState?.mapId === ACTIVE_MAP?.id
+                    ? {
+                        mapId: preparedNextLevelInitialState.mapId,
+                        rows: preparedNextLevelInitialState.rows,
+                        cols: preparedNextLevelInitialState.cols,
+                        boardState: cloneBoardSnapshot(preparedNextLevelInitialState.boardState),
+                        trayState: [...preparedNextLevelInitialState.trayState],
+                        cleanedSocketCells: [...(preparedNextLevelInitialState.cleanedSocketCells || [])],
+                        actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
+                    }
+                    : null;
+            resetGame({
+                regenerateLevelStart: !currentLevelInitialState,
+                preserveStageClearOverlay
+            });
             return true;
         }
 
@@ -7846,24 +7952,21 @@
                     return;
                 }
 
-                if (stageClearOverlayElement?.classList.contains("active")) {
-                    let didAdvance = false;
-                    const handleAdvance = () => {
-                        if (didAdvance || !isCurrentGameSession(sessionVersion)) {
-                            return;
-                        }
-                        didAdvance = true;
-                        advanceToNextStage(sessionVersion);
-                    };
-
-                    stageClearOverlayElement.addEventListener("transitionend", handleAdvance, { once: true });
+                const shouldFadeOverlay = stageClearOverlayElement?.classList.contains("active");
+                if (shouldFadeOverlay) {
                     stageClearOverlayElement.classList.remove("active");
-                    const nextStageFallbackTimer = window.setTimeout(handleAdvance, STAGE_CLEAR_FADE_OUT_MS + 34);
-                    stageClearTimers.push(nextStageFallbackTimer);
+                }
+
+                if (!advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay })) {
                     return;
                 }
 
-                advanceToNextStage(sessionVersion);
+                if (shouldFadeOverlay) {
+                    const stageClearCleanupTimer = window.setTimeout(() => {
+                        clearStageClearTimers();
+                    }, STAGE_CLEAR_FADE_OUT_MS + 34);
+                    stageClearTimers.push(stageClearCleanupTimer);
+                }
             }, STAGE_TRANSITION_DELAY_MS);
             stageClearTimers.push(fadeOutTimer);
         }
@@ -8044,15 +8147,16 @@
             const completedCells = TARGET_POSITIONS
                 .filter((position) => isCompletedTargetCell(position.row, position.col))
                 .sort((left, right) => left.row - right.row || left.col - right.col);
-            const sparkleStepMs = completedCells.length
-                ? Math.max(8, Math.min(COLOR_COMPLETE_STEP_MS, Math.floor(FULL_BOARD_CELEBRATION_MAX_MS / completedCells.length)))
-                : COLOR_COMPLETE_STEP_MS;
+            const sparkleSpreadBudgetMs = Math.max(0, FULL_BOARD_CELEBRATION_MAX_MS - MATCH_SPARKLE_MS - 60);
 
             completedCells.forEach((cell, index) => {
+                const sparkleDelayMs = completedCells.length <= 1
+                    ? startDelayMs
+                    : startDelayMs + Math.round((index / (completedCells.length - 1)) * sparkleSpreadBudgetMs);
                 const timerId = window.setTimeout(() => {
                     markCorrectPlacementSparkle(cell.row, cell.col);
                     scheduleRender();
-                }, startDelayMs + index * sparkleStepMs);
+                }, sparkleDelayMs);
                 celebrationTimers.push(timerId);
             });
 
@@ -8066,8 +8170,7 @@
                 return startDelayMs;
             }
 
-            const lastSparkleStartDelay = startDelayMs + (completedCells.length - 1) * sparkleStepMs;
-            return lastSparkleStartDelay + MATCH_SPARKLE_MS + 60;
+            return startDelayMs + FULL_BOARD_CELEBRATION_MAX_MS;
         }
 
         function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
@@ -11034,10 +11137,12 @@
         }
 
         function resetGame(options = {}) {
-            const { regenerateLevelStart = false } = options;
+            const { regenerateLevelStart = false, preserveStageClearOverlay = false } = options;
             gameSessionVersion += 1;
             clearSolvedStageFailSafeTimer();
-            clearStageClearTimers();
+            if (!preserveStageClearOverlay) {
+                clearStageClearTimers();
+            }
             clearMagicDragState();
             isAnimating = false;
             isStageTransitioning = false;
@@ -11334,6 +11439,15 @@
                 }
 
                 await ensureColorJewelSceneUi();
+                void getStageClearContract().then((contract) => {
+                    const stageClearImageExportPaths = (contract?.layers || [])
+                        .map((layer) => layer?.image?.exportPath || layer?.visual?.exportPath || "")
+                        .filter((path) => typeof path === "string" && path.trim());
+                    stageClearImageExportPaths.forEach((path) => {
+                        const preloadImage = new Image();
+                        preloadImage.src = `./src/${String(path).replace(/^\.\//, "").replace(/^assets\//, "assets/")}`;
+                    });
+                });
                 initializeBottomActionButtons();
                 const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
                 pushLifecycleDebugEntry("runtime-restore", {
