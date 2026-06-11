@@ -2067,10 +2067,6 @@
 
             <div id="sceneBottomUiMount"></div>
 
-            <div class="title-loading-overlay" id="titleLoadingOverlay" aria-hidden="true">
-                <div class="title-scene-host" id="titleSceneMount" aria-hidden="true"></div>
-            </div>
-
             <div class="setting-overlay" id="settingOverlay" aria-hidden="true">
                 <div class="setting-scene-host" id="settingSceneMount" aria-hidden="true"></div>
             </div>
@@ -2079,6 +2075,10 @@
                 <div class="stage-clear-scene-host" id="stageClearSceneMount" aria-hidden="true"></div>
             </div>
         </section>
+
+        <div class="title-loading-overlay" id="titleLoadingOverlay" aria-hidden="true">
+            <div class="title-scene-host" id="titleSceneMount" aria-hidden="true"></div>
+        </div>
     </main>
 
     <button class="pixel-admin-toggle" id="pixelAdminToggle" type="button" aria-controls="pixelAdmin" aria-expanded="false">
@@ -11297,6 +11297,15 @@
                         titleLoaderElement?.classList.add("title-scene-loader");
                         const titleLoaderImageElement = titleLoaderElement?.querySelector("img") || null;
 
+                        if (titleLoadingOverlayElement) {
+                            const titleBackground = titleContract?.background || {};
+                            if (titleBackground.type === "linear-gradient") {
+                                titleLoadingOverlayElement.style.background = `linear-gradient(${titleBackground.gradientAngle || 180}deg, ${titleBackground.color || "#fffef6"}, ${titleBackground.color2 || titleBackground.color || "#f7e3ab"})`;
+                            } else {
+                                titleLoadingOverlayElement.style.background = titleBackground.color || "#fffef6";
+                            }
+                        }
+
                         titleLoadingOverlayElement.classList.add("active");
                         titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
                         titleSceneMountElement.setAttribute("aria-hidden", "false");
@@ -11345,6 +11354,10 @@
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
                 } else if (titleLoadingOverlayElement) {
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
+                }
+
+                if (titleLoadingOverlayElement) {
+                    titleLoadingOverlayElement.style.background = "transparent";
                 }
 
                 if (titleSceneRenderer) {
