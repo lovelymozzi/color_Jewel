@@ -552,3 +552,53 @@ ConnectionAbortedError: [WinError 10053] 현재 연결은 사용자의 호스트 시스템의 소
 ::1 - - [11/Jun/2026 18:13:12] "GET /src/assets/magic.png?v=1781169192668 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 18:13:12] "GET /src/assets/clean.png?v=1781169192668 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 18:13:13] "GET /setting.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:28:32] "GET /src/assets/Icon_WhiteIcon_check_s.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:28:32] "GET /src/assets/Icon_WhiteIcon_Close.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:28:52] "GET / HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:28:53] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:28:53] "GET /src/assets/clean.png?v=1781170132929 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:28:53] "GET /src/assets/rock.png?v=1781170132929 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:28:53] "GET /src/assets/magic.png?v=1781170132929 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:28:53] "GET /src/assets/jewel_soket_outline.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:28:54] code 404, message File not found
+::1 - - [11/Jun/2026 18:28:54] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 18:33:15] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:33:15] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:33:15] "GET /src/assets/rock.png?v=1781170395312 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:33:15] "GET /src/assets/clean.png?v=1781170395312 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:33:15] "GET /src/assets/magic.png?v=1781170395312 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:33:16] code 404, message File not found
+::1 - - [11/Jun/2026 18:33:16] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 18:36:09] "GET /setting.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:35] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:36] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:36] "GET /scene-renderer.js HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:39:36] "GET /src/assets/rock.png?v=1781170776229 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:36] "GET /src/assets/clean.png?v=1781170776229 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:36] "GET /src/assets/magic.png?v=1781170776229 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:39:38] code 404, message File not found
+::1 - - [11/Jun/2026 18:39:38] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 18:42:46] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:42:46] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:42:46] "GET /src/assets/rock.png?v=1781170966455 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:42:46] "GET /src/assets/clean.png?v=1781170966455 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:42:46] "GET /src/assets/magic.png?v=1781170966455 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:42:46] "GET /src/assets/jewel_soket.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:50:40] code 404, message File not found
+::1 - - [11/Jun/2026 18:50:40] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 18:50:40] "GET /setting.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:50:40] code 404, message File not found
+::1 - - [11/Jun/2026 18:50:40] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Jun/2026 18:50:41] "GET /src/assets/Icon_WhiteIcon_check_s.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:50:41] "GET /src/assets/Icon_WhiteIcon_Close.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:38] "GET / HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:39] "GET /sound.js HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:39] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/clean.png?v=1781171919264 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/rock.png?v=1781171919264 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/magic.png?v=1781171919264 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/PictoIcon_Setting_1.webp HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/PictoIcon_Player_Play.Png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:39] "GET /src/assets/jewel_soket_outline.png HTTP/1.1" 304 -
+::1 - - [11/Jun/2026 18:58:40] code 404, message File not found
+::1 - - [11/Jun/2026 18:58:40] "GET /favicon.ico HTTP/1.1" 404 -
