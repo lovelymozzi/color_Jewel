@@ -3,17 +3,17 @@
   "sceneId": "stage-clear",
   "sceneName": "Stage_Clear",
   "canvas": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "viewport": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "background": {
-    "type": "none",
-    "color": "rgba(245,245,245,0)",
-    "color2": "#0e4a8c",
+    "type": "solid",
+    "color": "rgba(255,255,255,0.27)",
+    "color2": "#ffffff",
     "gradientAngle": 180,
     "imagePath": "",
     "tileSize": 64,
@@ -23,6 +23,7 @@
     "scrollDuration": 4
   },
   "groups": [],
+  "fxGroups": [],
   "sceneAnimations": [],
   "layers": [
     {
@@ -338,31 +339,16 @@
       ]
     },
     {
-      "stableId": "label-png-73",
+      "stableId": "label-png-76",
       "layerType": "image",
       "displayName": "label.png",
-      "x": 40,
-      "y": -31,
+      "x": 16,
+      "y": -84,
       "zIndex": 5,
       "visual": {
         "exportPath": "assets/label.png",
-        "width": 310,
-        "height": 199,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#ffa8a8",
-            "strength": 100
-          }
-        }
+        "width": 358,
+        "height": 306
       }
     }
   ]

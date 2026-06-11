@@ -4873,7 +4873,8 @@
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 680;
-        const FIREWORK_BURST_CLEANUP_MS = 1450;
+        const STAGE_CLEAR_FADE_OUT_MS = 240;
+        const STAGE_CLEAR_TOTAL_MS = 1560;
         const STAGE_CLEAR_FIREWORK_SEQUENCE = [
             { left: 18, top: 22, delay: 0, accent: 0 },
             { left: 82, top: 20, delay: 120, accent: 1 },
@@ -4885,8 +4886,9 @@
             { left: 50, top: 34, delay: 900, accent: 3 }
         ];
         const STAGE_TRANSITION_DELAY_MS = Math.max(
-            ...STAGE_CLEAR_FIREWORK_SEQUENCE.map(({ delay }) => delay)
-        ) + FIREWORK_BURST_CLEANUP_MS;
+            0,
+            STAGE_CLEAR_TOTAL_MS - STAGE_CLEAR_FADE_OUT_MS
+        );
         const DIAMOND_PARTICLE_PRESETS = [
             { dx: -18, dy: -16, size: 16, rotation: -24, delay: 0 },
             { dx: 20, dy: -14, size: 14, rotation: 18, delay: 30 },
@@ -7828,22 +7830,42 @@
                 stageClearOverlayElement.setAttribute("aria-hidden", "false");
             }
 
-            void showStageClearScene(sessionVersion);
+            void showStageClearScene(sessionVersion).then((didShow) => {
+                if (!didShow || !isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                    return;
+                }
 
-            STAGE_CLEAR_FIREWORK_SEQUENCE.forEach(({ delay, accent }) => {
-                void playFireworkBurstSound(delay, accent);
+                void playFireworkBurstSound(0, 3);
             });
 
             void playColorCompleteSound(30);
             void playColorCompleteSound(520);
 
-            const nextStageTimer = window.setTimeout(() => {
+            const fadeOutTimer = window.setTimeout(() => {
                 if (!isCurrentGameSession(sessionVersion)) {
                     return;
                 }
+
+                if (stageClearOverlayElement?.classList.contains("active")) {
+                    let didAdvance = false;
+                    const handleAdvance = () => {
+                        if (didAdvance || !isCurrentGameSession(sessionVersion)) {
+                            return;
+                        }
+                        didAdvance = true;
+                        advanceToNextStage(sessionVersion);
+                    };
+
+                    stageClearOverlayElement.addEventListener("transitionend", handleAdvance, { once: true });
+                    stageClearOverlayElement.classList.remove("active");
+                    const nextStageFallbackTimer = window.setTimeout(handleAdvance, STAGE_CLEAR_FADE_OUT_MS + 34);
+                    stageClearTimers.push(nextStageFallbackTimer);
+                    return;
+                }
+
                 advanceToNextStage(sessionVersion);
             }, STAGE_TRANSITION_DELAY_MS);
-            stageClearTimers.push(nextStageTimer);
+            stageClearTimers.push(fadeOutTimer);
         }
 
         function triggerSolvedStageSequence(sessionVersion = gameSessionVersion) {

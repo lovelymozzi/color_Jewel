@@ -11,6 +11,11 @@
 - **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
 
+<!-- SCENE:Stage_Clear BEGIN -->
+#### `Stage_Clear`  ·  contract: `./Stage_Clear.contract.json`
+- 이벤트: 없음
+<!-- SCENE:Stage_Clear END -->
+
 <!-- SCENE:setting BEGIN -->
 #### `setting`  ·  contract: `./setting.contract.json`
 - **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):

@@ -917,3 +917,11 @@ ConnectionAbortedError: [WinError 10053] 현재 연결은 사용자의 호스트 시스템의 소
 ::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/rock.png?v=1781178560896 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/clean.png?v=1781178560896 HTTP/1.1" 200 -
 ::1 - - [11/Jun/2026 20:49:21] "GET /src/assets/magic.png?v=1781178560896 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:58] "GET / HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:58] "GET /title.contract.json HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /src/assets/animation%20(5).png?v=1781178658906 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /src/assets/title.png?v=1781178658906 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /src/assets/rock.png?v=1781178658906 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /src/assets/clean.png?v=1781178658906 HTTP/1.1" 200 -
+::1 - - [11/Jun/2026 20:50:59] "GET /src/assets/magic.png?v=1781178658906 HTTP/1.1" 200 -
