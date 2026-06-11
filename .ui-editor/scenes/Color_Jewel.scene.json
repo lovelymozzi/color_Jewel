@@ -446,7 +446,7 @@
       "scaleY": 1,
       "rotation": 0,
       "zIndex": 6,
-      "visible": false,
+      "visible": true,
       "componentState": {
         "name": "타원",
         "shapeType": "circle",

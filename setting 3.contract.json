@@ -1,7 +1,7 @@
 {
   "contractVersion": 1,
-  "sceneId": "setting",
-  "sceneName": "setting",
+  "sceneId": "setting-3",
+  "sceneName": "setting 3",
   "canvas": {
     "width": 390,
     "height": 844
@@ -25,111 +25,66 @@
   "groups": [
     {
       "name": "sound_on",
-      "layerStableIds": []
+      "layerStableIds": [
+        "-226",
+        "pictoicon-sfx-on-png-227",
+        "shape-ellipse-228"
+      ]
     },
     {
       "name": "bg",
       "layerStableIds": [
-        "shape-rect-112",
-        "-111",
-        "-113",
-        "pause-119"
+        "shape-rect-220",
+        "-221",
+        "-222",
+        "pause-223"
       ]
     },
     {
       "name": "sound_off",
-      "layerStableIds": []
+      "layerStableIds": [
+        "-229",
+        "shape-ellipse-230",
+        "pictoicon-sfx-off-png-231"
+      ]
     },
     {
       "name": "bgm_on",
-      "layerStableIds": []
+      "layerStableIds": [
+        "shape-round-rect-232",
+        "pictoicon-music-on-png-233",
+        "shape-ellipse-234"
+      ]
     },
     {
       "name": "bgm_off",
-      "layerStableIds": []
+      "layerStableIds": [
+        "shape-round-rect-235",
+        "pictoicon-music-off-png-236",
+        "shape-ellipse-237"
+      ]
     },
     {
       "name": "haptics_off",
-      "layerStableIds": []
+      "layerStableIds": [
+        "shape-round-rect-238",
+        "haptics-off-png-239",
+        "shape-ellipse-240"
+      ]
     },
     {
       "name": "haptics_on",
-      "layerStableIds": []
-    },
-    {
-      "name": "bgm_on",
       "layerStableIds": [
-        "-254",
-        "jewel-soket-png-256",
-        "icon-whiteicon-check-s-png-258"
-      ]
-    },
-    {
-      "name": "off",
-      "layerStableIds": []
-    },
-    {
-      "name": "Group",
-      "layerStableIds": []
-    },
-    {
-      "name": "on",
-      "layerStableIds": []
-    },
-    {
-      "name": "bgm_off",
-      "layerStableIds": [
-        "shape-pill-274",
-        "jewel-soket-png-275",
-        "icon-whiteicon-close-png-277"
-      ]
-    },
-    {
-      "name": "sfx_on",
-      "layerStableIds": []
-    },
-    {
-      "name": "sfx_on",
-      "layerStableIds": []
-    },
-    {
-      "name": "sfx_on",
-      "layerStableIds": [
-        "-304",
-        "jewel-soket-png-305",
-        "icon-whiteicon-check-s-png-306"
-      ]
-    },
-    {
-      "name": "sfx_off",
-      "layerStableIds": [
-        "shape-pill-307",
-        "jewel-soket-png-308",
-        "icon-whiteicon-close-png-309"
-      ]
-    },
-    {
-      "name": "vibration_on",
-      "layerStableIds": [
-        "-310",
-        "jewel-soket-png-311",
-        "icon-whiteicon-check-s-png-312"
-      ]
-    },
-    {
-      "name": "vibration_off",
-      "layerStableIds": [
-        "shape-pill-313",
-        "jewel-soket-png-314",
-        "icon-whiteicon-close-png-315"
+        "-241",
+        "haptics-png-242",
+        "shape-ellipse-243"
       ]
     }
   ],
-  "fxGroups": [],
   "sceneAnimations": [],
   "layers": [
     {
-      "stableId": "shape-rect-112",
+      "stableId": "shape-rect-220",
       "layerType": "component",
       "displayName": "사각형",
       "x": 67,
@@ -146,8 +101,8 @@
             "hollowThickness": 8
           },
           "fill": {
-            "type": "solid",
-            "color1": "#fef1b3",
+            "type": "linear-gradient",
+            "color1": "#feebb0",
             "color2": "#ecd38e",
             "angle": 180,
             "depthIntensity": 50,
@@ -193,7 +148,7 @@
       }
     },
     {
-      "stableId": "-111",
+      "stableId": "-221",
       "layerType": "component",
       "displayName": "원",
       "x": 67,
@@ -211,7 +166,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fef1b3",
+            "color1": "#feebb0",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -257,7 +212,7 @@
       }
     },
     {
-      "stableId": "-113",
+      "stableId": "-222",
       "layerType": "component",
       "displayName": "사각형",
       "x": 125,
@@ -275,7 +230,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#fef1b3",
+            "color1": "#feebb0",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -321,7 +276,7 @@
       }
     },
     {
-      "stableId": "pause-119",
+      "stableId": "pause-223",
       "layerType": "component",
       "displayName": "pause",
       "x": 67,
@@ -339,7 +294,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#ddafef",
+            "color1": "#e8d15d",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -416,7 +371,7 @@
       ]
     },
     {
-      "stableId": "re-start-115",
+      "stableId": "re-start-224",
       "layerType": "component",
       "displayName": "re start",
       "x": 110,
@@ -434,7 +389,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#80cf77",
+            "color1": "#ff907d",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -449,14 +404,14 @@
               "type": "depth-edge",
               "enabled": true,
               "size": 4,
-              "color": "#6ab079"
+              "color": "#e37b68"
             },
             {
               "type": "outer",
-              "enabled": true,
+              "enabled": false,
               "x": 0,
-              "y": 7,
-              "blur": 4,
+              "y": 4,
+              "blur": 8,
               "color": "#000000",
               "opacity": 30
             },
@@ -555,12 +510,12 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "re-start-115:click"
+          "eventName": "re-start-224:click"
         }
       ]
     },
     {
-      "stableId": "re-play-114",
+      "stableId": "re-play-225",
       "layerType": "component",
       "displayName": "re play",
       "x": 110,
@@ -597,11 +552,11 @@
             },
             {
               "type": "outer",
-              "enabled": true,
+              "enabled": false,
               "x": 0,
-              "y": 7,
-              "blur": 4,
-              "color": "#000000",
+              "y": -3,
+              "blur": 0,
+              "color": "#ffffff",
               "opacity": 30
             },
             {
@@ -704,12 +659,858 @@
       ]
     },
     {
-      "stableId": "bgm-184",
+      "stableId": "-226",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 374,
+      "zIndex": 8,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#b980ff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-sfx-on-png-227",
+      "layerType": "image",
+      "displayName": "PictoIcon_Sfx_On.Png",
+      "x": 305,
+      "y": 380,
+      "zIndex": 8,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Sfx_On.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-228",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 261,
+      "y": 382,
+      "zIndex": 9,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "-229",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 374,
+      "zIndex": 10,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#c4b254",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-ellipse-230",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 305,
+      "y": 382,
+      "zIndex": 11,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-sfx-off-png-231",
+      "layerType": "image",
+      "displayName": "PictoIcon_Sfx_Off.Png",
+      "x": 262,
+      "y": 382,
+      "zIndex": 12,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Sfx_Off.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-round-rect-232",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 307,
+      "zIndex": 13,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#b980ff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-music-on-png-233",
+      "layerType": "image",
+      "displayName": "PictoIcon_Music_On.Png",
+      "x": 304,
+      "y": 316,
+      "zIndex": 14,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Music_On.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-234",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 261,
+      "y": 315,
+      "zIndex": 15,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-235",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 307,
+      "zIndex": 16,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#c4b254",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "pictoicon-music-off-png-236",
+      "layerType": "image",
+      "displayName": "PictoIcon_Music_Off.Png",
+      "x": 260,
+      "y": 316,
+      "zIndex": 17,
+      "visual": {
+        "exportPath": "assets/PictoIcon_Music_Off.Png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-237",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 304,
+      "y": 315,
+      "zIndex": 18,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "shape-round-rect-238",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 440,
+      "zIndex": 19,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#c4b254",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "haptics-off-png-239",
+      "layerType": "image",
+      "displayName": "Haptics_off.png",
+      "x": 262,
+      "y": 448,
+      "zIndex": 20,
+      "visual": {
+        "exportPath": "assets/Haptics_off.png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-240",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 305,
+      "y": 448,
+      "zIndex": 21,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "-241",
+      "layerType": "component",
+      "displayName": "둥근 사각형",
+      "x": 252,
+      "y": 440,
+      "zIndex": 22,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 95,
+            "height": 49,
+            "radius": 16,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#b980ff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "haptics-png-242",
+      "layerType": "image",
+      "displayName": "Haptics.png",
+      "x": 303,
+      "y": 448,
+      "zIndex": 23,
+      "visual": {
+        "exportPath": "assets/Haptics.png",
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "stableId": "shape-ellipse-243",
+      "layerType": "component",
+      "displayName": "타원",
+      "x": 261,
+      "y": 448,
+      "zIndex": 24,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "circle",
+            "width": 33,
+            "height": 30,
+            "radius": 12,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "solid",
+            "color1": "#ffffff",
+            "color2": "#2e6ab4",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 0,
+            "color": "#6bb5ff"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": false,
+              "size": 0,
+              "color": "#1e4a80"
+            },
+            {
+              "type": "outer",
+              "enabled": false,
+              "x": 0,
+              "y": 4,
+              "blur": 8,
+              "color": "#000000",
+              "opacity": 30
+            },
+            {
+              "type": "inner",
+              "enabled": false,
+              "x": 0,
+              "y": 1,
+              "blur": 4,
+              "color": "#ffffff",
+              "opacity": 15
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        }
+      }
+    },
+    {
+      "stableId": "bgm-244",
       "layerType": "component",
       "displayName": "bgm",
-      "x": 95,
+      "x": 64,
       "y": 312,
-      "zIndex": 16,
+      "zIndex": 25,
       "visual": {
         "model": {
           "shape": {
@@ -771,10 +1572,10 @@
           "slotIndex": 0,
           "staticContent": "BGM",
           "bindingKey": "",
-          "fontSize": 16,
+          "fontSize": 20,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#452510",
+          "color": "#ffffff",
           "offsetX": -12,
           "offsetY": 0,
           "style": {
@@ -798,12 +1599,12 @@
       ]
     },
     {
-      "stableId": "sfx-185",
+      "stableId": "sfx-245",
       "layerType": "component",
       "displayName": "sfx",
-      "x": 93,
+      "x": 64,
       "y": 383,
-      "zIndex": 16,
+      "zIndex": 26,
       "visual": {
         "model": {
           "shape": {
@@ -865,10 +1666,10 @@
           "slotIndex": 0,
           "staticContent": "SFX",
           "bindingKey": "",
-          "fontSize": 16,
+          "fontSize": 20,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#48240e",
+          "color": "#ffffff",
           "offsetX": -12,
           "offsetY": 0,
           "style": {
@@ -892,12 +1693,12 @@
       ]
     },
     {
-      "stableId": "vibration-187",
+      "stableId": "vibration-246",
       "layerType": "component",
       "displayName": "vibration",
-      "x": 93,
+      "x": 69,
       "y": 445,
-      "zIndex": 16,
+      "zIndex": 27,
       "visual": {
         "model": {
           "shape": {
@@ -959,10 +1760,10 @@
           "slotIndex": 0,
           "staticContent": "VIBRATION",
           "bindingKey": "",
-          "fontSize": 16,
+          "fontSize": 20,
           "fontWeight": "bold",
           "fontFamily": "\"Baloo 2\", cursive",
-          "color": "#3c1b09",
+          "color": "#ffffff",
           "offsetX": 12,
           "offsetY": 0,
           "style": {
@@ -986,12 +1787,12 @@
       ]
     },
     {
-      "stableId": "shape-round-rect-190",
+      "stableId": "shape-round-rect-247",
       "layerType": "component",
       "displayName": "둥근 사각형",
       "x": 98,
       "y": 283,
-      "zIndex": 10,
+      "zIndex": 7,
       "visual": {
         "model": {
           "shape": {
@@ -1004,7 +1805,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f3e49b",
+            "color1": "#ab9669",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -1017,24 +1818,24 @@
           "shadows": [
             {
               "type": "depth-edge",
-              "enabled": true,
-              "size": 3,
-              "color": "#fff5c2"
+              "enabled": false,
+              "size": 4,
+              "color": "#677683"
             },
             {
               "type": "outer",
               "enabled": false,
               "x": 0,
-              "y": 2,
-              "blur": 4,
+              "y": 4,
+              "blur": 8,
               "color": "#000000",
-              "opacity": 13
+              "opacity": 30
             },
             {
               "type": "inner",
-              "enabled": true,
+              "enabled": false,
               "x": 0,
-              "y": 3,
+              "y": 4,
               "blur": 0,
               "color": "#2a333c",
               "opacity": 15
@@ -1045,816 +1846,6 @@
             "enabled": false,
             "innerPct": 28,
             "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "pictoicon-music-on-png-251",
-      "layerType": "image",
-      "displayName": "PictoIcon_Music_On.Png",
-      "x": 111,
-      "y": 318,
-      "zIndex": 11,
-      "visual": {
-        "exportPath": "assets/PictoIcon_Music_On.Png",
-        "width": 30,
-        "height": 30,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#43200d",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "pictoicon-sfx-on-png-252",
-      "layerType": "image",
-      "displayName": "PictoIcon_Sfx_On.Png",
-      "x": 111,
-      "y": 388,
-      "zIndex": 12,
-      "visual": {
-        "exportPath": "assets/PictoIcon_Sfx_On.Png",
-        "width": 30,
-        "height": 30,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#ffffff",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#43200d",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "haptics-png-253",
-      "layerType": "image",
-      "displayName": "Haptics.png",
-      "x": 109,
-      "y": 448,
-      "zIndex": 13,
-      "visual": {
-        "exportPath": "assets/Haptics.png",
-        "width": 30,
-        "height": 30,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#43200d",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "-254",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 312,
-      "zIndex": 14,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-256",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 299,
-      "y": 307,
-      "zIndex": 15,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#b17c20",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cdeff",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-check-s-png-258",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_check_s.png",
-      "x": 265,
-      "y": 320,
-      "zIndex": 16,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_check_s.png",
-        "width": 25,
-        "height": 25,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#71c167",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "shape-pill-274",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 311,
-      "zIndex": 20,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-275",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 235,
-      "y": 307,
-      "zIndex": 21,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#1e293b",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cffb8",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-close-png-277",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_Close.png",
-      "x": 308,
-      "y": 322,
-      "zIndex": 22,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_Close.png",
-        "width": 20,
-        "height": 20,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#afa364",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "-304",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 381,
-      "zIndex": 21,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-305",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 299,
-      "y": 376,
-      "zIndex": 22,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#b17c20",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cdeff",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-check-s-png-306",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_check_s.png",
-      "x": 265,
-      "y": 389,
-      "zIndex": 23,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_check_s.png",
-        "width": 25,
-        "height": 25,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#71c167",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "shape-pill-307",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 380,
-      "zIndex": 27,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-308",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 235,
-      "y": 376,
-      "zIndex": 28,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#1e293b",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cffb8",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-close-png-309",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_Close.png",
-      "x": 308,
-      "y": 391,
-      "zIndex": 29,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_Close.png",
-        "width": 20,
-        "height": 20,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#afa364",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "-310",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 448,
-      "zIndex": 27,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-311",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 299,
-      "y": 443,
-      "zIndex": 28,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#b17c20",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cdeff",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-check-s-png-312",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_check_s.png",
-      "x": 265,
-      "y": 456,
-      "zIndex": 29,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_check_s.png",
-        "width": 25,
-        "height": 25,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#71c167",
-            "strength": 100
-          }
-        }
-      }
-    },
-    {
-      "stableId": "shape-pill-313",
-      "layerType": "component",
-      "displayName": "알약",
-      "x": 249,
-      "y": 447,
-      "zIndex": 33,
-      "visual": {
-        "model": {
-          "shape": {
-            "type": "pill",
-            "width": 96,
-            "height": 40,
-            "radius": 12,
-            "notch": 20,
-            "hollowThickness": 8
-          },
-          "fill": {
-            "type": "solid",
-            "color1": "#e9d881",
-            "color2": "#2e6ab4",
-            "angle": 180,
-            "depthIntensity": 50,
-            "rayCount": 8
-          },
-          "border": {
-            "width": 0,
-            "color": "#6bb5ff"
-          },
-          "shadows": [
-            {
-              "type": "depth-edge",
-              "enabled": true,
-              "size": 2,
-              "color": "#fff7e4"
-            },
-            {
-              "type": "outer",
-              "enabled": false,
-              "x": 0,
-              "y": 4,
-              "blur": 8,
-              "color": "#000000",
-              "opacity": 30
-            },
-            {
-              "type": "inner",
-              "enabled": false,
-              "x": 0,
-              "y": 1,
-              "blur": 4,
-              "color": "#ffffff",
-              "opacity": 15
-            }
-          ],
-          "mask": {
-            "type": "ring-fade",
-            "enabled": false,
-            "innerPct": 28,
-            "outerPct": 76
-          }
-        }
-      }
-    },
-    {
-      "stableId": "jewel-soket-png-314",
-      "layerType": "image",
-      "displayName": "jewel_soket.png",
-      "x": 235,
-      "y": 443,
-      "zIndex": 34,
-      "visual": {
-        "exportPath": "assets/jewel_soket.png",
-        "width": 52,
-        "height": 40,
-        "style": {
-          "shadow": {
-            "enabled": true,
-            "x": 0,
-            "y": -3,
-            "blur": 1,
-            "color": "#1e293b",
-            "opacity": 39
-          },
-          "tint": {
-            "mode": "tint",
-            "color": "#5cffb8",
-            "strength": 100
-          }
-        }
-      },
-      "rotation": 180
-    },
-    {
-      "stableId": "icon-whiteicon-close-png-315",
-      "layerType": "image",
-      "displayName": "Icon_WhiteIcon_Close.png",
-      "x": 308,
-      "y": 458,
-      "zIndex": 35,
-      "visual": {
-        "exportPath": "assets/Icon_WhiteIcon_Close.png",
-        "width": 20,
-        "height": 20,
-        "style": {
-          "shadow": {
-            "enabled": false,
-            "x": 0,
-            "y": 4,
-            "blur": 8,
-            "color": "#000000",
-            "opacity": 50
-          },
-          "tint": {
-            "mode": "overlay",
-            "color": "#afa364",
-            "strength": 100
           }
         }
       }

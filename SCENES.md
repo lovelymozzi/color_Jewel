@@ -10,3 +10,17 @@
   - `item.wand`  (click)
 - **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
+
+<!-- SCENE:setting BEGIN -->
+#### `setting`  ·  contract: `./setting.contract.json`
+- **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):
+  - `re-start-115:click`  (click)
+  - `re play`  (click)
+<!-- SCENE:setting END -->
+
+<!-- SCENE:setting 3 BEGIN -->
+#### `setting 3`  ·  contract: `./setting 3.contract.json`
+- **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):
+  - `re-start-224:click`  (click)
+  - `re play`  (click)
+<!-- SCENE:setting 3 END -->

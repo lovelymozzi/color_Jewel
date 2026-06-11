@@ -261,7 +261,7 @@
         },
         "images": [
           {
-            "exportPath": "assets/rock.png?v=20260611-1",
+            "exportPath": "assets/rock.png",
             "width": 35,
             "height": 35,
             "offsetX": 0,
@@ -617,7 +617,6 @@
       "x": 76,
       "y": 733,
       "zIndex": 6,
-      "visible": false,
       "visual": {
         "model": {
           "shape": {

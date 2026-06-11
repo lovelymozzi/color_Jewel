@@ -3047,8 +3047,64 @@
             hapticsOn: true
         });
         const SCENE_CONTRACT_VERSION = "20260611-1";
+        const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
+        const NONCACHED_SCENE_ASSET_PATHS = new Set([
+            "assets/magic.png",
+            "assets/clean.png",
+            "assets/rock.png"
+        ]);
         const LIFECYCLE_DEBUG_LIMIT = 96;
         const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
+
+        function withRuntimeSceneAssetBuster(path) {
+            if (typeof path !== "string" || !path.trim()) {
+                return path;
+            }
+
+            const hashIndex = path.indexOf("#");
+            const hashSuffix = hashIndex >= 0 ? path.slice(hashIndex) : "";
+            const pathWithoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+            const queryIndex = pathWithoutHash.indexOf("?");
+            const basePath = queryIndex >= 0 ? pathWithoutHash.slice(0, queryIndex) : pathWithoutHash;
+            const normalizedBasePath = basePath.replace(/^\.\//, "").replace(/^\/+/, "");
+
+            if (!NONCACHED_SCENE_ASSET_PATHS.has(normalizedBasePath)) {
+                return path;
+            }
+
+            const params = new URLSearchParams(queryIndex >= 0 ? pathWithoutHash.slice(queryIndex + 1) : "");
+            params.set("v", RUNTIME_SCENE_ASSET_BUSTER);
+            return `${basePath}?${params.toString()}${hashSuffix}`;
+        }
+
+        function patchContractAssetPaths(target, seen = new WeakSet()) {
+            if (!target || typeof target !== "object") {
+                return target;
+            }
+
+            if (seen.has(target)) {
+                return target;
+            }
+            seen.add(target);
+
+            if (Array.isArray(target)) {
+                target.forEach((item) => patchContractAssetPaths(item, seen));
+                return target;
+            }
+
+            Object.entries(target).forEach(([key, value]) => {
+                if ((key === "exportPath" || key === "imagePath") && typeof value === "string") {
+                    target[key] = withRuntimeSceneAssetBuster(value);
+                    return;
+                }
+
+                if (value && typeof value === "object") {
+                    patchContractAssetPaths(value, seen);
+                }
+            });
+
+            return target;
+        }
 
         function padMapToGrid(sourceMap, rows = MAX_GRID_ROWS, cols = MAX_GRID_COLS) {
             const sourceRows = sourceMap.length;
@@ -4166,6 +4222,7 @@
                     return response.json();
                 })
                 .then((contract) => {
+                    patchContractAssetPaths(contract);
                     colorJewelSceneContract = contract;
                     return contract;
                 })
@@ -6626,23 +6683,160 @@
             soundController?.setBgmEnabled?.(appSettings.bgmOn);
         }
 
+        const SETTING_SCENE_GROUP_ALIASES = Object.freeze({
+            bgm_on: ["bgm_on"],
+            bgm_off: ["bgm_off"],
+            sfx_on: ["sfx_on", "ssfx_on", "sound_on"],
+            sfx_offf: ["sfx_offf", "sfx_off", "sound_off"],
+            vibration_on: ["vibration_on", "vivration_on", "haptics_on"],
+            vibration_off: ["vibration_off", "haptics_off"]
+        });
+
+        function getSettingSceneGroups(groupName) {
+            const candidateNames = SETTING_SCENE_GROUP_ALIASES[groupName] || [groupName];
+            return candidateNames
+                .map((name) => settingSceneRenderer?.getGroup?.(name) || null)
+                .filter(Boolean);
+        }
+
         function setSettingSceneGroupVisibility(groupName, isVisible) {
-            const groupElement = settingSceneRenderer?.getGroup?.(groupName);
-            if (!groupElement) {
+            const groupElements = getSettingSceneGroups(groupName);
+            if (!groupElements.length) {
                 return;
             }
 
-            groupElement.style.display = isVisible ? "" : "none";
-            groupElement.setAttribute("aria-hidden", String(!isVisible));
+            groupElements.forEach((groupElement) => {
+                groupElement.style.display = isVisible ? "" : "none";
+                groupElement.setAttribute("aria-hidden", String(!isVisible));
+            });
+        }
+
+        const SETTING_TOGGLE_LABEL_CONFIG = Object.freeze({
+            bgm: {
+                pillStableId: "-254",
+                primaryButtonStableId: "jewel-soket-png-256",
+                jewelStableId: "jewel-soket-png-256",
+                iconStableId: "icon-whiteicon-check-s-png-258",
+                stableIds: [
+                    "-254",
+                    "jewel-soket-png-256",
+                    "icon-whiteicon-check-s-png-258",
+                    "shape-pill-274",
+                    "jewel-soket-png-275",
+                    "icon-whiteicon-close-png-277",
+                    "bgm-184"
+                ],
+                getValue: () => appSettings.bgmOn
+            },
+            sfx: {
+                pillStableId: "-304",
+                primaryButtonStableId: "jewel-soket-png-305",
+                jewelStableId: "jewel-soket-png-305",
+                iconStableId: "icon-whiteicon-check-s-png-306",
+                stableIds: [
+                    "-304",
+                    "jewel-soket-png-305",
+                    "icon-whiteicon-check-s-png-306",
+                    "shape-pill-307",
+                    "jewel-soket-png-308",
+                    "icon-whiteicon-close-png-309",
+                    "sfx-185"
+                ],
+                getValue: () => appSettings.soundEffectsOn
+            },
+            vibration: {
+                pillStableId: "-310",
+                primaryButtonStableId: "jewel-soket-png-311",
+                jewelStableId: "jewel-soket-png-311",
+                iconStableId: "icon-whiteicon-check-s-png-312",
+                stableIds: [
+                    "-310",
+                    "jewel-soket-png-311",
+                    "icon-whiteicon-check-s-png-312",
+                    "shape-pill-313",
+                    "jewel-soket-png-314",
+                    "icon-whiteicon-close-png-315",
+                    "vibration-187"
+                ],
+                getValue: () => appSettings.hapticsOn
+            }
+        });
+        const SETTING_TOGGLE_ICON_SOURCES = Object.freeze({
+            on: `./src/assets/Icon_WhiteIcon_check_s.png?v=${SCENE_CONTRACT_VERSION}`,
+            off: `./src/assets/Icon_WhiteIcon_Close.png?v=${SCENE_CONTRACT_VERSION}`
+        });
+
+        function getSettingToggleIconImage(stableId) {
+            return settingSceneRenderer?.getElement?.(stableId)?.querySelector?.("img") || null;
+        }
+
+        function getSettingSceneElement(stableId) {
+            return settingSceneRenderer?.getElement?.(stableId) || null;
+        }
+
+        function getSettingSceneElementPosition(stableId) {
+            const element = getSettingSceneElement(stableId);
+            if (!element) {
+                return null;
+            }
+
+            const left = parseFloat(element.style.left || "0");
+            const top = parseFloat(element.style.top || "0");
+            if (!Number.isFinite(left) || !Number.isFinite(top)) {
+                return null;
+            }
+
+            return { left, top };
+        }
+
+        function setSettingSceneElementPosition(stableId, left, top) {
+            const element = getSettingSceneElement(stableId);
+            if (!element) {
+                return;
+            }
+
+            element.style.left = `${left}px`;
+            element.style.top = `${top}px`;
+        }
+
+        function syncSettingSceneToggleLayouts() {
+            Object.values(SETTING_TOGGLE_LABEL_CONFIG).forEach(({ pillStableId, jewelStableId, iconStableId, getValue }) => {
+                const pillPosition = getSettingSceneElementPosition(pillStableId);
+                if (!pillPosition) {
+                    return;
+                }
+
+                const isEnabled = !!getValue();
+                const jewelLeft = pillPosition.left + (isEnabled ? 50 : -6);
+                const jewelTop = pillPosition.top - 5;
+                const iconLeft = pillPosition.left + (isEnabled ? 16 : 59);
+                const iconTop = pillPosition.top + (isEnabled ? 8 : 11);
+
+                setSettingSceneElementPosition(jewelStableId, jewelLeft, jewelTop);
+                setSettingSceneElementPosition(iconStableId, iconLeft, iconTop);
+            });
+        }
+
+        function syncSettingSceneToggleIcons() {
+            Object.values(SETTING_TOGGLE_LABEL_CONFIG).forEach(({ iconStableId, getValue }) => {
+                const iconElement = getSettingToggleIconImage(iconStableId);
+                if (!iconElement) {
+                    return;
+                }
+
+                iconElement.src = getValue()
+                    ? SETTING_TOGGLE_ICON_SOURCES.on
+                    : SETTING_TOGGLE_ICON_SOURCES.off;
+            });
         }
 
         function syncSettingScenePreferenceGroups() {
-            setSettingSceneGroupVisibility("sound_on", appSettings.soundEffectsOn);
-            setSettingSceneGroupVisibility("sound_off", !appSettings.soundEffectsOn);
+            setSettingSceneGroupVisibility("sfx_on", appSettings.soundEffectsOn);
+            setSettingSceneGroupVisibility("sfx_offf", !appSettings.soundEffectsOn);
             setSettingSceneGroupVisibility("bgm_on", appSettings.bgmOn);
             setSettingSceneGroupVisibility("bgm_off", !appSettings.bgmOn);
-            setSettingSceneGroupVisibility("haptics_on", appSettings.hapticsOn);
-            setSettingSceneGroupVisibility("haptics_off", !appSettings.hapticsOn);
+            setSettingSceneGroupVisibility("vibration_on", appSettings.hapticsOn);
+            setSettingSceneGroupVisibility("vibration_off", !appSettings.hapticsOn);
         }
 
         function applyAppSettings(nextSettings, options = {}) {
@@ -7222,20 +7416,57 @@
         }
 
         function registerSettingSceneToggleHandler(groupName, handler) {
-            const groupElement = settingSceneRenderer?.getGroup?.(groupName);
-            if (!groupElement) {
+            const groupElements = getSettingSceneGroups(groupName);
+            if (!groupElements.length) {
                 return;
             }
 
-            const handleClick = (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handler();
-            };
+            groupElements.forEach((groupElement) => {
+                const handleClick = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handler();
+                };
 
-            groupElement.addEventListener("click", handleClick);
-            settingSceneUnsubscribers.push(() => {
-                groupElement.removeEventListener("click", handleClick);
+                groupElement.addEventListener("click", handleClick);
+                settingSceneUnsubscribers.push(() => {
+                    groupElement.removeEventListener("click", handleClick);
+                });
+            });
+        }
+
+        function registerSettingSceneStableIdToggleHandlers(stableIds, handler) {
+            stableIds.forEach((stableId) => {
+                const element = settingSceneRenderer?.getElement?.(stableId);
+                if (!element) {
+                    return;
+                }
+
+                element.style.cursor = "pointer";
+                element.setAttribute("role", "button");
+                element.setAttribute("tabindex", "0");
+
+                const handleClick = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handler();
+                };
+
+                const handleKeydown = (event) => {
+                    if (event.key !== "Enter" && event.key !== " ") {
+                        return;
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handler();
+                };
+
+                element.addEventListener("click", handleClick);
+                element.addEventListener("keydown", handleKeydown);
+                settingSceneUnsubscribers.push(() => {
+                    element.removeEventListener("click", handleClick);
+                    element.removeEventListener("keydown", handleKeydown);
+                });
             });
         }
 
@@ -7288,15 +7519,32 @@
                     settingSceneRenderer.on("re-start-115:click", restartGameFromSettingScene)
                 ];
 
-                registerSettingSceneToggleHandler("sound_on", () => setSoundEffectsEnabled(false));
-                registerSettingSceneToggleHandler("sound_off", () => {
+                registerSettingSceneToggleHandler("sfx_on", () => setSoundEffectsEnabled(false));
+                registerSettingSceneToggleHandler("sfx_offf", () => {
                     queueAudioContextWarmup();
                     setSoundEffectsEnabled(true);
                 });
                 registerSettingSceneToggleHandler("bgm_on", () => setBgmEnabled(false));
                 registerSettingSceneToggleHandler("bgm_off", () => setBgmEnabled(true));
-                registerSettingSceneToggleHandler("haptics_on", () => setHapticsEnabled(false));
-                registerSettingSceneToggleHandler("haptics_off", () => setHapticsEnabled(true));
+                registerSettingSceneToggleHandler("vibration_on", () => setHapticsEnabled(false));
+                registerSettingSceneToggleHandler("vibration_off", () => setHapticsEnabled(true));
+                registerSettingSceneStableIdToggleHandlers(
+                    SETTING_TOGGLE_LABEL_CONFIG.sfx.stableIds,
+                    () => {
+                        if (!appSettings.soundEffectsOn) {
+                            queueAudioContextWarmup();
+                        }
+                        setSoundEffectsEnabled(!appSettings.soundEffectsOn);
+                    }
+                );
+                registerSettingSceneStableIdToggleHandlers(
+                    SETTING_TOGGLE_LABEL_CONFIG.bgm.stableIds,
+                    () => setBgmEnabled(!appSettings.bgmOn)
+                );
+                registerSettingSceneStableIdToggleHandlers(
+                    SETTING_TOGGLE_LABEL_CONFIG.vibration.stableIds,
+                    () => setHapticsEnabled(!appSettings.hapticsOn)
+                );
                 syncSettingScenePreferenceGroups();
 
                 settingOverlayElement.classList.remove("closing");
