@@ -313,7 +313,7 @@
 
         .board {
             display: grid;
-            grid-template-columns: repeat(20, var(--board-cell-size));
+            grid-template-columns: repeat(var(--board-cols, 30), var(--board-cell-size));
             gap: var(--board-gap);
             padding: 0;
             width: max-content;
@@ -1797,12 +1797,12 @@
         }
 
         .pixel-admin-axis-horizontal .pixel-admin-axis-track {
-            grid-template-columns: repeat(var(--pixel-admin-cols, 20), var(--pixel-admin-cell-size, 16px));
+            grid-template-columns: repeat(var(--pixel-admin-cols, 30), var(--pixel-admin-cell-size, 16px));
             grid-auto-rows: 22px;
         }
 
         .pixel-admin-axis-vertical .pixel-admin-axis-track {
-            grid-template-rows: repeat(var(--pixel-admin-rows, 20), var(--pixel-admin-cell-size, 16px));
+            grid-template-rows: repeat(var(--pixel-admin-rows, 30), var(--pixel-admin-cell-size, 16px));
             grid-auto-columns: 22px;
         }
 
@@ -1834,7 +1834,7 @@
 
         .pixel-admin-grid {
             display: grid;
-            grid-template-columns: repeat(var(--pixel-admin-cols, 20), var(--pixel-admin-cell-size, 16px));
+            grid-template-columns: repeat(var(--pixel-admin-cols, 30), var(--pixel-admin-cell-size, 16px));
             gap: 1px;
             width: max-content;
             max-width: none;
@@ -2061,7 +2061,7 @@
             <div class="tutorial-layer" id="tutorialLayer" aria-hidden="true"></div>
             <div class="board-wrap">
                 <div class="board-panzoom" id="boardPanzoom">
-                    <div class="board" id="board" aria-label="20x20 퍼즐 보드"></div>
+                    <div class="board" id="board" aria-label="최대 30x30 퍼즐 보드"></div>
                 </div>
             </div>
 
@@ -2101,7 +2101,7 @@
             <input class="pixel-admin-input" id="pixelAdminTitleInput" type="text" maxlength="24" placeholder="스테이지 제목" />
         </label>
 
-        <p class="pixel-admin-help" id="pixelAdminHelp">20x20 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. `#`는 자동으로 붙습니다.</p>
+        <p class="pixel-admin-help" id="pixelAdminHelp">최대 30x30 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. `#`는 자동으로 붙습니다.</p>
         <p class="pixel-admin-selection" id="pixelAdminSelection">선택된 색상</p>
         <div class="pixel-admin-palette-tools">
             <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" title="색상 추가" aria-label="색상 추가">+</button>
@@ -3116,8 +3116,8 @@
             }
         ];
 
-        const MAX_GRID_ROWS = 20;
-        const MAX_GRID_COLS = 20;
+        const MAX_GRID_ROWS = 30;
+        const MAX_GRID_COLS = 30;
         const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
         const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
@@ -4664,6 +4664,10 @@
         });
         const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
         const TOUCH_TAP_GUARD_MS = 520;
+        const BOARD_PAN_DRAG_THRESHOLD_PX = 8;
+        const BOARD_COMPACT_MIN_SCALE_VERTICAL_PAN_MULTIPLIER = 2.2;
+        const BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE = 1.2;
+        const BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE = 1.5;
         const SOUND_VOLUME_MULTIPLIER = 5.4;
         const appElement = document.querySelector(".app");
         const boardStageElement = document.querySelector(".board-stage");
@@ -4829,8 +4833,10 @@
             lastTapX: 0,
             lastTapY: 0,
             isTouchGestureActive: false,
+            isTouchPanning: false,
             pointerId: null,
             isPointerDragging: false,
+            isPointerPanActive: false,
             magicPointerId: null,
             isMagicDragging: false,
             magicLastCell: null
@@ -9072,12 +9078,21 @@
 
         function getBoardInteractionMetrics() {
             if (!boardWrapElement || !boardPanzoomElement) {
-                return { wrapWidth: 0, wrapHeight: 0, contentWidth: 0, contentHeight: 0 };
+                return {
+                    wrapWidth: 0,
+                    wrapHeight: 0,
+                    stageWidth: 0,
+                    stageHeight: 0,
+                    contentWidth: 0,
+                    contentHeight: 0
+                };
             }
 
             return {
                 wrapWidth: boardWrapElement.clientWidth,
                 wrapHeight: boardWrapElement.clientHeight,
+                stageWidth: boardStageElement?.clientWidth || boardWrapElement.clientWidth,
+                stageHeight: boardStageElement?.clientHeight || boardWrapElement.clientHeight,
                 contentWidth: boardPanzoomElement.offsetWidth,
                 contentHeight: boardPanzoomElement.offsetHeight
             };
@@ -9085,8 +9100,32 @@
 
         function clampBoardPan(scale = boardInteraction.scale, panX = boardInteraction.panX, panY = boardInteraction.panY) {
             const metrics = getBoardInteractionMetrics();
-            const maxPanX = Math.max(0, (metrics.contentWidth * scale - metrics.wrapWidth) / 2);
-            const maxPanY = Math.max(0, (metrics.contentHeight * scale - metrics.wrapHeight) / 2);
+            const scaledContentWidth = metrics.contentWidth * scale;
+            const scaledContentHeight = metrics.contentHeight * scale;
+            let maxPanX = Math.max(0, Math.abs(scaledContentWidth - metrics.wrapWidth) / 2);
+            let maxPanY = Math.max(0, Math.abs(scaledContentHeight - metrics.wrapHeight) / 2);
+            const naturalMaxPanY = maxPanY;
+
+            if (scale <= boardInteraction.minScale + 0.001) {
+                const isCompactBoardLayout = boardInteraction.minScale < 1;
+                maxPanX = Math.max(maxPanX, (metrics.stageWidth + scaledContentWidth) / 2);
+                maxPanY = Math.max(
+                    maxPanY,
+                    isCompactBoardLayout
+                        ? metrics.stageHeight * BOARD_COMPACT_MIN_SCALE_VERTICAL_PAN_MULTIPLIER
+                        : (metrics.stageHeight + scaledContentHeight) / 2
+                );
+            } else if (boardInteraction.minScale < 1 && scale <= BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE) {
+                maxPanY = Math.max(maxPanY, (metrics.stageHeight + scaledContentHeight) / 2);
+            } else if (boardInteraction.minScale < 1 && scale <= BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE) {
+                const expandedMaxPanY = (metrics.stageHeight + scaledContentHeight) / 2;
+                const blendProgress =
+                    (scale - BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE) /
+                    (BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE - BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE);
+                const blendedMaxPanY =
+                    expandedMaxPanY + (naturalMaxPanY - expandedMaxPanY) * Math.max(0, Math.min(1, blendProgress));
+                maxPanY = Math.max(maxPanY, blendedMaxPanY);
+            }
 
             return {
                 x: Math.min(maxPanX, Math.max(-maxPanX, panX)),
@@ -9099,13 +9138,11 @@
 
             if (boardInteraction.scale <= boardInteraction.minScale + 0.001) {
                 boardInteraction.scale = boardInteraction.minScale;
-                boardInteraction.panX = 0;
-                boardInteraction.panY = 0;
-            } else {
-                const clampedPan = clampBoardPan();
-                boardInteraction.panX = clampedPan.x;
-                boardInteraction.panY = clampedPan.y;
             }
+
+            const clampedPan = clampBoardPan();
+            boardInteraction.panX = clampedPan.x;
+            boardInteraction.panY = clampedPan.y;
 
             boardPanzoomElement.style.transform = `translate(${boardInteraction.panX}px, ${boardInteraction.panY}px) scale(${boardInteraction.scale})`;
             scheduleTutorialOverlayRender();
@@ -9164,6 +9201,7 @@
             const activeTouches = [...boardInteraction.touches.values()];
 
             if (activeTouches.length >= 2) {
+                boardInteraction.isTouchPanning = false;
                 boardInteraction.pinchStartDistance = getTouchDistance(activeTouches[0], activeTouches[1]);
                 boardInteraction.pinchStartScale = boardInteraction.scale;
                 boardInteraction.basePanX = boardInteraction.panX;
@@ -9172,6 +9210,7 @@
             }
 
             if (activeTouches.length === 1) {
+                boardInteraction.isTouchPanning = false;
                 boardInteraction.panStartX = activeTouches[0].clientX;
                 boardInteraction.panStartY = activeTouches[0].clientY;
                 boardInteraction.basePanX = boardInteraction.panX;
@@ -9257,23 +9296,35 @@
                 }
 
                 if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-                if (boardInteraction.scale <= boardInteraction.minScale + 0.001) return;
 
                 boardInteraction.pointerId = event.pointerId;
                 boardInteraction.isPointerDragging = true;
+                boardInteraction.isPointerPanActive = false;
                 boardInteraction.panStartX = event.clientX;
                 boardInteraction.panStartY = event.clientY;
                 boardInteraction.basePanX = boardInteraction.panX;
                 boardInteraction.basePanY = boardInteraction.panY;
-                boardWrapElement.setPointerCapture(event.pointerId);
-                event.preventDefault();
             });
 
             boardWrapElement.addEventListener("pointermove", (event) => {
                 if (!boardInteraction.isPointerDragging || event.pointerId !== boardInteraction.pointerId) return;
 
-                boardInteraction.panX = boardInteraction.basePanX + (event.clientX - boardInteraction.panStartX);
-                boardInteraction.panY = boardInteraction.basePanY + (event.clientY - boardInteraction.panStartY);
+                const deltaX = event.clientX - boardInteraction.panStartX;
+                const deltaY = event.clientY - boardInteraction.panStartY;
+                if (
+                    !boardInteraction.isPointerPanActive &&
+                    Math.hypot(deltaX, deltaY) < BOARD_PAN_DRAG_THRESHOLD_PX
+                ) {
+                    return;
+                }
+
+                if (!boardInteraction.isPointerPanActive) {
+                    boardInteraction.isPointerPanActive = true;
+                    boardWrapElement.setPointerCapture(event.pointerId);
+                }
+
+                boardInteraction.panX = boardInteraction.basePanX + deltaX;
+                boardInteraction.panY = boardInteraction.basePanY + deltaY;
                 applyBoardTransform();
                 boardInteraction.suppressClickUntil = Date.now() + 240;
                 event.preventDefault();
@@ -9281,8 +9332,12 @@
 
             const stopPointerDrag = (event) => {
                 if (event.pointerId != null && event.pointerId !== boardInteraction.pointerId) return;
+                if (event.pointerId != null && boardWrapElement.hasPointerCapture?.(event.pointerId)) {
+                    boardWrapElement.releasePointerCapture(event.pointerId);
+                }
                 boardInteraction.pointerId = null;
                 boardInteraction.isPointerDragging = false;
+                boardInteraction.isPointerPanActive = false;
             };
 
             boardWrapElement.addEventListener("pointerup", stopPointerDrag);
@@ -9411,9 +9466,16 @@
 
                 if (
                     activeTouches.length === 1 &&
-                    boardInteraction.scale > boardInteraction.minScale + 0.001
+                    (
+                        boardInteraction.isTouchPanning ||
+                        Math.hypot(
+                            activeTouches[0].clientX - boardInteraction.panStartX,
+                            activeTouches[0].clientY - boardInteraction.panStartY
+                        ) >= BOARD_PAN_DRAG_THRESHOLD_PX
+                    )
                 ) {
                     const activeTouch = activeTouches[0];
+                    boardInteraction.isTouchPanning = true;
                     boardInteraction.panX = boardInteraction.basePanX + (activeTouch.clientX - boardInteraction.panStartX);
                     boardInteraction.panY = boardInteraction.basePanY + (activeTouch.clientY - boardInteraction.panStartY);
                     applyBoardTransform();
@@ -9436,6 +9498,7 @@
                 });
                 if (boardInteraction.touches.size === 0) {
                     boardInteraction.isTouchGestureActive = false;
+                    boardInteraction.isTouchPanning = false;
                     boardInteraction.pinchStartDistance = 0;
                 }
                 initializeBoardGestureState();
