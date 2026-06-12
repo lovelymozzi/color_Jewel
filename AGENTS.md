@@ -16,12 +16,23 @@
 ```js
 import { SceneRenderer } from './scene-renderer.js';
 const renderer = new SceneRenderer(document.body);
-await renderer.load('./<scene>.contract.json'); renderer.show();
+await renderer.load('./<scene>.contract.json');
+renderer.update({ player: { coins: 1500 } }); // ★ show() 전에 호출 — 첫 페인트부터 실제값
+renderer.show();
 const off = renderer.on('<event_name>', (e) => {}); // 반환값 = 구독 해제
-renderer.update({ player: { coins: 1500 } }); renderer.hide();
 ```
 
 **API**: `load` / `loadSync` · `show` / `hide` · `on` / `off` · `update` · `getElement` / `getGroup` / `getTextElement`
+
+### ⚠ 바인딩 값은 `show()` 전에 `update()`로 주입
+- 바인딩 텍스트/이미지는 데이터가 없으면 contract에 저장된 **디폴트 literal**로 그려집니다.
+- `show()` 후에 `update()`를 호출하면 디폴트값이 잠깐 보였다가 실제값으로 바뀌는 **플리커**가 생깁니다.
+- 첫 렌더 데이터는 반드시 `show()` **이전에** `update(data)`로 넣으세요. (`update`는 `show` 전 호출분을 버퍼링해 첫 페인트에 반영합니다.)
+
+### ⚠ 씬에 `hostedBy`가 있으면 단독으로 로드하지 말 것
+- 일반 씬 contract에 `hostedBy` 배열이 있으면, 그 씬은 **단독이 아니라 navigation 씬 안에서 표시되도록 설계**된 것입니다.
+- 이 경우 그 씬을 직접 `load` 하면 **네비게이션 바 없이** 씬만 나옵니다. 대신 `hostedBy[].navContract`(navigation contract)를 진입점으로 로드하세요 — navigation 씬이 탭을 통해 해당 씬을 내부에 마운트합니다.
+- `hostedBy` 항목: `{ navScene, navContract, tabId, tabLabel }`.
 
 ### publish된 씬
 - 씬 목록과 씬별 공개 인터페이스(이벤트·바인딩 키)는 [`./SCENES.md`](./SCENES.md) 참조.

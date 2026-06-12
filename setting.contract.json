@@ -3,12 +3,12 @@
   "sceneId": "setting",
   "sceneName": "setting",
   "canvas": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "viewport": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "background": {
     "type": "none",

@@ -3,12 +3,12 @@
   "sceneId": "color-jewel",
   "sceneName": "Color_Jewel",
   "canvas": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "viewport": {
-    "width": 390,
-    "height": 844
+    "width": 393,
+    "height": 852
   },
   "background": {
     "type": "none",
@@ -29,7 +29,8 @@
         "level-node-19",
         "level-node-18",
         "level-node-57",
-        "level-node-4"
+        "level-node-4",
+        "level-node-170"
       ]
     },
     {
@@ -37,6 +38,7 @@
       "layerStableIds": []
     }
   ],
+  "fxGroups": [],
   "sceneAnimations": [],
   "layers": [
     {
@@ -104,12 +106,12 @@
         },
         "images": [
           {
-            "exportPath": "assets/PictoIcon_Setting_1.webp",
+            "exportPath": "assets/setting.png",
             "width": 32,
             "height": 32,
             "offsetX": 0,
             "offsetY": 0,
-            "zIndex": 3
+            "zIndex": 2
           }
         ]
       },
@@ -683,6 +685,159 @@
           }
         ]
       }
+    },
+    {
+      "stableId": "level-node-170",
+      "layerType": "component",
+      "displayName": "Level Node",
+      "x": 207,
+      "y": 689,
+      "scale": 1.35,
+      "zIndex": 7,
+      "visual": {
+        "model": {
+          "shape": {
+            "type": "rectangle",
+            "width": 51,
+            "height": 51,
+            "radius": 20,
+            "notch": 20,
+            "hollowThickness": 8
+          },
+          "fill": {
+            "type": "linear-gradient",
+            "color1": "#fef4b9",
+            "color2": "#fedf87",
+            "angle": 180,
+            "depthIntensity": 50,
+            "rayCount": 8
+          },
+          "border": {
+            "width": 2,
+            "color": "#f4d273"
+          },
+          "shadows": [
+            {
+              "type": "depth-edge",
+              "enabled": true,
+              "size": 3,
+              "color": "#eec266"
+            },
+            {
+              "type": "outer",
+              "enabled": true,
+              "x": 0,
+              "y": 7,
+              "blur": 4,
+              "color": "#000000",
+              "opacity": 13
+            },
+            {
+              "type": "inner",
+              "enabled": true,
+              "x": 0,
+              "y": 2,
+              "blur": 0,
+              "color": "#ffffb3",
+              "opacity": 100
+            }
+          ],
+          "mask": {
+            "type": "ring-fade",
+            "enabled": false,
+            "innerPct": 28,
+            "outerPct": 76
+          }
+        },
+        "images": [
+          {
+            "exportPath": "assets/circle1.png",
+            "width": 22,
+            "height": 22,
+            "offsetX": 19,
+            "offsetY": 17,
+            "zIndex": 2
+          },
+          {
+            "exportPath": "assets/magnet.png",
+            "width": 32,
+            "height": 32,
+            "offsetX": 2,
+            "offsetY": 0,
+            "zIndex": 4,
+            "style": {
+              "shadow": {
+                "enabled": true,
+                "x": 0,
+                "y": 3,
+                "blur": 0,
+                "color": "#000000",
+                "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
+              }
+            }
+          }
+        ]
+      },
+      "effects": [
+        {
+          "type": "press",
+          "source": {
+            "provider": "internal",
+            "name": "press"
+          },
+          "enabled": true,
+          "target": "self",
+          "trigger": "pointer",
+          "params": {
+            "transitionMs": 100,
+            "brightness": 95,
+            "scale": 100,
+            "useDepthOffset": true
+          }
+        }
+      ],
+      "texts": [
+        {
+          "slotIndex": 0,
+          "staticContent": "2",
+          "bindingKey": "item.wand",
+          "fontSize": 16,
+          "fontWeight": "bold",
+          "fontFamily": "\"Lilita One\", cursive",
+          "color": "#ffffff",
+          "offsetX": 19,
+          "offsetY": 17,
+          "zIndex": 3,
+          "style": {
+            "stroke": {
+              "width": 0,
+              "color": "#ffffff"
+            },
+            "depth": {
+              "size": 0,
+              "color": "#000000"
+            },
+            "shadow": {
+              "x": 0,
+              "y": 1,
+              "blur": 2,
+              "color": "#000000",
+              "opacity": 40
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "item.wand"
+        }
+      ]
     }
   ]
 }

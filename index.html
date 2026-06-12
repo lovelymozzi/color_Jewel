@@ -4452,6 +4452,7 @@
                 "level-node-4",
                 "level-node-57",
                 "level-node-18",
+                "level-node-170",
                 "level-node-19"
             ]);
             const bounds = (contract?.layers || [])
@@ -4611,11 +4612,13 @@
                 bottomActionButton1Element = colorJewelSceneRenderer.getElement("level-node-4");
                 bottomActionButton2Element = colorJewelSceneRenderer.getElement("level-node-57");
                 bottomActionButton3Element = colorJewelSceneRenderer.getElement("level-node-18");
+                bottomActionButton3TreasureElement = colorJewelSceneRenderer.getElement("level-node-170");
                 bottomActionButton4Element = colorJewelSceneRenderer.getElement("level-node-19");
                 bottomActionButtonElements = [
                     bottomActionButton1Element,
                     bottomActionButton2Element,
                     bottomActionButton3Element,
+                    bottomActionButton3TreasureElement,
                     bottomActionButton4Element
                 ].filter(Boolean);
 
@@ -4683,6 +4686,7 @@
         let bottomActionButton1Element = null;
         let bottomActionButton2Element = null;
         let bottomActionButton3Element = null;
+        let bottomActionButton3TreasureElement = null;
         let bottomActionButton4Element = null;
         let bottomAdSlotElement = null;
         const tutorialLayerElement = document.getElementById("tutorialLayer");
@@ -6659,6 +6663,8 @@
                     clean: Math.max(0, actionCharges.clean)
                 }
             });
+            setSceneLayerDisplay("level-node-18", ACTIVE_MAP?.id !== "treasurechest");
+            setSceneLayerDisplay("level-node-170", ACTIVE_MAP?.id === "treasurechest");
 
             const buttonStates = [
                 {

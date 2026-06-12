@@ -34,6 +34,44 @@ function buildTextShadowValue(t) {
     return layers.join(', ');
 }
 
+// 워드아트 곡선 배치 여부. curveType==='arc' 이고 곡률(curveAngle)이 0이 아닐 때만 곡선.
+function isTextCurved(t) {
+    return !!(t && t.curveType === 'arc' && Math.abs(t.curveAngle || 0) > 0);
+}
+
+// 워드아트 호/원형 배치: 텍스트 span을 글자별 자식 span으로 쪼개 원호 위에 회전 배치한다.
+// 색·폰트·외곽선·그림자는 CSS 상속으로 자식에 자동 전파되므로 여기선 위치/회전만 담당.
+// curve 미설정 시 아무 동작도 하지 않고 false 반환 → 호출측 기존 평문 경로 유지.
+// 곡선 텍스트는 글자별 분할 구조라 바인딩(textContent 통째 교체)과 양립 불가 → 호출측에서 바인딩 차단.
+function applyTextCurve(span, t, sx = 1) {
+    if (!isTextCurved(t)) return false;
+    const chars = Array.from(span.textContent || '');
+    if (chars.length === 0) return false;
+
+    const A = t.curveAngle;                 // 총 곡률(도). 양수=위 아치, 음수=아래 아치, ±360=원형
+    const up = A >= 0;
+    const absA = Math.abs(A);
+    const stepDeg = absA / chars.length;    // 글자당 각도. 중앙정렬 위해 글자 중심을 -absA/2..+absA/2 에 배치
+    const stepRad = stepDeg * Math.PI / 180;
+    const fs = (t.fontSize || 14) * sx;
+    // 글자 진행폭 ≈ 폰트크기*0.62. 반지름 = 진행폭 / 스텝각 → 곡률(각도)만으로 반지름 자동결정(겹침 방지).
+    const advance = fs * 0.62;
+    const r = stepRad > 0 ? Math.max(advance, advance / stepRad) : advance;
+    // 0크기 부모 span(translate -50%,-50% → 원점=배치 기준점). 자식은 그 원점 기준으로 절대배치 후 회전.
+    const originY = up ? `calc(50% + ${r}px)` : `calc(50% - ${r}px)`;
+
+    span.textContent = '';
+    chars.forEach((ch, i) => {
+        const deg = -absA / 2 + stepDeg * (i + 0.5);
+        const rot = up ? deg : -deg;
+        const c = document.createElement('span');
+        c.textContent = ch === ' ' ? ' ' : ch;
+        c.style.cssText = `position:absolute;left:50%;top:50%;white-space:pre;transform:translate(-50%,-50%) rotate(${rot}deg);transform-origin:50% ${originY};`;
+        span.appendChild(c);
+    });
+    return true;
+}
+
 function depthGradientCss(hex, intensity) {
     intensity = (intensity === undefined ? 50 : intensity) / 100;
     const r = parseInt(hex.slice(1,3), 16);
@@ -743,6 +781,12 @@ const BG_SCROLL_DIRS = {
 // brick 가로폭(bw)은 이미지 자연 비율(naturalWidth/naturalHeight)로 자동 계산.
 const BRICK_TILE_CACHE = new Map();
 
+// tint(재색칠) SVG 필터 dedup 캐시. 모바일 WebKit 은 filter:url(data:...) 형태의
+// data-URI SVG 필터를 무시하므로, <filter> 를 문서에 인라인 등록하고 url(#id) 로 참조한다.
+// key = mode|r,g,b|k2|k3 → 동일 설정은 필터 노드 1개를 공유(노드 무한 증가 방지).
+const TINT_FILTER_CACHE = new Map();
+let _tintFilterSeq = 0;
+
 // 사용자 이미지를 받아 (2bw × 2bh) 짜리 brick-staggered 합성 타일 dataURL 을 비동기 생성.
 // bh 는 사용자 입력(brick 높이), bw 는 이미지 naturalAspect 로 결정.
 // row 0: x=0, x=bw 두 장 / row 1: x=-bw/2, bw/2, 1.5bw 세 장 (캔버스 밖은 clip 되어 stagger 형성).
@@ -843,6 +887,9 @@ export class SceneRenderer {
         this._handlers = {};       // eventName → Set<Function>
         this._boundElements = {};  // bindingKey → HTMLElement[]
         this._boundImages = {};    // imageKey → HTMLImageElement[]
+        this._dataValues = {};     // 평탄화된 bindingKey → 마지막 값. show() 이전 update()도 누적되어
+                                   //   _buildDOM 첫 페인트에 실제값을 시드 → 디폴트 literal 플리커 방지.
+                                   //   reload/재마운트 시 _boundElements는 리셋해도 이건 유지한다.
         this._groupWrappers = {};  // groupName → HTMLElement
         // Navigation scene 전용
         this._sceneRegistry = (options && options.sceneRegistry) || null; // { sceneName: contract }
@@ -1131,15 +1178,22 @@ export class SceneRenderer {
     update(data) {
         const flat = this._flattenPaths(data);
         for (const [key, value] of Object.entries(flat)) {
-            const els = this._boundElements[key];
-            if (els) els.forEach(el => {
-                const tpl = el.dataset.bindingTemplate;
-                el.textContent = tpl ? tpl.replaceAll('{value}', String(value)) : String(value);
-            });
-            const imgs = this._boundImages[key];
-            if (imgs) imgs.forEach(img => { img.src = this._resolveAssetPath(String(value)); });
+            this._dataValues[key] = value; // 버퍼에 누적 → 이후 _buildDOM이 첫 페인트부터 시드
+            (this._boundElements[key] || []).forEach(el => this._applyBoundText(el, value));
+            (this._boundImages[key] || []).forEach(img => this._applyBoundImage(img, value));
         }
         return this;
+    }
+
+    /** 바인딩 텍스트 1개의 표시값 적용 (공통). template({value} 치환) 우선, 없으면 raw. */
+    _applyBoundText(span, value) {
+        const tpl = span.dataset.bindingTemplate;
+        span.textContent = tpl ? tpl.replaceAll('{value}', String(value)) : String(value);
+    }
+
+    /** 바인딩 이미지 1개의 src 적용 (공통). */
+    _applyBoundImage(img, value) {
+        img.src = this._resolveAssetPath(String(value));
     }
 
     /** stableId로 DOM 요소에 직접 접근 (고급 사용). */
@@ -1590,10 +1644,13 @@ export class SceneRenderer {
                 span.textContent = t.staticContent || '';
                 span.style.cssText = this._textCss(t, _sx, _sy);
                 _flipText(span);
-                if (t.bindingKey) {
+                const curved = applyTextCurve(span, t, _sx);
+                if (t.bindingKey && !curved) {
                     if (t.staticContent && t.staticContent.includes('{value}')) span.dataset.bindingTemplate = t.staticContent;
                     if (!this._boundElements[t.bindingKey]) this._boundElements[t.bindingKey] = [];
                     this._boundElements[t.bindingKey].push(span);
+                    // 사전 주입된 데이터가 있으면 디폴트 literal 대신 실제값으로 첫 페인트 (플리커 방지)
+                    if (Object.prototype.hasOwnProperty.call(this._dataValues, t.bindingKey)) this._applyBoundText(span, this._dataValues[t.bindingKey]);
                 }
                 inner.appendChild(span);
             });
@@ -1613,6 +1670,7 @@ export class SceneRenderer {
                 if (im.imageKey) {
                     if (!this._boundImages[im.imageKey]) this._boundImages[im.imageKey] = [];
                     this._boundImages[im.imageKey].push(img);
+                    if (Object.prototype.hasOwnProperty.call(this._dataValues, im.imageKey)) this._applyBoundImage(img, this._dataValues[im.imageKey]);
                 }
                 inner.appendChild(img);
             });
@@ -1643,6 +1701,7 @@ export class SceneRenderer {
             if (layer.image?.imageKey) {
                 if (!this._boundImages[layer.image.imageKey]) this._boundImages[layer.image.imageKey] = [];
                 this._boundImages[layer.image.imageKey].push(img);
+                if (Object.prototype.hasOwnProperty.call(this._dataValues, layer.image.imageKey)) this._applyBoundImage(img, this._dataValues[layer.image.imageKey]);
             }
             // 색 채우기(재색칠): 별도 레이어/마스크를 겹치면 안티앨리어싱 가장자리의 알파가 어긋나
             // 틴트된 이미지끼리 겹칠 때 1px 경계선(seam)이 생긴다.
@@ -1671,8 +1730,36 @@ export class SceneRenderer {
                     body = `<feColorMatrix type="matrix" values="${lum(r / 255)} ${lum(g / 255)} ${lum(b / 255)} 0 0 0 1 0" result="t"/>`
                          + `<feComposite in="SourceGraphic" in2="t" operator="arithmetic" k1="0" k2="${k2}" k3="${k3}" k4="0"/>`;
                 }
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg"><filter id="t" color-interpolation-filters="sRGB">${body}</filter></svg>`;
-                return `url("data:image/svg+xml,${encodeURIComponent(svg)}#t")`;
+                // 모바일 WebKit 은 filter:url(data:...) 형태의 data-URI SVG 필터를 무시한다
+                // (요소는 정상 표시되나 tint 가 적용 안 됨). → <filter> 를 문서에 인라인 등록하고 url(#id) 참조.
+                if (typeof document === 'undefined') return '';
+                const fkey = `${mode}|${r},${g},${b}|${k2}|${k3}`;
+                let fid = TINT_FILTER_CACHE.get(fkey);
+                if (!fid || !document.getElementById(fid)) {
+                    const NS = 'http://www.w3.org/2000/svg';
+                    let defs = document.getElementById('__tintFilterDefs');
+                    if (!defs) {
+                        defs = document.createElementNS(NS, 'svg');
+                        defs.id = '__tintFilterDefs';
+                        defs.setAttribute('width', '0');
+                        defs.setAttribute('height', '0');
+                        defs.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+                        (document.body || document.documentElement).appendChild(defs);
+                    }
+                    fid = '__tint' + (++_tintFilterSeq);
+                    const f = document.createElementNS(NS, 'filter');
+                    f.id = fid;
+                    f.setAttribute('color-interpolation-filters', 'sRGB');
+                    f.innerHTML = body;
+                    defs.appendChild(f);
+                    TINT_FILTER_CACHE.set(fkey, fid);
+                }
+                // base 태그(에디터 srcdoc 프리뷰)가 있으면 url(#id) 가 base 기준으로 해석돼 깨지므로
+                // 현재 문서 URL 로 정규화한다. 일반 게임 문서(base 없음)는 단순 #id 로 참조.
+                const ref = document.querySelector('base[href]')
+                    ? `${location.href.split('#')[0]}#${fid}`
+                    : `#${fid}`;
+                return `url("${ref}")`;
             })();
             const _shadowFilter = imageShadowCss(imageStyle);
             img.style.filter = [_tintFilter, _shadowFilter].filter(Boolean).join(' ');
@@ -1687,10 +1774,13 @@ export class SceneRenderer {
                     span.textContent = t.staticContent || '';
                     span.style.cssText = this._textCss(t, _sx, _sy);
                     _flipText(span);
-                    if (t.bindingKey) {
+                    const curved = applyTextCurve(span, t, _sx);
+                    if (t.bindingKey && !curved) {
                         if (t.staticContent && t.staticContent.includes('{value}')) span.dataset.bindingTemplate = t.staticContent;
                         if (!this._boundElements[t.bindingKey]) this._boundElements[t.bindingKey] = [];
                         this._boundElements[t.bindingKey].push(span);
+                        // 사전 주입된 데이터가 있으면 디폴트 literal 대신 실제값으로 첫 페인트 (플리커 방지)
+                        if (Object.prototype.hasOwnProperty.call(this._dataValues, t.bindingKey)) this._applyBoundText(span, this._dataValues[t.bindingKey]);
                     }
                     wrapDiv.appendChild(span);
                 });
@@ -2050,6 +2140,8 @@ SceneRenderer.utils = {
     textCss(t) {
         return SceneRenderer.prototype._textCss.call(null, t);
     },
+    /** 워드아트 곡선 배치 적용(에디터 캔버스 등 textCss 단독 경로용). 곡선이면 true. */
+    applyTextCurve,
     /** 텍스트 text-shadow 값 단일 소스 (CSS export 등 외부 호출용) */
     textShadowValue: buildTextShadowValue,
     normalizeComponentVisualModel,
@@ -2201,6 +2293,7 @@ SceneRenderer.utils = {
                 color: t.color,
                 offsetX: t.offsetX, offsetY: t.offsetY, zIndex: t.zIndex,
                 style: normalizeTextStyleModel(t),
+                ...(t.curveType === 'arc' ? { curveType: 'arc', curveAngle: t.curveAngle || 0 } : {}),
             })),
             image: layer.type === 'image' ? { exportPath: layer.exportPath || '', imageKey: layer.imageKey || '', style: normalizedImageStyle } : null,
             rotation: layer.rotation || 0,

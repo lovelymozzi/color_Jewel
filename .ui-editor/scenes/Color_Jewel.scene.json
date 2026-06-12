@@ -59,7 +59,7 @@
         "selectedTextIndex": -1,
         "images": [
           {
-            "exportPath": "assets/PictoIcon_Setting_1.webp",
+            "exportPath": "assets/setting.png",
             "width": 32,
             "height": 32,
             "offsetX": 0,
@@ -70,7 +70,7 @@
             "shadowBlur": 8,
             "shadowColor": "#000000",
             "shadowOpacity": 50,
-            "zIndex": 3
+            "zIndex": 2
           }
         ],
         "selectedImageIndex": 0,
@@ -503,6 +503,114 @@
         "maskInnerPct": 28,
         "maskOuterPct": 76
       }
+    },
+    {
+      "id": 170,
+      "stableId": "level-node-170",
+      "type": "component",
+      "source": "preset",
+      "name": "Level Node",
+      "exportPath": "",
+      "x": 207,
+      "y": 689,
+      "scale": 1.35,
+      "scaleX": 1,
+      "scaleY": 1,
+      "rotation": 0,
+      "zIndex": 7,
+      "visible": true,
+      "componentState": {
+        "name": "Level Node",
+        "shapeType": "rectangle",
+        "width": 51,
+        "height": 51,
+        "borderRadius": 20,
+        "bgType": "linear-gradient",
+        "bgColor1": "#fef4b9",
+        "bgColor2": "#fedf87",
+        "gradientAngle": 180,
+        "borderWidth": 2,
+        "borderColor": "#f4d273",
+        "depthEnabled": true,
+        "depthSize": 3,
+        "depthColor": "#eec266",
+        "outerShadowEnabled": true,
+        "outerShadowX": 0,
+        "outerShadowY": 7,
+        "outerShadowBlur": 4,
+        "outerShadowColor": "#000000",
+        "outerShadowOpacity": 13,
+        "innerShadowEnabled": true,
+        "innerShadowX": 0,
+        "innerShadowY": 2,
+        "innerShadowBlur": 0,
+        "innerShadowColor": "#ffffb3",
+        "innerShadowOpacity": 100,
+        "texts": [
+          {
+            "content": "2",
+            "fontSize": 16,
+            "fontWeight": "bold",
+            "fontFamily": "\"Lilita One\", cursive",
+            "color": "#ffffff",
+            "textStrokeWidth": 0,
+            "textStrokeColor": "#ffffff",
+            "textShadowX": 0,
+            "textShadowY": 1,
+            "textShadowBlur": 2,
+            "textShadowColor": "#000000",
+            "textShadowOpacity": 40,
+            "textDepthSize": 0,
+            "textDepthColor": "#000000",
+            "offsetX": 19,
+            "offsetY": 17,
+            "bindingKey": "item.wand",
+            "zIndex": 3
+          }
+        ],
+        "selectedTextIndex": 0,
+        "images": [
+          {
+            "exportPath": "assets/circle1.png",
+            "width": 22,
+            "height": 22,
+            "offsetX": 19,
+            "offsetY": 17,
+            "zIndex": 2
+          },
+          {
+            "exportPath": "assets/magnet.png",
+            "width": 32,
+            "height": 32,
+            "offsetX": 2,
+            "offsetY": 0,
+            "shadowEnabled": true,
+            "shadowX": 0,
+            "shadowY": 3,
+            "shadowBlur": 0,
+            "shadowColor": "#000000",
+            "shadowOpacity": 15,
+            "zIndex": 4
+          }
+        ],
+        "selectedImageIndex": 1,
+        "pressEnabled": true,
+        "pressTransition": 100,
+        "pressBrightness": 95,
+        "pressScale": 100,
+        "depthIntensity": 50,
+        "rayCount": 8,
+        "maskEnabled": false,
+        "maskInnerPct": 28,
+        "maskOuterPct": 76
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventName": "item.wand"
+        }
+      ],
+      "groupId": "grp-82"
     }
   ],
   "groups": [
@@ -515,5 +623,6 @@
       "name": "sound_off"
     }
   ],
+  "fxGroups": [],
   "sceneAnimations": []
 }
