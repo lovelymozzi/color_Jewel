@@ -2726,6 +2726,39 @@
             [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0]
         ];
 
+        const SEA_TURTLE_IMAGE_MAP = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0],
+            [0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 6, 6, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 2, 2, 2, 0, 0, 0],
+            [0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 1, 6, 0, 0, 0],
+            [0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 2, 2, 1, 6, 6, 3, 0, 0],
+            [0, 0, 0, 6, 6, 6, 1, 6, 0, 0, 3, 1, 2, 2, 2, 2, 1, 3, 3, 0, 0, 2, 2, 1, 2, 2, 2, 3, 0, 0],
+            [0, 0, 0, 0, 2, 1, 2, 2, 1, 3, 3, 2, 5, 2, 2, 5, 2, 2, 2, 3, 2, 2, 1, 2, 2, 8, 1, 1, 8, 0],
+            [0, 0, 0, 0, 0, 2, 2, 1, 2, 2, 3, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1, 2, 2, 1, 6, 6, 3, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 5, 2, 2, 1, 2, 2, 2, 5, 4, 4, 2, 2, 2, 0, 3, 6, 6, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 3, 2, 1, 2, 2, 2, 2, 4, 4, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 1, 5, 2, 2, 2, 4, 4, 4, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 1, 2, 2, 2, 2, 3, 3, 3, 2, 2, 4, 4, 4, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 2, 1, 2, 3, 3, 1, 2, 3, 3, 3, 2, 4, 4, 4, 2, 2, 2, 2, 1, 2, 2, 0, 0, 0, 0, 0, 0],
+            [0, 2, 2, 1, 2, 2, 3, 1, 2, 3, 3, 3, 3, 4, 4, 4, 2, 2, 1, 2, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0],
+            [0, 2, 1, 2, 2, 2, 1, 0, 4, 4, 4, 4, 4, 4, 4, 2, 2, 1, 3, 0, 2, 2, 2, 1, 2, 0, 0, 0, 0, 0],
+            [0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 0, 0, 1, 0, 2, 1, 2, 2, 0, 0, 0, 0, 0],
+            [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0],
+            [2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 1, 0, 0, 0, 0, 0],
+            [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 0, 9, 0, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 9, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 9, 9, 0, 0],
+            [0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 9, 9, 0, 0]
+        ];
+
         function scaleMap(sourceMap, factor) {
             return sourceMap.flatMap((row) => {
                 const scaledRow = row.flatMap((cell) => Array(factor).fill(cell));
@@ -3115,6 +3148,18 @@
                     completedColorsPerUnlock: 1,
                     pocketsPerUnlock: 1
                 }
+            },
+            {
+                id: "seaturtle",
+                displayName: "바다거북이",
+                baseImageMap: SEA_TURTLE_IMAGE_MAP,
+                scale: 1,
+                startMessageTemplate: "{title} 스테이지예요. 보석을 맞춰 바다를 헤엄치는 거북이를 완성해 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
             }
         ];
 
@@ -3125,6 +3170,7 @@
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
+        const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v1";
         const DEFAULT_APP_SETTINGS = Object.freeze({
             soundEffectsOn: true,
             bgmOn: true,
@@ -3466,6 +3512,81 @@
             } catch (error) {
                 return false;
             }
+        }
+
+        function readLevelInitialStateCacheStorage() {
+            try {
+                const rawValue = window.localStorage.getItem(LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY);
+                if (!rawValue) {
+                    return {};
+                }
+
+                const parsed = JSON.parse(rawValue);
+                return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeLevelInitialStateCacheStorage(storagePayload) {
+            try {
+                if (!storagePayload || !Object.keys(storagePayload).length) {
+                    window.localStorage.removeItem(LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY);
+                    return true;
+                }
+
+                window.localStorage.setItem(
+                    LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY,
+                    JSON.stringify(storagePayload)
+                );
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function readPersistedLevelInitialState(definition, config = ACTIVE_MAP) {
+            if (!definition || !config || definition.adminTargetMap || definition.adminPalette || definition.adminDisplayName) {
+                return null;
+            }
+
+            const storagePayload = readLevelInitialStateCacheStorage();
+            const cacheEntry = storagePayload[definition.id];
+            const cacheSignature = `${config.id}:${config.rows}:${config.cols}:${getStageOverrideVersion(definition)}`;
+            if (!cacheEntry || cacheEntry.signature !== cacheSignature) {
+                return null;
+            }
+
+            const allowedColorIds = new Set([0, ...Object.keys(config.targetColorCounts).map(Number)]);
+            return normalizeLevelInitialStateSnapshot(cacheEntry.state, config, allowedColorIds);
+        }
+
+        function persistLevelInitialState(definition, levelInitialState, config = ACTIVE_MAP) {
+            if (
+                !definition ||
+                !levelInitialState ||
+                !config ||
+                definition.adminTargetMap ||
+                definition.adminPalette ||
+                definition.adminDisplayName
+            ) {
+                return false;
+            }
+
+            const storagePayload = readLevelInitialStateCacheStorage();
+            storagePayload[definition.id] = {
+                signature: `${config.id}:${config.rows}:${config.cols}:${getStageOverrideVersion(definition)}`,
+                state: {
+                    mapId: levelInitialState.mapId,
+                    rows: levelInitialState.rows,
+                    cols: levelInitialState.cols,
+                    boardState: cloneBoardSnapshot(levelInitialState.boardState),
+                    trayState: [...levelInitialState.trayState],
+                    cleanedSocketCells: [...(levelInitialState.cleanedSocketCells || [])],
+                    actionCharges: clampActionChargesSnapshot(levelInitialState.actionCharges)
+                }
+            };
+            return writeLevelInitialStateCacheStorage(storagePayload);
         }
 
         function getInitialMapIndex() {
@@ -3944,13 +4065,17 @@
         }
 
         function persistPixelAdminDraftState(options = {}) {
-            const { showFailureMessage = false } = options;
+            const { showFailureMessage = false, shouldRender = true } = options;
             const definition = getMapDefinitionById(pixelAdminState.currentMapId) || getCurrentMapDefinition();
 
             clearPixelAdminAutoSaveTimer();
 
             if (!definition || !pixelAdminState.draftMap) {
                 return false;
+            }
+
+            if (!pixelAdminState.isDirty && !pixelAdminState.exportIsDirty) {
+                return true;
             }
 
             try {
@@ -3973,7 +4098,9 @@
             const didPersist = persistPixelAdminStageOverride(definition);
             if (didPersist) {
                 pixelAdminState.isDirty = false;
-                renderPixelAdmin();
+                if (shouldRender) {
+                    renderPixelAdmin();
+                }
                 return true;
             }
 
@@ -4040,12 +4167,38 @@
         }
 
         function buildMapConfig(definition) {
+            const cachedConfig = definition.__cachedMapConfig;
+            const cachedSignature = definition.__cachedMapConfigSignature;
+            const sourceMapRef = definition.adminTargetMap || definition.baseImageMap || null;
+            const initialBoardStateRef = definition.initialBoardState || null;
+            const adminPaletteRef = definition.adminPalette || null;
+            const pocketUnlockRef = definition.pocketUnlock || null;
+
+            if (
+                cachedConfig &&
+                cachedSignature &&
+                cachedSignature.sourceMapRef === sourceMapRef &&
+                cachedSignature.initialBoardStateRef === initialBoardStateRef &&
+                cachedSignature.adminPaletteRef === adminPaletteRef &&
+                cachedSignature.adminDisplayName === definition.adminDisplayName &&
+                cachedSignature.displayName === definition.displayName &&
+                cachedSignature.startMessageTemplate === definition.startMessageTemplate &&
+                cachedSignature.startMessage === definition.startMessage &&
+                cachedSignature.scale === definition.scale &&
+                cachedSignature.boardCellSize === definition.boardCellSize &&
+                cachedSignature.trayCellSize === definition.trayCellSize &&
+                cachedSignature.overrideVersion === definition.overrideVersion &&
+                cachedSignature.pocketUnlockRef === pocketUnlockRef
+            ) {
+                return cachedConfig;
+            }
+
             const paddedTarget = padMapToGrid(getStageEditorCanvasMap(definition));
             const targetMap = paddedTarget.map;
             const rows = targetMap.length;
             const cols = targetMap[0].length;
-            const initialBoardState = definition.initialBoardState
-                ? padMapToGrid(definition.initialBoardState, rows, cols).map
+            const initialBoardState = initialBoardStateRef
+                ? padMapToGrid(initialBoardStateRef, rows, cols).map
                 : null;
             const targetPositions = targetMap.flatMap((row, rowIndex) =>
                 row
@@ -4063,8 +4216,37 @@
                 const rightDistance = Math.abs(right.row - center.row) + Math.abs(right.col - center.col);
                 return leftDistance - rightDistance || left.row - right.row || left.col - right.col;
             };
+            const initialLayoutOrder = [...targetPositions].sort(sortCenterOut);
+            const initialLayoutIndex = new Map(
+                initialLayoutOrder.map((position, index) => [`${position.row}-${position.col}`, index])
+            );
+            const targetNeighborPairs = targetPositions.flatMap((position) => {
+                const neighbors = [];
+                [
+                    { row: position.row + 1, col: position.col },
+                    { row: position.row, col: position.col + 1 }
+                ].forEach((neighbor) => {
+                    if (!targetMap[neighbor.row]?.[neighbor.col]) return;
+                    neighbors.push([
+                        initialLayoutIndex.get(`${position.row}-${position.col}`),
+                        initialLayoutIndex.get(`${neighbor.row}-${neighbor.col}`)
+                    ]);
+                });
+                return neighbors;
+            });
+            const sortedLayoutPositionsByColor = [...initialLayoutOrder].sort((left, right) => {
+                const leftColor = targetMap[left.row][left.col];
+                const rightColor = targetMap[right.row][right.col];
+                return leftColor - rightColor || left.row - right.row || left.col - right.col;
+            });
+            const sortedLayoutColors = sortedLayoutPositionsByColor.map((position) => targetMap[position.row][position.col]);
+            const maxTargetColorCount = sortedLayoutColors.reduce((counts, color) => {
+                counts.set(color, (counts.get(color) || 0) + 1);
+                return counts;
+            }, new Map());
+            const initialLayoutOffsets = getInitialLayoutOffsets(initialLayoutOrder, targetMap, targetNeighborPairs);
 
-            return {
+            const config = {
                 ...definition,
                 displayName: getStageResolvedDisplayName(definition),
                 startMessage: getStageStartMessage(definition),
@@ -4081,7 +4263,13 @@
                 targetPositions,
                 targetColorCounts,
                 totalTargetCells: targetPositions.length,
-                initialLayoutOrder: [...targetPositions].sort(sortCenterOut),
+                initialLayoutOrder,
+                initialLayoutIndex,
+                targetNeighborPairs,
+                sortedLayoutPositionsByColor,
+                sortedLayoutColors,
+                maxTargetColorCount: Math.max(0, ...maxTargetColorCount.values()),
+                initialLayoutOffsets,
                 pocketUnlock: {
                     initialOpenCount: 12,
                     completedColorsPerUnlock: 1,
@@ -4089,6 +4277,23 @@
                     ...(definition.pocketUnlock || {})
                 }
             };
+
+            definition.__cachedMapConfigSignature = {
+                sourceMapRef,
+                initialBoardStateRef,
+                adminPaletteRef,
+                adminDisplayName: definition.adminDisplayName,
+                displayName: definition.displayName,
+                startMessageTemplate: definition.startMessageTemplate,
+                startMessage: definition.startMessage,
+                scale: definition.scale,
+                boardCellSize: definition.boardCellSize,
+                trayCellSize: definition.trayCellSize,
+                overrideVersion: definition.overrideVersion,
+                pocketUnlockRef
+            };
+            definition.__cachedMapConfig = config;
+            return config;
         }
 
         const COLOR_PALETTE = {
@@ -4247,6 +4452,24 @@
                     10: "#4673C7",
                     11: "#4B2F1B"
                 }
+            },
+            seaturtle: {
+                cssVars: {
+                    "--grid-bg": "rgba(25, 103, 147, 0.92)",
+                    "--grid-line": "rgba(209, 191, 158, 0.66)"
+                },
+                palette: {
+                    0: "#FFFFFF",
+                    1: "#7DC879",
+                    2: "#62B36B",
+                    3: "#406B3F",
+                    4: "#EEF6D8",
+                    5: "#A28759",
+                    6: "#85D9DF",
+                    7: "#38704D",
+                    8: "#101218",
+                    9: "#757D4D"
+                }
             }
         };
 
@@ -4272,6 +4495,7 @@
 
             // Gem sprites are cached per color id, so clear them whenever a palette changes.
             jewelImageCache.clear();
+            shadeColorCache.clear();
         }
 
         function applyMapTheme(mapId) {
@@ -4766,6 +4990,7 @@
         let actionOverlayState = null;
         let celebrationTimers = [];
         let stageClearTimers = [];
+        let lastResponsiveLayoutKey = "";
         let colorJewelSceneRenderer = null;
         let colorJewelSceneContract = null;
         let colorJewelSceneContractPromise = null;
@@ -4926,7 +5151,12 @@
             { dx: 0, dy: 24, size: 10, rotation: -18, delay: 112 }
         ];
 
-        function syncActiveMap(nextMapIndex = 0) {
+        function syncActiveMap(nextMapIndex = 0, options = {}) {
+            const {
+                syncPixelAdmin = true,
+                renderPixelAdmin = true,
+                prepareUpcomingMap = true
+            } = options;
             currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
             const currentDefinition = MAP_DEFINITIONS[currentMapIndex];
             const currentOverrideVersion = getStageOverrideVersion(currentDefinition);
@@ -4944,33 +5174,24 @@
             TARGET_POSITIONS = ACTIVE_MAP.targetPositions;
             TARGET_COLOR_COUNTS = ACTIVE_MAP.targetColorCounts;
             INITIAL_LAYOUT_ORDER = ACTIVE_MAP.initialLayoutOrder;
+            INITIAL_LAYOUT_INDEX = ACTIVE_MAP.initialLayoutIndex;
+            TARGET_NEIGHBOR_PAIRS = ACTIVE_MAP.targetNeighborPairs;
             POCKET_UNLOCK_RULE = ACTIVE_MAP.pocketUnlock;
             DEFAULT_BOARD_CELL_SIZE = ACTIVE_MAP.boardCellSize ?? 36;
             DEFAULT_TRAY_CELL_SIZE = ACTIVE_MAP.trayCellSize ?? 40;
-            INITIAL_LAYOUT_INDEX = new Map(
-                INITIAL_LAYOUT_ORDER.map((position, index) => [`${position.row}-${position.col}`, index])
-            );
-            TARGET_NEIGHBOR_PAIRS = TARGET_POSITIONS.flatMap((position) => {
-                const neighbors = [];
-                [
-                    { row: position.row + 1, col: position.col },
-                    { row: position.row, col: position.col + 1 }
-                ].forEach((neighbor) => {
-                    if (!TARGET_MAP[neighbor.row]?.[neighbor.col]) return;
-                    neighbors.push([
-                        INITIAL_LAYOUT_INDEX.get(`${position.row}-${position.col}`),
-                        INITIAL_LAYOUT_INDEX.get(`${neighbor.row}-${neighbor.col}`)
-                    ]);
-                });
-                return neighbors;
-            });
             TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
             boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
-            syncPixelAdminWithActiveMap();
+            if (syncPixelAdmin) {
+                syncPixelAdminWithActiveMap(false, renderPixelAdmin);
+            }
 
             if (preparedNextMapTimer) {
                 window.clearTimeout(preparedNextMapTimer);
                 preparedNextMapTimer = null;
+            }
+
+            if (!prepareUpcomingMap) {
+                return;
             }
 
             const upcomingMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
@@ -4993,12 +5214,10 @@
                     const preservedTargetPositions = TARGET_POSITIONS;
                     const preservedTargetColorCounts = TARGET_COLOR_COUNTS;
                     const preservedInitialLayoutOrder = INITIAL_LAYOUT_ORDER;
+                    const preservedInitialLayoutIndex = INITIAL_LAYOUT_INDEX;
                     const preservedTargetNeighborPairs = TARGET_NEIGHBOR_PAIRS;
                     const preservedTotalTargetCells = TOTAL_TARGET_CELLS;
                     const preparedConfig = buildMapConfig(upcomingDefinition);
-                    const preparedLayoutIndex = new Map(
-                        preparedConfig.initialLayoutOrder.map((position, index) => [`${position.row}-${position.col}`, index])
-                    );
 
                     preparedNextMapIndex = upcomingMapIndex;
                     preparedNextMapVersion = upcomingOverrideVersion;
@@ -5010,20 +5229,8 @@
                     TARGET_POSITIONS = preparedConfig.targetPositions;
                     TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
                     INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
-                    TARGET_NEIGHBOR_PAIRS = preparedConfig.targetPositions.flatMap((position) => {
-                        const neighbors = [];
-                        [
-                            { row: position.row + 1, col: position.col },
-                            { row: position.row, col: position.col + 1 }
-                        ].forEach((neighbor) => {
-                            if (!preparedConfig.targetMap[neighbor.row]?.[neighbor.col]) return;
-                            neighbors.push([
-                                preparedLayoutIndex.get(`${position.row}-${position.col}`),
-                                preparedLayoutIndex.get(`${neighbor.row}-${neighbor.col}`)
-                            ]);
-                        });
-                        return neighbors;
-                    });
+                    INITIAL_LAYOUT_INDEX = preparedConfig.initialLayoutIndex;
+                    TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
                     TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
                     preparedNextLevelInitialState = buildCurrentLevelInitialState();
                     ACTIVE_MAP = preservedActiveMap;
@@ -5033,6 +5240,7 @@
                     TARGET_POSITIONS = preservedTargetPositions;
                     TARGET_COLOR_COUNTS = preservedTargetColorCounts;
                     INITIAL_LAYOUT_ORDER = preservedInitialLayoutOrder;
+                    INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
                     TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
                     TOTAL_TARGET_CELLS = preservedTotalTargetCells;
                 }, 0);
@@ -5379,7 +5587,7 @@
             renderPixelAdmin();
         }
 
-        function syncPixelAdminWithActiveMap(force = false) {
+        function syncPixelAdminWithActiveMap(force = false, shouldRender = true) {
             if (!pixelAdminElement) {
                 return;
             }
@@ -5392,6 +5600,9 @@
             }
 
             if (!force && pixelAdminState.currentMapId === definition.id && pixelAdminState.draftMap) {
+                if (shouldRender) {
+                    renderPixelAdmin();
+                }
                 return;
             }
 
@@ -5410,13 +5621,16 @@
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "`Shift + A`로 어드민을 열고 닫을 수 있습니다.";
-            renderPixelAdmin();
+            if (shouldRender) {
+                renderPixelAdmin();
+            }
         }
 
         function setPixelAdminOpen(nextOpen) {
             pixelAdminState.isOpen = nextOpen;
             if (nextOpen) {
                 syncPixelAdminWithActiveMap();
+                return;
             }
             renderPixelAdmin();
         }
@@ -5562,6 +5776,12 @@
                 return;
             }
 
+            const axisKey = `${rowCount}x${columnCount}`;
+            if (pixelAdminAxisTopElement.dataset.axisKey === axisKey) {
+                syncPixelAdminAxisScroll();
+                return;
+            }
+
             const buildCells = (count) =>
                 Array.from({ length: count }, (_, index) => `<span class="pixel-admin-axis-cell">${index + 1}</span>`).join("");
 
@@ -5572,6 +5792,10 @@
             pixelAdminAxisBottomElement.innerHTML = horizontalMarkup;
             pixelAdminAxisLeftElement.innerHTML = verticalMarkup;
             pixelAdminAxisRightElement.innerHTML = verticalMarkup;
+            pixelAdminAxisTopElement.dataset.axisKey = axisKey;
+            pixelAdminAxisBottomElement.dataset.axisKey = axisKey;
+            pixelAdminAxisLeftElement.dataset.axisKey = axisKey;
+            pixelAdminAxisRightElement.dataset.axisKey = axisKey;
             syncPixelAdminAxisScroll();
         }
 
@@ -5626,7 +5850,7 @@
             const anchorRatioX = (pixelAdminGridWrapElement.scrollLeft + localX) / previousGridWidth;
             const anchorRatioY = (pixelAdminGridWrapElement.scrollTop + localY) / previousGridHeight;
 
-            pixelAdminState.canvasZoom = Math.max(1, Math.min(6, nextZoom));
+            pixelAdminState.canvasZoom = Math.max(0.2, Math.min(10, nextZoom));
             const nextMetrics = syncPixelAdminGridMetrics(
                 pixelAdminState.draftMap[0].length,
                 pixelAdminState.draftMap.length
@@ -5691,9 +5915,15 @@
 
         function setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta = {}) {
             const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
+            const presentationKey = `${mapId}|${rowIndex}|${colIndex}|${colorId}|${colorHex}`;
+
+            if (cell.dataset.presentationKey === presentationKey) {
+                return;
+            }
 
             cell.dataset.row = String(rowIndex);
             cell.dataset.col = String(colIndex);
+            cell.dataset.presentationKey = presentationKey;
             cell.classList.toggle("empty", colorId === 0);
             if (colorId === 0) {
                 cell.style.removeProperty("--cell-color");
@@ -5831,7 +6061,7 @@
                 normalizeStageDisplayName(definition.displayName) ||
                 null;
             const didPersist = persistPixelAdminStageOverride(definition);
-            syncActiveMap(currentMapIndex);
+            syncActiveMap(currentMapIndex, { renderPixelAdmin: false });
             resetGame({ regenerateLevelStart: true });
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
@@ -5843,7 +6073,7 @@
 
         function reloadPixelAdminDraft() {
             clearPixelAdminAutoSaveTimer();
-            syncPixelAdminWithActiveMap(true);
+            syncPixelAdminWithActiveMap(true, false);
             pixelAdminState.message = "현재 스테이지에 적용된 캔버스와 팔레트를 다시 불러왔어요.";
             renderPixelAdmin();
         }
@@ -5859,37 +6089,57 @@
             definition.adminPalette = null;
             definition.adminDisplayName = null;
             clearPersistedPixelAdminStageOverride(definition.id);
-            syncActiveMap(currentMapIndex);
+            syncActiveMap(currentMapIndex, { renderPixelAdmin: false });
             resetGame({ regenerateLevelStart: true });
-            syncPixelAdminWithActiveMap(true);
+            syncPixelAdminWithActiveMap(true, false);
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "기본 캔버스와 팔레트로 복원했어요.";
             renderPixelAdmin();
         }
 
         function goToNextLevelFromAdmin() {
-            persistPixelAdminDraftState();
+            const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
+            const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
+            persistPixelAdminDraftState({ shouldRender: false });
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(currentMapIndex + 1);
-            resetGame({ regenerateLevelStart: true });
+            syncActiveMap(nextMapIndex, { renderPixelAdmin: false, prepareUpcomingMap: false });
+            currentLevelInitialState =
+                preparedNextMapIndex === nextMapIndex &&
+                preparedNextMapVersion === nextOverrideVersion &&
+                preparedNextLevelInitialState?.mapId === ACTIVE_MAP?.id
+                    ? {
+                        mapId: preparedNextLevelInitialState.mapId,
+                        rows: preparedNextLevelInitialState.rows,
+                        cols: preparedNextLevelInitialState.cols,
+                        boardState: cloneBoardSnapshot(preparedNextLevelInitialState.boardState),
+                        trayState: [...preparedNextLevelInitialState.trayState],
+                        cleanedSocketCells: [...(preparedNextLevelInitialState.cleanedSocketCells || [])],
+                        actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
+                    }
+                    : null;
+            resetGame({ regenerateLevelStart: !currentLevelInitialState });
             pixelAdminState.message = `다음 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
         }
 
         function goToPreviousLevelFromAdmin() {
-            persistPixelAdminDraftState();
+            const previousMapIndex =
+                ((currentMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            persistPixelAdminDraftState({ shouldRender: false });
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(currentMapIndex - 1);
+            syncActiveMap(previousMapIndex, { renderPixelAdmin: false, prepareUpcomingMap: false });
+            currentLevelInitialState = null;
             resetGame({ regenerateLevelStart: true });
             pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
@@ -5941,6 +6191,10 @@
             pixelAdminToggleElement.setAttribute("aria-expanded", String(pixelAdminState.isOpen));
             applyPixelAdminPanelWidth();
 
+            if (!pixelAdminState.isOpen) {
+                return;
+            }
+
             if (!definition || !mapId || !sourceMap?.length) {
                 return;
             }
@@ -5955,7 +6209,7 @@
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
 
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
-            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. HEX는 `#` 없이 6자리만 입력하면 되고, 채도는 자동으로 65 이하로 맞춰집니다.";
+            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 그리드 위에서 마우스 휠로 확대/축소할 수 있고, HEX는 `#` 없이 6자리만 입력하면 채도는 자동으로 65 이하로 맞춰집니다.";
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             if (!pixelAdminState.exportIsDirty) {
@@ -6030,39 +6284,51 @@
             renderPixelAdminAxes(rows, cols);
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
             syncPixelAdminGridMetrics(cols, rows);
-            pixelAdminGridElement.innerHTML = "";
+            if (pixelAdminGridElement.childElementCount !== rows * cols) {
+                const fragment = document.createDocumentFragment();
+
+                sourceMap.forEach((row, rowIndex) => {
+                    row.forEach((colorId, colIndex) => {
+                        const cell = document.createElement("button");
+
+                        cell.type = "button";
+                        cell.className = "pixel-admin-cell";
+                        cell.addEventListener("mousedown", (event) => {
+                            if (event.button !== 0 && event.button !== 2) {
+                                return;
+                            }
+
+                            event.preventDefault();
+                            startPixelAdminDrawing(event.button === 2 ? 0 : pixelAdminState.selectedColorId);
+                            paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
+                        });
+                        cell.addEventListener("mouseenter", (event) => {
+                            if (!pixelAdminInteraction.isDrawing) {
+                                return;
+                            }
+
+                            if (!(event.buttons & 1) && !(event.buttons & 2)) {
+                                stopPixelAdminDrawing();
+                                return;
+                            }
+
+                            paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
+                        });
+                        cell.addEventListener("contextmenu", (event) => {
+                            event.preventDefault();
+                        });
+                        fragment.appendChild(cell);
+                    });
+                });
+
+                pixelAdminGridElement.replaceChildren(fragment);
+            }
+
             sourceMap.forEach((row, rowIndex) => {
                 row.forEach((colorId, colIndex) => {
-                    const cell = document.createElement("button");
-
-                    cell.type = "button";
+                    const cell = pixelAdminGridElement.children[(rowIndex * cols) + colIndex];
                     cell.className = "pixel-admin-cell";
                     setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta);
-                    cell.addEventListener("mousedown", (event) => {
-                        if (event.button !== 0 && event.button !== 2) {
-                            return;
-                        }
-
-                        event.preventDefault();
-                        startPixelAdminDrawing(event.button === 2 ? 0 : pixelAdminState.selectedColorId);
-                        paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
-                    });
-                    cell.addEventListener("mouseenter", (event) => {
-                        if (!pixelAdminInteraction.isDrawing) {
-                            return;
-                        }
-
-                        if (!(event.buttons & 1) && !(event.buttons & 2)) {
-                            stopPixelAdminDrawing();
-                            return;
-                        }
-
-                        paintPixelAdminCellFromElement(cell, pixelAdminInteraction.drawColorId);
-                    });
-                    cell.addEventListener("contextmenu", (event) => {
-                        event.preventDefault();
-                    });
-                    pixelAdminGridElement.appendChild(cell);
                 });
             });
         }
@@ -6084,26 +6350,30 @@
             return INITIAL_MAX_CLUSTER_SIZE;
         }
 
-        function getInitialLayoutOffsets() {
-            const sourceColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
+        function getInitialLayoutOffsets(
+            layoutOrder = INITIAL_LAYOUT_ORDER,
+            targetMap = TARGET_MAP,
+            targetNeighborPairs = TARGET_NEIGHBOR_PAIRS
+        ) {
+            const sourceColors = layoutOrder.map((position) => targetMap[position.row][position.col]);
             const scoredOffsets = [];
 
             for (let offset = 1; offset < sourceColors.length; offset += 1) {
                 const shiftedColors = sourceColors.map((_, index) => sourceColors[(index + offset) % sourceColors.length]);
 
                 const isValidOffset = shiftedColors.every((color, index) => {
-                    const position = INITIAL_LAYOUT_ORDER[index];
-                    return color !== TARGET_MAP[position.row][position.col];
+                    const position = layoutOrder[index];
+                    return color !== targetMap[position.row][position.col];
                 });
 
                 if (!isValidOffset) continue;
 
                 const adjacencyScore =
-                    TARGET_NEIGHBOR_PAIRS.reduce(
+                    targetNeighborPairs.reduce(
                         (sameNeighbors, [leftIndex, rightIndex]) =>
                             sameNeighbors + (shiftedColors[leftIndex] === shiftedColors[rightIndex] ? 1 : 0),
                         0
-                    ) / TARGET_NEIGHBOR_PAIRS.length;
+                    ) / Math.max(1, targetNeighborPairs.length);
 
                 scoredOffsets.push({ offset, adjacencyScore });
             }
@@ -6118,7 +6388,7 @@
                         left.adjacencyScore - right.adjacencyScore ||
                         Math.abs(left.offset - sourceColors.length / 2) - Math.abs(right.offset - sourceColors.length / 2)
                 )
-                .slice(0, 8)
+                .slice(0, 16)
                 .map(({ offset }) => offset);
         }
 
@@ -6418,17 +6688,9 @@
         }
 
         function buildDerangedInitialColors() {
-            const groupedPositions = [...INITIAL_LAYOUT_ORDER].sort((left, right) => {
-                const leftColor = TARGET_MAP[left.row][left.col];
-                const rightColor = TARGET_MAP[right.row][right.col];
-                return leftColor - rightColor || left.row - right.row || left.col - right.col;
-            });
-            const groupedColors = groupedPositions.map((position) => TARGET_MAP[position.row][position.col]);
-            const colorCounts = groupedColors.reduce((counts, color) => {
-                counts.set(color, (counts.get(color) || 0) + 1);
-                return counts;
-            }, new Map());
-            const maxCount = Math.max(...colorCounts.values());
+            const groupedPositions = ACTIVE_MAP.sortedLayoutPositionsByColor;
+            const groupedColors = ACTIVE_MAP.sortedLayoutColors;
+            const maxCount = ACTIVE_MAP.maxTargetColorCount;
             const colorCount = groupedColors.length;
 
             if (maxCount > Math.floor(colorCount / 2)) {
@@ -6452,8 +6714,46 @@
 
             const createEmptyBoard = () => TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
             const targetColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
+            const randomAttemptCount =
+                TOTAL_TARGET_CELLS > 320 ? 2 : TOTAL_TARGET_CELLS > 240 ? 3 : TOTAL_TARGET_CELLS > 180 ? 4 : 6;
+            const offsetAttemptCount =
+                TOTAL_TARGET_CELLS > 320 ? 12 : TOTAL_TARGET_CELLS > 240 ? 10 : TOTAL_TARGET_CELLS > 180 ? 8 : 6;
+            const candidateOffsets = [];
+            const preferredOffsets = ACTIVE_MAP.initialLayoutOffsets?.length ? ACTIVE_MAP.initialLayoutOffsets : [1];
+            const sampledOffsetStep = Math.max(1, Math.floor((targetColors.length - 1) / Math.max(1, offsetAttemptCount)));
+            let fallbackBoardState = null;
+            let fallbackBoardQuality = null;
 
-            for (let attempt = 0; attempt < 12; attempt += 1) {
+            preferredOffsets.forEach((offset) => {
+                if (candidateOffsets.length >= offsetAttemptCount || !Number.isInteger(offset) || offset <= 0) {
+                    return;
+                }
+                if (!candidateOffsets.includes(offset)) {
+                    candidateOffsets.push(offset);
+                }
+            });
+
+            for (
+                let offset = Math.max(1, Math.floor(targetColors.length / 2));
+                candidateOffsets.length < offsetAttemptCount && offset < targetColors.length;
+                offset += sampledOffsetStep
+            ) {
+                if (!candidateOffsets.includes(offset)) {
+                    candidateOffsets.push(offset);
+                }
+            }
+
+            for (
+                let offset = sampledOffsetStep;
+                candidateOffsets.length < offsetAttemptCount && offset < targetColors.length;
+                offset += sampledOffsetStep
+            ) {
+                if (!candidateOffsets.includes(offset)) {
+                    candidateOffsets.push(offset);
+                }
+            }
+
+            for (let attempt = 0; attempt < randomAttemptCount; attempt += 1) {
                 const sourceColors = buildDerangedInitialColors();
                 if (!sourceColors) break;
                 const board = createEmptyBoard();
@@ -6466,9 +6766,15 @@
                 if (!hasMatchedInitialCells(board) || (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board))) {
                     return board;
                 }
+
+                const candidateQuality = getInitialBoardQuality(board);
+                if (!fallbackBoardQuality || isBetterInitialBoardQuality(candidateQuality, fallbackBoardQuality)) {
+                    fallbackBoardState = cloneBoardSnapshot(board);
+                    fallbackBoardQuality = candidateQuality;
+                }
             }
 
-            for (let offset = 1; offset < targetColors.length; offset += 1) {
+            for (const offset of candidateOffsets) {
                 const board = createEmptyBoard();
 
                 INITIAL_LAYOUT_ORDER.forEach((position, index) => {
@@ -6479,11 +6785,22 @@
                 if (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board)) {
                     return board;
                 }
+
+                const candidateQuality = getInitialBoardQuality(board);
+                if (!fallbackBoardQuality || isBetterInitialBoardQuality(candidateQuality, fallbackBoardQuality)) {
+                    fallbackBoardState = cloneBoardSnapshot(board);
+                    fallbackBoardQuality = candidateQuality;
+                }
+            }
+
+            if (fallbackBoardState) {
+                return fallbackBoardState;
             }
 
             const fallbackBoard = createEmptyBoard();
+            const fallbackOffset = candidateOffsets[0] || 1;
             INITIAL_LAYOUT_ORDER.forEach((position, index) => {
-                fallbackBoard[position.row][position.col] = targetColors[(index + 1) % targetColors.length];
+                fallbackBoard[position.row][position.col] = targetColors[(index + fallbackOffset) % targetColors.length];
             });
             prepareInitialBoardCandidate(fallbackBoard);
             removeMatchedInitialCells(fallbackBoard);
@@ -6491,14 +6808,60 @@
         }
 
         function buildCurrentLevelInitialState() {
+            const definition = getCurrentMapDefinition();
+            const cachedInitialState = definition?.__cachedLevelInitialState;
+            const cachedInitialStateSignature = definition?.__cachedLevelInitialStateSignature;
+            const sourceMapRef = definition?.adminTargetMap || definition?.baseImageMap || null;
+            const initialBoardStateRef = definition?.initialBoardState || null;
+            const initialTrayStateRef = definition?.initialTrayState || null;
+
+            if (
+                cachedInitialState &&
+                cachedInitialStateSignature &&
+                cachedInitialStateSignature.sourceMapRef === sourceMapRef &&
+                cachedInitialStateSignature.initialBoardStateRef === initialBoardStateRef &&
+                cachedInitialStateSignature.initialTrayStateRef === initialTrayStateRef &&
+                cachedInitialStateSignature.overrideVersion === definition?.overrideVersion &&
+                cachedInitialState.mapId === ACTIVE_MAP?.id &&
+                cachedInitialState.rows === ROWS &&
+                cachedInitialState.cols === COLS
+            ) {
+                return createLevelInitialStateSnapshot(
+                    cachedInitialState.boardState,
+                    cachedInitialState.trayState,
+                    cachedInitialState.cleanedSocketCells,
+                    cachedInitialState.actionCharges
+                );
+            }
+
+            const persistedInitialState = readPersistedLevelInitialState(definition, ACTIVE_MAP);
+            if (persistedInitialState) {
+                if (definition) {
+                    definition.__cachedLevelInitialStateSignature = {
+                        sourceMapRef,
+                        initialBoardStateRef,
+                        initialTrayStateRef,
+                        overrideVersion: definition.overrideVersion
+                    };
+                    definition.__cachedLevelInitialState = createLevelInitialStateSnapshot(
+                        persistedInitialState.boardState,
+                        persistedInitialState.trayState,
+                        persistedInitialState.cleanedSocketCells,
+                        persistedInitialState.actionCharges
+                    );
+                }
+                return persistedInitialState;
+            }
+
             let nextBoardState = createBoardState();
 
             if (!ACTIVE_MAP.initialBoardState) {
                 let bestBoardState = nextBoardState;
                 let bestBoardQuality = getInitialBoardQuality(nextBoardState);
-                const initialAttemptCount = 18;
+                const additionalAttemptCount =
+                    TOTAL_TARGET_CELLS > 260 ? 0 : TOTAL_TARGET_CELLS > 150 ? 1 : 3;
 
-                for (let attempt = 0; attempt < initialAttemptCount; attempt += 1) {
+                for (let attempt = 0; attempt < additionalAttemptCount; attempt += 1) {
                     const candidateBoardState = createBoardState();
                     const candidateQuality = getInitialBoardQuality(candidateBoardState);
 
@@ -6519,12 +6882,30 @@
                 nextBoardState = bestBoardState;
             }
 
-            return createLevelInitialStateSnapshot(
+            const nextInitialState = createLevelInitialStateSnapshot(
                 nextBoardState,
                 Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0),
                 [],
                 getDefaultActionCharges()
             );
+
+            if (definition) {
+                definition.__cachedLevelInitialStateSignature = {
+                    sourceMapRef,
+                    initialBoardStateRef,
+                    initialTrayStateRef,
+                    overrideVersion: definition.overrideVersion
+                };
+                definition.__cachedLevelInitialState = createLevelInitialStateSnapshot(
+                    nextInitialState.boardState,
+                    nextInitialState.trayState,
+                    nextInitialState.cleanedSocketCells,
+                    nextInitialState.actionCharges
+                );
+                persistLevelInitialState(definition, nextInitialState, ACTIVE_MAP);
+            }
+
+            return nextInitialState;
         }
 
         function setStatus(message) {
@@ -6789,8 +7170,15 @@
         }
 
         function shadeColor(hex, amount) {
+            const normalizedHex = normalizeHexColor(hex) || hex;
+            const cacheKey = `${normalizedHex}|${amount}`;
+            const cachedColor = shadeColorCache.get(cacheKey);
+            if (cachedColor) {
+                return cachedColor;
+            }
+
             const clamp = (channel) => Math.max(0, Math.min(255, channel + amount));
-            const base = hexToRgb(normalizeHexColor(hex) || hex);
+            const base = hexToRgb(normalizedHex);
             const shaded = clampRgbSaturation({
                 r: clamp(base.r),
                 g: clamp(base.g),
@@ -6799,12 +7187,15 @@
             const r = shaded.r;
             const g = shaded.g;
             const b = shaded.b;
-            return `rgb(${r}, ${g}, ${b})`;
+            const nextColor = `rgb(${r}, ${g}, ${b})`;
+            shadeColorCache.set(cacheKey, nextColor);
+            return nextColor;
         }
 
         const JEWEL_TEMPLATE_SRC = "data:image/png;base64,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";
         const jewelTemplateImage = new Image();
         const jewelImageCache = new Map();
+        const shadeColorCache = new Map();
         let jewelTemplateReady = false;
 
         function hexToRgb(hex) {
@@ -8220,7 +8611,7 @@
             return startDelayMs + FULL_BOARD_CELEBRATION_MAX_MS;
         }
 
-        function getOpenedPocketCount(completedColorCount = countCompletedColors()) {
+        function getOpenedPocketCount(completedColorCount = completedColorIds.size) {
             const initialOpenCount = POCKET_UNLOCK_RULE.initialOpenCount ?? 12;
             const completedColorsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.completedColorsPerUnlock ?? 1);
             const pocketsPerUnlock = Math.max(1, POCKET_UNLOCK_RULE.pocketsPerUnlock ?? 1);
@@ -8229,7 +8620,7 @@
             return Math.min(POCKET_SIZE, initialOpenCount + additionalPockets);
         }
 
-        function getOpenedPocketIndexSet(completedColorCount = countCompletedColors()) {
+        function getOpenedPocketIndexSet(completedColorCount = completedColorIds.size) {
             return new Set(
                 Array.from({ length: getOpenedPocketCount(completedColorCount) }, (_, index) => index)
             );
@@ -9057,7 +9448,7 @@
         }
 
         function countCompletedColors() {
-            return getCompletedColorIds().size;
+            return completedColorIds.size;
         }
 
         function shouldRenderGemLayer() {
@@ -9273,92 +9664,173 @@
         }
 
         function renderBoard() {
-            boardElement.innerHTML = "";
             const now = performance.now();
             cleanupExpiredSparkles(now);
             const shouldRenderGems = shouldRenderGemLayer();
             const magicTargeting = isMagicTargetingMode();
+            const totalCellCount = ROWS * COLS;
+            const selectedBoardCellKeys = selected?.source === "board"
+                ? new Set(selected.cells.map((cell) => toCellKey(cell.row, cell.col)))
+                : null;
+
+            if (boardElement.childElementCount !== totalCellCount) {
+                const fragment = document.createDocumentFragment();
+
+                for (let row = 0; row < ROWS; row += 1) {
+                    for (let col = 0; col < COLS; col += 1) {
+                        const button = document.createElement("button");
+                        button.type = "button";
+                        button.className = "cell";
+
+                        button.addEventListener("pointerdown", (event) => {
+                            if (!isMagicTargetingMode() || button.disabled) {
+                                return;
+                            }
+
+                            if (event.pointerType === "mouse" && event.button !== 0) {
+                                return;
+                            }
+
+                            event.preventDefault();
+                            beginMagicDrag(
+                                Number(button.dataset.row),
+                                Number(button.dataset.col),
+                                event.pointerId
+                            );
+                        });
+
+                        button.addEventListener("mouseenter", () => {
+                            if (!isMagicTargetingMode() || boardInteraction.isMagicDragging || button.disabled) {
+                                return;
+                            }
+
+                            previewMagicBounds(
+                                Number(button.dataset.row),
+                                Number(button.dataset.col)
+                            );
+                        });
+
+                        bindTapActivation(button, () => {
+                            if (button.disabled || isMagicTargetingMode()) {
+                                return;
+                            }
+
+                            void handleBoardClick(
+                                Number(button.dataset.row),
+                                Number(button.dataset.col)
+                            );
+                        });
+
+                        fragment.appendChild(button);
+                    }
+                }
+
+                boardElement.replaceChildren(fragment);
+            }
 
             for (let row = 0; row < ROWS; row += 1) {
                 for (let col = 0; col < COLS; col += 1) {
-                    const target = TARGET_MAP[row][col];
-                    const gem = boardState[row][col];
-                    const button = document.createElement("button");
-                    button.type = "button";
+                    const target = TARGET_MAP[row]?.[col] || 0;
+                    const gem = boardState[row]?.[col] || 0;
+                    const button = boardElement.children[(row * COLS) + col];
+                    const cleaned = isCleanedSocketCell(row, col);
+                    const isCorrectGem = target && (
+                        cleaned ||
+                        (gem !== 0 && gem === target)
+                    );
+                    const sparkleElapsedMs = isCorrectGem ? getCellSparkleElapsed(row, col, now) : null;
+                    const shouldSparkle = sparkleElapsedMs != null;
+                    const isSelectedCell = Boolean(selectedBoardCellKeys?.has(toCellKey(row, col)));
+                    const renderKey = `${target}|${gem}|${cleaned ? 1 : 0}|${isCorrectGem ? 1 : 0}|${shouldSparkle ? 1 : 0}|${isSelectedCell ? 1 : 0}|${shouldRenderGems ? 1 : 0}|${magicTargeting ? 1 : 0}`;
+
+                    if (button.dataset.renderKey === renderKey) {
+                        continue;
+                    }
+
                     button.className = "cell";
                     button.dataset.row = String(row);
                     button.dataset.col = String(col);
+                    button.dataset.renderKey = renderKey;
+                    button.disabled = false;
+                    button.replaceChildren();
+                    button.style.background = "";
+                    button.style.removeProperty("--tile-base");
+                    button.style.removeProperty("--tile-dark");
+                    button.style.removeProperty("--tile-shadow");
+                    button.style.removeProperty("--tile-light");
 
                     if (!target) {
                         button.classList.add("void");
                         button.disabled = true;
                         button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 빈 영역`);
-                        boardElement.appendChild(button);
                         continue;
                     }
 
+                    const targetColor = COLOR_PALETTE[target].color;
                     button.classList.add("board-cell");
-                    button.style.background = COLOR_PALETTE[target].color;
-                    button.style.setProperty("--tile-base", COLOR_PALETTE[target].color);
-                    button.style.setProperty("--tile-dark", shadeColor(COLOR_PALETTE[target].color, -18));
-                    button.style.setProperty("--tile-shadow", shadeColor(COLOR_PALETTE[target].color, -34));
-                    button.style.setProperty("--tile-light", shadeColor(COLOR_PALETTE[target].color, 12));
+                    button.style.background = targetColor;
+                    button.style.setProperty("--tile-base", targetColor);
+                    button.style.setProperty("--tile-dark", shadeColor(targetColor, -18));
+                    button.style.setProperty("--tile-shadow", shadeColor(targetColor, -34));
+                    button.style.setProperty("--tile-light", shadeColor(targetColor, 12));
                     button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
 
-                    if (gem === 0 && !isCleanedSocketCell(row, col)) button.classList.add("empty-target");
-                    const isCorrectGem = isCompletedTargetCell(row, col);
-                    const sparkleElapsedMs = isCorrectGem ? getCellSparkleElapsed(row, col, now) : null;
-                    const shouldSparkle = sparkleElapsedMs != null;
+                    if (gem === 0 && !cleaned) button.classList.add("empty-target");
                     const sparkleColorId = gem || target;
                     if (isCorrectGem) {
                         button.classList.add("correct", "locked");
                         button.disabled = !magicTargeting;
                     }
                     if (shouldSparkle) button.classList.add("sparkle");
-                    if (isSelected("board", row, col)) button.classList.add("selected");
+                    if (isSelectedCell) button.classList.add("selected");
                     if (shouldRenderGems && shouldSparkle) button.appendChild(createSparkleBurst(sparkleColorId, sparkleElapsedMs));
                     if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs));
-
-                    if (!button.disabled) {
-                        if (magicTargeting) {
-                            button.addEventListener("pointerdown", (event) => {
-                                if (event.pointerType === "mouse" && event.button !== 0) {
-                                    return;
-                                }
-
-                                event.preventDefault();
-                                beginMagicDrag(row, col, event.pointerId);
-                            });
-                            button.addEventListener("mouseenter", () => {
-                                if (!boardInteraction.isMagicDragging) {
-                                    previewMagicBounds(row, col);
-                                }
-                            });
-                        } else {
-                            bindTapActivation(button, () => {
-                                void handleBoardClick(row, col);
-                            });
-                        }
-                    }
-                    boardElement.appendChild(button);
                 }
             }
         }
 
-        function renderTrayRange(container, startIndex, endIndex, labelPrefix) {
-            container.innerHTML = "";
-            const openedPocketIndices = getOpenedPocketIndexSet();
-            const nextOpenIndex = getOpenedPocketCount();
+        function renderTrayRange(container, startIndex, endIndex, labelPrefix, openedPocketIndices, nextOpenIndex, selectedTrayIndices) {
             const shouldRenderGems = shouldRenderGemLayer();
+            const slotCount = endIndex - startIndex;
+
+            if (container.childElementCount !== slotCount) {
+                const fragment = document.createDocumentFragment();
+
+                for (let index = startIndex; index < endIndex; index += 1) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "cell tray-slot";
+                    button.dataset.index = String(index);
+                    bindTapActivation(button, () => {
+                        if (button.disabled) {
+                            return;
+                        }
+
+                        void handleTrayClick(Number(button.dataset.index));
+                    });
+                    fragment.appendChild(button);
+                }
+
+                container.replaceChildren(fragment);
+            }
 
             for (let index = startIndex; index < endIndex; index += 1) {
                 const gem = trayState[index];
                 const isOpenedPocket = isPocketOpened(index, openedPocketIndices);
                 const isNextOpenPocket = index === nextOpenIndex && nextOpenIndex < POCKET_SIZE;
-                const button = document.createElement("button");
-                button.type = "button";
+                const button = container.children[index - startIndex];
+                const isSelectedSlot = Boolean(selectedTrayIndices?.has(index));
+                const renderKey = `${gem}|${isOpenedPocket ? 1 : 0}|${isNextOpenPocket ? 1 : 0}|${isSelectedSlot ? 1 : 0}|${shouldRenderGems ? 1 : 0}`;
+
+                if (button.dataset.renderKey === renderKey) {
+                    continue;
+                }
+
                 button.className = "cell tray-slot";
                 button.dataset.index = String(index);
+                button.dataset.renderKey = renderKey;
+                button.disabled = false;
+                button.replaceChildren();
                 button.setAttribute("aria-label", `${labelPrefix} 포켓 ${index - startIndex + 1}`);
 
                 if (isNextOpenPocket) {
@@ -9372,21 +9844,21 @@
                 } else if (!gem) {
                     button.classList.add("empty-target");
                 }
-                if (isSelected("tray", index)) button.classList.add("selected");
+                if (isSelectedSlot) button.classList.add("selected");
                 if (shouldRenderGems && gem) button.appendChild(createGem(gem));
-
-                if (!button.disabled) {
-                    bindTapActivation(button, () => {
-                        void handleTrayClick(index);
-                    });
-                }
-                container.appendChild(button);
             }
         }
 
         function renderTrays() {
-            renderTrayRange(topTrayElement, 0, TOP_POCKET_COUNT, "Pocket 1");
-            renderTrayRange(bottomTrayElement, TOP_POCKET_COUNT, POCKET_SIZE, "Pocket 2");
+            const completedColorCount = completedColorIds.size;
+            const openedPocketIndices = getOpenedPocketIndexSet(completedColorCount);
+            const nextOpenIndex = getOpenedPocketCount(completedColorCount);
+            const selectedTrayIndices = selected?.source === "tray"
+                ? new Set(selected.indices || [])
+                : null;
+
+            renderTrayRange(topTrayElement, 0, TOP_POCKET_COUNT, "Pocket 1", openedPocketIndices, nextOpenIndex, selectedTrayIndices);
+            renderTrayRange(bottomTrayElement, TOP_POCKET_COUNT, POCKET_SIZE, "Pocket 2", openedPocketIndices, nextOpenIndex, selectedTrayIndices);
         }
 
         function getBoardInteractionMetrics() {
@@ -9838,14 +10310,21 @@
 
         function updateResponsiveLayout() {
             const root = document.documentElement;
-            const rootStyles = getComputedStyle(root);
             const { width: viewportWidth, height: viewportHeight } = getViewportMetrics();
             const aspectWidth = activeSceneViewportWidth;
             const aspectHeight = activeSceneViewportHeight;
             const maxShellWidth = activeSceneViewportWidth;
             const compactLayout = viewportWidth <= 540;
+            const layoutKey = `${viewportWidth}x${viewportHeight}|${aspectWidth}x${aspectHeight}|${compactLayout ? 1 : 0}`;
             let appShellWidth;
             let appShellHeight;
+
+            if (layoutKey === lastResponsiveLayoutKey) {
+                return;
+            }
+
+            lastResponsiveLayoutKey = layoutKey;
+            const rootStyles = getComputedStyle(root);
 
             if (compactLayout) {
                 appShellWidth = viewportWidth;
@@ -10099,7 +10578,7 @@
         function findTutorialMisplacedBoardCells() {
             return TARGET_POSITIONS
                 .filter((position) => {
-                    const gem = boardState[position.row][position.col];
+                    const gem = boardState[position.row]?.[position.col] || 0;
                     return gem && gem !== TARGET_MAP[position.row][position.col];
                 })
                 .sort((left, right) => left.row - right.row || left.col - right.col);
@@ -10292,6 +10771,10 @@
         function render() {
             renderFrame = null;
             updateResponsiveLayout();
+            if (!ROWS || !COLS || !TARGET_MAP.length || !boardState.length) {
+                clearTutorialOverlay();
+                return;
+            }
             renderBoard();
             renderTrays();
             updateActionButtonState();
