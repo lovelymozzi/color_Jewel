@@ -3475,9 +3475,37 @@
         }
 
         function getStageEditorCanvasMap(definition) {
-            return definition.adminTargetMap
+            if (!definition) {
+                return [];
+            }
+
+            const sourceMapRef = definition.adminTargetMap || definition.baseImageMap || null;
+            const cachedSignature = definition.__cachedStageEditorCanvasMapSignature;
+            const cachedMap = definition.__cachedStageEditorCanvasMap;
+            if (
+                cachedMap &&
+                cachedSignature &&
+                cachedSignature.sourceMapRef === sourceMapRef &&
+                cachedSignature.scale === definition.scale &&
+                cachedSignature.balancedColors === definition.balancedColors &&
+                cachedSignature.colorSeed === definition.colorSeed &&
+                cachedSignature.overrideVersion === definition.overrideVersion
+            ) {
+                return clonePixelMap(cachedMap);
+            }
+
+            const nextMap = definition.adminTargetMap
                 ? clonePixelMap(definition.adminTargetMap)
                 : buildStageCanvasMapFromBase(definition);
+            definition.__cachedStageEditorCanvasMap = nextMap;
+            definition.__cachedStageEditorCanvasMapSignature = {
+                sourceMapRef,
+                scale: definition.scale,
+                balancedColors: definition.balancedColors,
+                colorSeed: definition.colorSeed,
+                overrideVersion: definition.overrideVersion
+            };
+            return clonePixelMap(nextMap);
         }
 
         function getMapDefinitionById(mapId) {
@@ -3606,16 +3634,24 @@
         }
 
         function readPixelAdminStageStorage() {
+            if (pixelAdminStageStorageCache) {
+                return pixelAdminStageStorageCache;
+            }
+
             try {
                 const rawValue = window.localStorage.getItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
                 if (!rawValue) {
-                    return {};
+                    pixelAdminStageStorageCache = {};
+                    return pixelAdminStageStorageCache;
                 }
 
                 const parsed = JSON.parse(rawValue);
-                return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+                pixelAdminStageStorageCache =
+                    parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+                return pixelAdminStageStorageCache;
             } catch (error) {
-                return {};
+                pixelAdminStageStorageCache = {};
+                return pixelAdminStageStorageCache;
             }
         }
 
@@ -3623,6 +3659,7 @@
             try {
                 if (!storagePayload || !Object.keys(storagePayload).length) {
                     window.localStorage.removeItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
+                    pixelAdminStageStorageCache = {};
                     return true;
                 }
 
@@ -3630,6 +3667,7 @@
                     PIXEL_ADMIN_STAGE_STORAGE_KEY,
                     JSON.stringify(storagePayload)
                 );
+                pixelAdminStageStorageCache = storagePayload;
                 return true;
             } catch (error) {
                 return false;
@@ -3659,16 +3697,24 @@
         }
 
         function readLevelInitialStateCacheStorage() {
+            if (levelInitialStateStorageCache) {
+                return levelInitialStateStorageCache;
+            }
+
             try {
                 const rawValue = window.localStorage.getItem(LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY);
                 if (!rawValue) {
-                    return {};
+                    levelInitialStateStorageCache = {};
+                    return levelInitialStateStorageCache;
                 }
 
                 const parsed = JSON.parse(rawValue);
-                return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+                levelInitialStateStorageCache =
+                    parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+                return levelInitialStateStorageCache;
             } catch (error) {
-                return {};
+                levelInitialStateStorageCache = {};
+                return levelInitialStateStorageCache;
             }
         }
 
@@ -3676,6 +3722,7 @@
             try {
                 if (!storagePayload || !Object.keys(storagePayload).length) {
                     window.localStorage.removeItem(LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY);
+                    levelInitialStateStorageCache = {};
                     return true;
                 }
 
@@ -3683,6 +3730,7 @@
                     LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY,
                     JSON.stringify(storagePayload)
                 );
+                levelInitialStateStorageCache = storagePayload;
                 return true;
             } catch (error) {
                 return false;
@@ -4160,7 +4208,20 @@
                 palette: clonePaletteMeta(definition.adminPalette || {})
             };
 
-            return writePixelAdminStageStorage(storagePayload);
+            pixelAdminStageStorageNeedsFlush = true;
+            if (pixelAdminStageStorageFlushTimer) {
+                window.clearTimeout(pixelAdminStageStorageFlushTimer);
+            }
+            pixelAdminStageStorageFlushTimer = window.setTimeout(() => {
+                pixelAdminStageStorageFlushTimer = null;
+                if (!pixelAdminStageStorageNeedsFlush) {
+                    return;
+                }
+                if (writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                    pixelAdminStageStorageNeedsFlush = false;
+                }
+            }, 220);
+            return true;
         }
 
         function clearPersistedPixelAdminStageOverride(mapId) {
@@ -4174,7 +4235,20 @@
             }
 
             delete storagePayload[mapId];
-            return writePixelAdminStageStorage(storagePayload);
+            pixelAdminStageStorageNeedsFlush = true;
+            if (pixelAdminStageStorageFlushTimer) {
+                window.clearTimeout(pixelAdminStageStorageFlushTimer);
+            }
+            pixelAdminStageStorageFlushTimer = window.setTimeout(() => {
+                pixelAdminStageStorageFlushTimer = null;
+                if (!pixelAdminStageStorageNeedsFlush) {
+                    return;
+                }
+                if (writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                    pixelAdminStageStorageNeedsFlush = false;
+                }
+            }, 220);
+            return true;
         }
 
         function loadPersistedPixelAdminStageOverrides() {
@@ -4683,6 +4757,15 @@
         };
 
         function resetRuntimeColorPalette(paletteMeta = {}) {
+            const nextPaletteSignature = Object.entries(paletteMeta)
+                .map(([colorId, colorMeta]) => [
+                    Number(colorId),
+                    normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color) || "#CCCCCC"
+                ])
+                .filter(([colorId]) => Number.isInteger(colorId) && colorId > 0)
+                .sort((left, right) => left[0] - right[0])
+                .map(([colorId, color]) => `${colorId}:${color}`)
+                .join("|");
             const defaultIds = new Set(Object.keys(DEFAULT_COLOR_PALETTE));
 
             Object.keys(COLOR_PALETTE).forEach((colorId) => {
@@ -4702,9 +4785,12 @@
                 };
             });
 
-            // Gem sprites are cached per color id, so clear them whenever a palette changes.
-            jewelImageCache.clear();
-            shadeColorCache.clear();
+            if (runtimePaletteSignature !== nextPaletteSignature) {
+                // Gem sprites are cached per color id, so clear them only when the palette actually changes.
+                jewelImageCache.clear();
+                shadeColorCache.clear();
+                runtimePaletteSignature = nextPaletteSignature;
+            }
         }
 
         function applyMapTheme(mapId) {
@@ -5213,6 +5299,10 @@
         let preparedNextMapVersion = 0;
         let preparedNextMapConfig = null;
         let preparedNextLevelInitialState = null;
+        let preparedPreviousMapIndex = -1;
+        let preparedPreviousMapVersion = 0;
+        let preparedPreviousMapConfig = null;
+        let preparedPreviousLevelInitialState = null;
         let preparedNextMapTimer = null;
         let titleSceneRenderer = null;
         let settingSceneRenderer = null;
@@ -5240,6 +5330,11 @@
         let solvedStageFailSafeTimer = null;
         let pixelAdminAutoSaveTimer = null;
         let lastCorrectPlacementHapticAt = 0;
+        let pixelAdminStageStorageCache = null;
+        let pixelAdminStageStorageFlushTimer = null;
+        let pixelAdminStageStorageNeedsFlush = false;
+        let levelInitialStateStorageCache = null;
+        let runtimePaletteSignature = "";
         let appSettings = readPersistedAppSettings();
         const pixelAdminState = {
             isOpen: false,
@@ -5255,6 +5350,15 @@
             undoStack: [],
             isDirty: false,
             exportIsDirty: false,
+            exportNeedsRefresh: true,
+            renderedPaletteKey: "",
+            renderedGridMapId: "",
+            renderedGridSizeKey: "",
+            renderedGridMapRef: null,
+            renderedGridPaletteKey: "",
+            pendingGameReset: null,
+            deferHeavyRender: false,
+            deferredHeavyRenderTimer: null,
             message: "`Shift + A`로 어드민을 열고 닫을 수 있습니다."
         };
         const pixelAdminInteraction = {
@@ -5386,6 +5490,10 @@
                 preparedNextMapVersion === currentOverrideVersion &&
                 preparedNextMapConfig?.id === currentDefinition.id
                     ? preparedNextMapConfig
+                    : preparedPreviousMapIndex === currentMapIndex &&
+                      preparedPreviousMapVersion === currentOverrideVersion &&
+                      preparedPreviousMapConfig?.id === currentDefinition.id
+                        ? preparedPreviousMapConfig
                     : buildMapConfig(currentDefinition);
             TARGET_MAP = ACTIVE_MAP.targetMap;
             ROWS = ACTIVE_MAP.rows;
@@ -5409,7 +5517,7 @@
                 preparedNextMapTimer = null;
             }
 
-            if (!prepareUpcomingMap) {
+            if (!prepareUpcomingMap || pixelAdminState.isOpen) {
                 return;
             }
 
@@ -5455,6 +5563,8 @@
                     ];
                     let nextPreparedConfig = null;
                     let nextPreparedInitialState = null;
+                    let previousPreparedConfig = null;
+                    let previousPreparedInitialState = null;
 
                     adjacentDefinitions.forEach(({ mapIndex, definition, overrideVersion, storeAsPreparedNext }) => {
                         const preparedConfig = buildMapConfig(definition);
@@ -5469,19 +5579,28 @@
                         TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
                         TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
 
-                        const preparedInitialState = buildCurrentLevelInitialState();
-                        if (!storeAsPreparedNext) {
+                        const preparedInitialState = buildCurrentLevelInitialState({
+                            persistState: false,
+                            fastMode: pixelAdminState.isOpen
+                        });
+                        if (storeAsPreparedNext) {
+                            preparedNextMapIndex = mapIndex;
+                            preparedNextMapVersion = overrideVersion;
+                            nextPreparedConfig = preparedConfig;
+                            nextPreparedInitialState = preparedInitialState;
                             return;
                         }
 
-                        preparedNextMapIndex = mapIndex;
-                        preparedNextMapVersion = overrideVersion;
-                        nextPreparedConfig = preparedConfig;
-                        nextPreparedInitialState = preparedInitialState;
+                        preparedPreviousMapIndex = mapIndex;
+                        preparedPreviousMapVersion = overrideVersion;
+                        previousPreparedConfig = preparedConfig;
+                        previousPreparedInitialState = preparedInitialState;
                     });
 
                     preparedNextMapConfig = nextPreparedConfig;
                     preparedNextLevelInitialState = nextPreparedInitialState;
+                    preparedPreviousMapConfig = previousPreparedConfig;
+                    preparedPreviousLevelInitialState = previousPreparedInitialState;
                     ACTIVE_MAP = preservedActiveMap;
                     TARGET_MAP = preservedTargetMap;
                     ROWS = preservedRows;
@@ -5492,7 +5611,7 @@
                     INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
                     TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
                     TOTAL_TARGET_CELLS = preservedTotalTargetCells;
-                }, 0);
+                }, pixelAdminState.isOpen ? 180 : 48);
             }
         }
 
@@ -5752,6 +5871,7 @@
             );
             pixelAdminState.isDirty = true;
             pixelAdminState.exportIsDirty = false;
+            pixelAdminState.exportNeedsRefresh = false;
             return true;
         }
 
@@ -5783,6 +5903,7 @@
                 color: nextColor
             };
             pixelAdminState.isDirty = true;
+            pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = `${getDefaultPixelAdminColorLabel(pixelAdminState.currentMapId, colorId)} 색상을 수정했어요.`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
@@ -5796,6 +5917,7 @@
 
             pixelAdminState.draftDisplayName = String(nextValue || "").slice(0, 24);
             pixelAdminState.isDirty = true;
+            pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = "스테이지 제목을 수정했어요. 잠시 후 자동 저장됩니다.";
             schedulePixelAdminAutoSave(700);
             renderPixelAdmin();
@@ -5808,6 +5930,7 @@
             };
             pixelAdminState.selectedColorId = nextColorId;
             pixelAdminState.isDirty = true;
+            pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = `C${nextColorId} 색상을 팔레트에 추가했어요.`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
@@ -5840,6 +5963,7 @@
                 pixelAdminState.draftPalette
             );
             pixelAdminState.isDirty = true;
+            pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = erasedCellCount
                 ? `C${colorId} 색상을 삭제하고 ${erasedCellCount}개 셀을 비웠어요.`
                 : `C${colorId} 색상을 팔레트에서 삭제했어요.`;
@@ -5881,6 +6005,7 @@
             );
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
+            pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = "`Shift + A`로 어드민을 열고 닫을 수 있습니다.";
             pixelAdminInteraction.strokeSnapshot = null;
             if (shouldRender) {
@@ -5892,9 +6017,30 @@
             pixelAdminState.isOpen = nextOpen;
             if (nextOpen) {
                 syncPixelAdminWithActiveMap();
+                syncActiveMap(currentMapIndex, {
+                    syncPixelAdmin: false,
+                    renderPixelAdmin: false,
+                    prepareUpcomingMap: false
+                });
                 return;
             }
+            if (pixelAdminState.deferredHeavyRenderTimer) {
+                window.clearTimeout(pixelAdminState.deferredHeavyRenderTimer);
+                pixelAdminState.deferredHeavyRenderTimer = null;
+            }
+            pixelAdminState.deferHeavyRender = false;
             stopPixelAdminGridResize();
+            if (pixelAdminState.pendingGameReset) {
+                const pendingGameReset = pixelAdminState.pendingGameReset;
+                pixelAdminState.pendingGameReset = null;
+                resetGame({
+                    ...pendingGameReset,
+                    skipRender: false
+                });
+            } else {
+                render();
+                persistRuntimeSnapshot();
+            }
             renderPixelAdmin();
         }
 
@@ -6263,6 +6409,7 @@
 
             pixelAdminState.draftMap[rowIndex][colIndex] = colorId;
             pixelAdminState.isDirty = true;
+            pixelAdminState.exportNeedsRefresh = true;
             const nextMessage = `${rowIndex + 1}행 ${colIndex + 1}열을 ${getPixelAdminColorLabel(
                 pixelAdminState.currentMapId,
                 colorId,
@@ -6380,10 +6527,21 @@
                 normalizeStageDisplayName(definition.displayName) ||
                 null;
             const didPersist = persistPixelAdminStageOverride(definition);
-            syncActiveMap(currentMapIndex, { renderPixelAdmin: false });
-            resetGame({ regenerateLevelStart: true });
+            syncActiveMap(currentMapIndex, {
+                syncPixelAdmin: false,
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
+            currentLevelInitialState = null;
+            pixelAdminState.pendingGameReset = null;
+            resetGame({
+                regenerateLevelStart: true,
+                fastLevelStart: true,
+                persistLevelStart: false
+            });
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
+            pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = didPersist
                 ? "이 스테이지에 캔버스와 팔레트 변경사항을 적용하고 저장했어요."
                 : "이 스테이지에 캔버스와 팔레트 변경사항을 적용했지만 저장에는 실패했어요.";
@@ -6393,6 +6551,7 @@
         function reloadPixelAdminDraft() {
             clearPixelAdminAutoSaveTimer();
             syncPixelAdminWithActiveMap(true, false);
+            pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = "현재 스테이지에 적용된 캔버스와 팔레트를 다시 불러왔어요.";
             renderPixelAdmin();
         }
@@ -6408,10 +6567,21 @@
             definition.adminPalette = null;
             definition.adminDisplayName = null;
             clearPersistedPixelAdminStageOverride(definition.id);
-            syncActiveMap(currentMapIndex, { renderPixelAdmin: false });
-            resetGame({ regenerateLevelStart: true });
+            syncActiveMap(currentMapIndex, {
+                syncPixelAdmin: false,
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
+            currentLevelInitialState = null;
+            pixelAdminState.pendingGameReset = null;
+            resetGame({
+                regenerateLevelStart: true,
+                fastLevelStart: true,
+                persistLevelStart: false
+            });
             syncPixelAdminWithActiveMap(true, false);
             pixelAdminState.exportIsDirty = false;
+            pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = "기본 캔버스와 팔레트로 복원했어요.";
             renderPixelAdmin();
         }
@@ -6427,7 +6597,10 @@
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(nextMapIndex, { renderPixelAdmin: false });
+            syncActiveMap(nextMapIndex, {
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
             currentLevelInitialState =
                 preparedNextMapIndex === nextMapIndex &&
                 preparedNextMapVersion === nextOverrideVersion &&
@@ -6442,7 +6615,13 @@
                         actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
                     }
                     : null;
-            resetGame({ regenerateLevelStart: !currentLevelInitialState });
+            pixelAdminState.pendingGameReset = null;
+            resetGame({
+                regenerateLevelStart: !currentLevelInitialState,
+                fastLevelStart: !currentLevelInitialState,
+                persistLevelStart: false
+            });
+            pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = `다음 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
         }
@@ -6457,9 +6636,31 @@
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(previousMapIndex, { renderPixelAdmin: false });
-            currentLevelInitialState = null;
-            resetGame({ regenerateLevelStart: true });
+            syncActiveMap(previousMapIndex, {
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
+            currentLevelInitialState =
+                preparedPreviousMapIndex === previousMapIndex &&
+                preparedPreviousMapVersion === getStageOverrideVersion(getCurrentMapDefinition()) &&
+                preparedPreviousLevelInitialState?.mapId === ACTIVE_MAP?.id
+                    ? {
+                        mapId: preparedPreviousLevelInitialState.mapId,
+                        rows: preparedPreviousLevelInitialState.rows,
+                        cols: preparedPreviousLevelInitialState.cols,
+                        boardState: cloneBoardSnapshot(preparedPreviousLevelInitialState.boardState),
+                        trayState: [...preparedPreviousLevelInitialState.trayState],
+                        cleanedSocketCells: [...(preparedPreviousLevelInitialState.cleanedSocketCells || [])],
+                        actionCharges: clampActionChargesSnapshot(preparedPreviousLevelInitialState.actionCharges)
+                    }
+                    : null;
+            pixelAdminState.pendingGameReset = null;
+            resetGame({
+                regenerateLevelStart: !currentLevelInitialState,
+                fastLevelStart: !currentLevelInitialState,
+                persistLevelStart: false
+            });
+            pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
             renderPixelAdmin();
         }
@@ -6526,14 +6727,54 @@
             const selectedColorHex = getPixelAdminColorHex(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const selectedColorLabel = getPixelAdminColorLabel(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
+            const paletteColorKey = paletteIds
+                .map((colorId) => `${colorId}:${getPixelAdminColorHex(mapId, colorId, paletteMeta)}`)
+                .join("|");
+            const paletteRenderKey = `${mapId}|${pixelAdminState.selectedColorId}|${paletteColorKey}`;
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
+            const gridSizeKey = `${rows}x${cols}`;
+            const shouldRefreshExport = !pixelAdminState.exportIsDirty && pixelAdminState.exportNeedsRefresh;
+            const shouldRefreshPalette = pixelAdminState.renderedPaletteKey !== paletteRenderKey;
+            const shouldRefreshGrid =
+                pixelAdminGridElement.childElementCount !== rows * cols ||
+                pixelAdminState.renderedGridMapId !== mapId ||
+                pixelAdminState.renderedGridSizeKey !== gridSizeKey ||
+                pixelAdminState.renderedGridMapRef !== sourceMap ||
+                pixelAdminState.renderedGridPaletteKey !== paletteColorKey;
+            const shouldDeferHeavyRender =
+                pixelAdminState.deferHeavyRender &&
+                (shouldRefreshExport || shouldRefreshPalette || shouldRefreshGrid);
 
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
-            pixelAdminHelpElement.textContent = "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 그리드 위에서 마우스 휠로 확대/축소할 수 있고, HEX는 `#` 없이 6자리만 입력하면 채도는 자동으로 65 이하로 맞춰집니다.";
+            pixelAdminHelpElement.textContent = shouldDeferHeavyRender
+                ? "새 스테이지를 불러오는 중이에요. 코드값, 팔레트, 그리드는 잠시 후 갱신됩니다."
+                : "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 그리드 위에서 마우스 휠로 확대/축소할 수 있고, HEX는 `#` 없이 6자리만 입력하면 채도는 자동으로 65 이하로 맞춰집니다.";
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
-            if (!pixelAdminState.exportIsDirty) {
+            pixelAdminGridElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
+            pixelAdminPaletteElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
+            pixelAdminExportElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
+            if (shouldDeferHeavyRender) {
+                if (pixelAdminState.deferredHeavyRenderTimer) {
+                    window.clearTimeout(pixelAdminState.deferredHeavyRenderTimer);
+                }
+                pixelAdminState.deferredHeavyRenderTimer = window.setTimeout(() => {
+                    pixelAdminState.deferredHeavyRenderTimer = null;
+                    pixelAdminState.deferHeavyRender = false;
+                    if (pixelAdminState.isOpen) {
+                        renderPixelAdmin();
+                    }
+                }, 64);
+                return;
+            }
+            if (pixelAdminState.deferredHeavyRenderTimer) {
+                window.clearTimeout(pixelAdminState.deferredHeavyRenderTimer);
+                pixelAdminState.deferredHeavyRenderTimer = null;
+            }
+            pixelAdminState.deferHeavyRender = false;
+            if (shouldRefreshExport) {
                 pixelAdminExportElement.value = serializePixelAdminMap(mapId, sourceMap, paletteMeta, draftDisplayName);
+                pixelAdminState.exportNeedsRefresh = false;
             }
             if (pixelAdminTitleInputElement) {
                 pixelAdminTitleInputElement.value = pixelAdminState.draftDisplayName || "";
@@ -6550,56 +6791,59 @@
                 pixelAdminEraseElement.classList.toggle("selected", pixelAdminState.selectedColorId === 0);
             }
 
-            pixelAdminPaletteElement.innerHTML = "";
-            paletteIds.forEach((colorId) => {
-                const swatchCard = document.createElement("div");
-                const swatch = document.createElement("button");
-                const swatchChip = document.createElement("span");
-                const swatchLabel = document.createElement("span");
-                const swatchHex = document.createElement("span");
-                const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
-                const removableColor = canRemovePixelAdminColor(mapId, colorId);
+            if (shouldRefreshPalette) {
+                pixelAdminPaletteElement.innerHTML = "";
+                paletteIds.forEach((colorId) => {
+                    const swatchCard = document.createElement("div");
+                    const swatch = document.createElement("button");
+                    const swatchChip = document.createElement("span");
+                    const swatchLabel = document.createElement("span");
+                    const swatchHex = document.createElement("span");
+                    const colorHex = getPixelAdminColorHex(mapId, colorId, paletteMeta);
+                    const removableColor = canRemovePixelAdminColor(mapId, colorId);
 
-                swatchCard.className = "pixel-admin-swatch-card";
-                swatch.type = "button";
-                swatch.className = "pixel-admin-swatch";
-                if (colorId === pixelAdminState.selectedColorId) swatch.classList.add("selected");
+                    swatchCard.className = "pixel-admin-swatch-card";
+                    swatch.type = "button";
+                    swatch.className = "pixel-admin-swatch";
+                    if (colorId === pixelAdminState.selectedColorId) swatch.classList.add("selected");
 
-                swatchChip.className = "pixel-admin-swatch-chip";
-                swatchChip.style.setProperty("--swatch-color", colorHex);
+                    swatchChip.className = "pixel-admin-swatch-chip";
+                    swatchChip.style.setProperty("--swatch-color", colorHex);
 
-                swatchLabel.className = "pixel-admin-swatch-label";
-                swatchLabel.textContent = getPixelAdminColorLabel(mapId, colorId, paletteMeta);
+                    swatchLabel.className = "pixel-admin-swatch-label";
+                    swatchLabel.textContent = getPixelAdminColorLabel(mapId, colorId, paletteMeta);
 
-                swatchHex.className = "pixel-admin-swatch-hex";
-                swatchHex.textContent = colorHex;
+                    swatchHex.className = "pixel-admin-swatch-hex";
+                    swatchHex.textContent = colorHex;
 
-                swatch.append(swatchChip, swatchLabel, swatchHex);
-                swatch.addEventListener("click", () => {
-                    pixelAdminState.selectedColorId = colorId;
-                    pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}을(를) 선택했어요.`;
-                    renderPixelAdmin();
-                });
-
-                swatchCard.appendChild(swatch);
-
-                if (removableColor) {
-                    const deleteButton = document.createElement("button");
-                    deleteButton.type = "button";
-                    deleteButton.className = "pixel-admin-swatch-delete";
-                    deleteButton.textContent = "x";
-                    deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 삭제`);
-                    deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 삭제`;
-                    deleteButton.addEventListener("click", (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        removePixelAdminColor(colorId);
+                    swatch.append(swatchChip, swatchLabel, swatchHex);
+                    swatch.addEventListener("click", () => {
+                        pixelAdminState.selectedColorId = colorId;
+                        pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}을(를) 선택했어요.`;
+                        renderPixelAdmin();
                     });
-                    swatchCard.appendChild(deleteButton);
-                }
 
-                pixelAdminPaletteElement.appendChild(swatchCard);
-            });
+                    swatchCard.appendChild(swatch);
+
+                    if (removableColor) {
+                        const deleteButton = document.createElement("button");
+                        deleteButton.type = "button";
+                        deleteButton.className = "pixel-admin-swatch-delete";
+                        deleteButton.textContent = "x";
+                        deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 삭제`);
+                        deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 삭제`;
+                        deleteButton.addEventListener("click", (event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            removePixelAdminColor(colorId);
+                        });
+                        swatchCard.appendChild(deleteButton);
+                    }
+
+                    pixelAdminPaletteElement.appendChild(swatchCard);
+                });
+                pixelAdminState.renderedPaletteKey = paletteRenderKey;
+            }
 
             renderPixelAdminAxes(rows, cols);
             pixelAdminGridElement.style.setProperty("--pixel-admin-cols", cols);
@@ -6644,13 +6888,19 @@
                 pixelAdminGridElement.replaceChildren(fragment);
             }
 
-            sourceMap.forEach((row, rowIndex) => {
-                row.forEach((colorId, colIndex) => {
-                    const cell = pixelAdminGridElement.children[(rowIndex * cols) + colIndex];
-                    cell.className = "pixel-admin-cell";
-                    setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta);
+            if (shouldRefreshGrid) {
+                sourceMap.forEach((row, rowIndex) => {
+                    row.forEach((colorId, colIndex) => {
+                        const cell = pixelAdminGridElement.children[(rowIndex * cols) + colIndex];
+                        cell.className = "pixel-admin-cell";
+                        setPixelAdminCellPresentation(cell, rowIndex, colIndex, colorId, mapId, paletteMeta);
+                    });
                 });
-            });
+                pixelAdminState.renderedGridMapId = mapId;
+                pixelAdminState.renderedGridSizeKey = gridSizeKey;
+                pixelAdminState.renderedGridMapRef = sourceMap;
+                pixelAdminState.renderedGridPaletteKey = paletteColorKey;
+            }
         }
 
         function shuffle(list) {
@@ -7130,14 +7380,17 @@
             return shuffle(colorPool);
         }
 
-        function createBoardState() {
+        function createBoardState(options = {}) {
+            const { fastMode = false } = options;
             if (ACTIVE_MAP.initialBoardState) {
                 return ACTIVE_MAP.initialBoardState.map((row) => [...row]);
             }
 
             const createEmptyBoard = () => TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
             const randomAttemptCount =
-                TOTAL_TARGET_CELLS > 320 ? 3 : TOTAL_TARGET_CELLS > 240 ? 4 : TOTAL_TARGET_CELLS > 180 ? 5 : 7;
+                fastMode
+                    ? 1
+                    : TOTAL_TARGET_CELLS > 320 ? 3 : TOTAL_TARGET_CELLS > 240 ? 4 : TOTAL_TARGET_CELLS > 180 ? 5 : 7;
             let fallbackBoardState = null;
             let fallbackBoardQuality = null;
 
@@ -7178,7 +7431,8 @@
             return fallbackBoard;
         }
 
-        function buildCurrentLevelInitialState() {
+        function buildCurrentLevelInitialState(options = {}) {
+            const { persistState = true, fastMode = false } = options;
             const definition = getCurrentMapDefinition();
             const cachedInitialState = definition?.__cachedLevelInitialState;
             const cachedInitialStateSignature = definition?.__cachedLevelInitialStateSignature;
@@ -7224,16 +7478,16 @@
                 return persistedInitialState;
             }
 
-            let nextBoardState = createBoardState();
+            let nextBoardState = createBoardState({ fastMode });
 
             if (!ACTIVE_MAP.initialBoardState) {
                 let bestBoardState = nextBoardState;
                 let bestBoardQuality = getInitialBoardQuality(nextBoardState);
                 const additionalAttemptCount =
-                    TOTAL_TARGET_CELLS > 260 ? 0 : TOTAL_TARGET_CELLS > 150 ? 1 : 3;
+                    fastMode ? 0 : TOTAL_TARGET_CELLS > 260 ? 0 : TOTAL_TARGET_CELLS > 150 ? 1 : 3;
 
                 for (let attempt = 0; attempt < additionalAttemptCount; attempt += 1) {
-                    const candidateBoardState = createBoardState();
+                    const candidateBoardState = createBoardState({ fastMode });
                     const candidateQuality = getInitialBoardQuality(candidateBoardState);
 
                     if (isBetterInitialBoardQuality(candidateQuality, bestBoardQuality)) {
@@ -7273,7 +7527,9 @@
                     nextInitialState.cleanedSocketCells,
                     nextInitialState.actionCharges
                 );
-                persistLevelInitialState(definition, nextInitialState, ACTIVE_MAP);
+                if (persistState) {
+                    persistLevelInitialState(definition, nextInitialState, ACTIVE_MAP);
+                }
             }
 
             return nextInitialState;
@@ -10038,6 +10294,7 @@
             const now = performance.now();
             cleanupExpiredSparkles(now);
             const shouldRenderGems = shouldRenderGemLayer();
+            const useFlatGems = false;
             const magicTargeting = isMagicTargetingMode();
             const totalCellCount = ROWS * COLS;
             const selectedBoardCellKeys = selected?.source === "board"
@@ -10168,13 +10425,14 @@
                     if (shouldSparkle) button.classList.add("sparkle");
                     if (isSelectedCell) button.classList.add("selected");
                     if (shouldRenderGems && shouldSparkle) button.appendChild(createSparkleBurst(sparkleColorId, sparkleElapsedMs));
-                    if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs));
+                    if (shouldRenderGems && gem) button.appendChild(createGem(gem, sparkleElapsedMs, { flat: useFlatGems }));
                 }
             }
         }
 
         function renderTrayRange(container, startIndex, endIndex, labelPrefix, openedPocketIndices, nextOpenIndex, selectedTrayIndices) {
             const shouldRenderGems = shouldRenderGemLayer();
+            const useFlatGems = false;
             const slotCount = endIndex - startIndex;
 
             if (container.childElementCount !== slotCount) {
@@ -10230,7 +10488,7 @@
                     button.classList.add("empty-target");
                 }
                 if (isSelectedSlot) button.classList.add("selected");
-                if (shouldRenderGems && gem) button.appendChild(createGem(gem));
+                if (shouldRenderGems && gem) button.appendChild(createGem(gem, null, { flat: useFlatGems }));
             }
         }
 
@@ -10908,6 +11166,13 @@
             pushLifecycleDebugEntry("pagehide", {
                 persisted: Boolean(event.persisted)
             });
+            if (pixelAdminStageStorageFlushTimer) {
+                window.clearTimeout(pixelAdminStageStorageFlushTimer);
+                pixelAdminStageStorageFlushTimer = null;
+            }
+            if (pixelAdminStageStorageNeedsFlush && writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                pixelAdminStageStorageNeedsFlush = false;
+            }
             shouldResumeBgmOnForeground = appSettings.bgmOn;
             soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
             persistRuntimeSnapshot();
@@ -10918,6 +11183,13 @@
                 pushLifecycleDebugEntry("visibilitychange", {
                     state: "hidden"
                 });
+                if (pixelAdminStageStorageFlushTimer) {
+                    window.clearTimeout(pixelAdminStageStorageFlushTimer);
+                    pixelAdminStageStorageFlushTimer = null;
+                }
+                if (pixelAdminStageStorageNeedsFlush && writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                    pixelAdminStageStorageNeedsFlush = false;
+                }
                 shouldResumeBgmOnForeground = appSettings.bgmOn;
                 soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
                 persistRuntimeSnapshot();
@@ -10938,10 +11210,24 @@
 
         window.addEventListener("beforeunload", () => {
             pushLifecycleDebugEntry("beforeunload");
+            if (pixelAdminStageStorageFlushTimer) {
+                window.clearTimeout(pixelAdminStageStorageFlushTimer);
+                pixelAdminStageStorageFlushTimer = null;
+            }
+            if (pixelAdminStageStorageNeedsFlush && writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                pixelAdminStageStorageNeedsFlush = false;
+            }
         });
 
         document.addEventListener("freeze", () => {
             pushLifecycleDebugEntry("freeze");
+            if (pixelAdminStageStorageFlushTimer) {
+                window.clearTimeout(pixelAdminStageStorageFlushTimer);
+                pixelAdminStageStorageFlushTimer = null;
+            }
+            if (pixelAdminStageStorageNeedsFlush && writePixelAdminStageStorage(readPixelAdminStageStorage())) {
+                pixelAdminStageStorageNeedsFlush = false;
+            }
             shouldResumeBgmOnForeground = appSettings.bgmOn;
             soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
         });
@@ -12623,7 +12909,13 @@
         }
 
         function resetGame(options = {}) {
-            const { regenerateLevelStart = false, preserveStageClearOverlay = false } = options;
+            const {
+                regenerateLevelStart = false,
+                preserveStageClearOverlay = false,
+                fastLevelStart = false,
+                persistLevelStart = true,
+                skipRender = false
+            } = options;
             gameSessionVersion += 1;
             clearSolvedStageFailSafeTimer();
             if (!preserveStageClearOverlay) {
@@ -12638,7 +12930,10 @@
                 !currentLevelInitialState ||
                 currentLevelInitialState.mapId !== ACTIVE_MAP?.id
             ) {
-                currentLevelInitialState = buildCurrentLevelInitialState();
+                currentLevelInitialState = buildCurrentLevelInitialState({
+                    persistState: persistLevelStart,
+                    fastMode: fastLevelStart
+                });
             }
 
             boardState = cloneBoardSnapshot(currentLevelInitialState.boardState);
@@ -12654,7 +12949,9 @@
             solved = false;
             completedColorIds = getCompletedColorIds();
             setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
-            render();
+            if (!skipRender) {
+                render();
+            }
             persistRuntimeSnapshot();
         }
 
