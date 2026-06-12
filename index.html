@@ -1767,12 +1767,44 @@
 
         .pixel-admin-grid-shell {
             flex: 1;
-            min-height: 220px;
+            min-height: var(--pixel-admin-grid-shell-min-height, 220px);
             display: grid;
             grid-template-columns: 24px minmax(0, 1fr) 24px;
             grid-template-rows: 24px minmax(0, 1fr) 24px;
             gap: 6px;
             align-items: stretch;
+            position: relative;
+        }
+
+        .pixel-admin-grid-resize-bar {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -2px;
+            height: 34px;
+            cursor: ns-resize;
+            z-index: 4;
+        }
+
+        .pixel-admin-grid-resize-bar::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 8px;
+            width: 118px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(194, 157, 112, 0.42);
+            box-shadow: 0 0 0 1px rgba(255, 244, 232, 0.64);
+            transform: translateX(-50%);
+            transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .pixel-admin-grid-resize-bar:hover::before,
+        .pixel-admin.grid-resizing .pixel-admin-grid-resize-bar::before {
+            background: rgba(255, 142, 48, 0.92);
+            box-shadow: 0 0 0 4px rgba(255, 221, 181, 0.72);
+            transform: translateX(-50%) scaleX(1.04);
         }
 
         .pixel-admin-axis-corner {
@@ -2054,6 +2086,10 @@
             .pixel-admin-resize-handle {
                 display: none;
             }
+
+            .pixel-admin-grid-resize-bar {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -2141,6 +2177,7 @@
                 <div class="pixel-admin-axis-track" id="pixelAdminAxisBottom"></div>
             </div>
             <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+            <div class="pixel-admin-grid-resize-bar" id="pixelAdminGridResizeBar" aria-hidden="true"></div>
         </div>
 
         <div class="pixel-admin-actions">
@@ -2759,6 +2796,39 @@
             [0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 9, 9, 0, 0]
         ];
 
+        const SHIBA_IMAGE_MAP = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 9, 9, 6, 1, 6, 9, 9, 9, 9, 6, 1, 6, 9, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 9, 6, 1, 4, 1, 6, 6, 6, 1, 4, 1, 6, 9, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 9, 6, 1, 4, 4, 1, 1, 1, 1, 4, 4, 1, 6, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 9, 9, 9, 9, 6, 1, 1, 4, 1, 1, 1, 1, 1, 1, 4, 1, 1, 6, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 9, 8, 8, 8, 9, 6, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 6, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 8, 8, 8, 8, 8, 6, 1, 1, 2, 2, 5, 5, 2, 2, 2, 1, 1, 6, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 9, 8, 8, 8, 8, 8, 6, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 6, 9, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 1, 2, 2, 3, 2, 2, 2, 2, 3, 2, 2, 1, 6, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 1, 2, 5, 5, 5, 5, 5, 5, 5, 5, 2, 1, 6, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 3, 2, 5, 5, 5, 5, 5, 5, 5, 5, 2, 3, 6, 9, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 1, 3, 5, 5, 5, 3, 3, 5, 5, 5, 3, 1, 6, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 6, 5, 5, 6, 8, 1, 1, 1, 5, 5, 5, 5, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 6, 5, 1, 1, 5, 6, 1, 1, 1, 5, 5, 5, 5, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 6, 5, 1, 1, 1, 1, 5, 1, 1, 1, 5, 5, 5, 5, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 6, 5, 1, 6, 8, 6, 5, 1, 1, 1, 1, 5, 5, 5, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 6, 5, 1, 1, 6, 1, 5, 1, 1, 3, 3, 1, 1, 1, 5, 1, 1, 6, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 6, 5, 1, 1, 1, 1, 5, 1, 3, 3, 1, 3, 1, 1, 5, 1, 6, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 6, 5, 1, 1, 5, 6, 1, 1, 1, 1, 3, 1, 1, 5, 6, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 6, 5, 5, 6, 8, 1, 1, 1, 1, 3, 1, 1, 6, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 6, 6, 8, 1, 1, 1, 1, 3, 3, 1, 6, 8, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 3, 1, 1, 3, 6, 3, 6, 1, 6, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 6, 1, 3, 3, 6, 1, 1, 6, 3, 6, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 8, 6, 5, 5, 5, 6, 6, 5, 5, 6, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 8, 8, 8, 8, 8, 8, 8, 8, 6, 6, 6, 8, 8, 6, 6, 8, 8, 8, 8, 8, 8, 7, 0, 0, 0, 0],
+            [0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0]
+        ];
+
         function scaleMap(sourceMap, factor) {
             return sourceMap.flatMap((row) => {
                 const scaledRow = row.flatMap((cell) => Array(factor).fill(cell));
@@ -3160,17 +3230,30 @@
                     completedColorsPerUnlock: 1,
                     pocketsPerUnlock: 1
                 }
+            },
+            {
+                id: "shiba",
+                displayName: "시바견",
+                baseImageMap: SHIBA_IMAGE_MAP,
+                scale: 1,
+                startMessageTemplate: "{title} 스테이지예요. 보석을 맞춰 파란 배경 속 시바견을 완성해 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
             }
         ];
 
         const MAX_GRID_ROWS = 30;
         const MAX_GRID_COLS = 30;
+        const PIXEL_ADMIN_UNDO_LIMIT = 60;
         const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
         const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
-        const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v1";
+        const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v2";
         const DEFAULT_APP_SETTINGS = Object.freeze({
             soundEffectsOn: true,
             bgmOn: true,
@@ -3892,7 +3975,10 @@
                         return false;
                     }
 
-                    if (!config.targetMap[rowIndex][colIndex]) {
+                    if (
+                        !config.targetMap[rowIndex][colIndex] &&
+                        !config.initialSpawnPositionKeySet?.has(toCellKey(rowIndex, colIndex))
+                    ) {
                         return cell === 0;
                     }
 
@@ -4234,6 +4320,27 @@
                 });
                 return neighbors;
             });
+            const spawnWidth = Math.min(
+                cols,
+                Math.max(8, Math.min(cols - 2, Math.ceil(Math.sqrt(targetPositions.length * 1.55))))
+            );
+            const spawnHeight = Math.min(rows, Math.max(1, Math.ceil(targetPositions.length / spawnWidth)));
+            const spawnStartRow = Math.max(0, Math.floor((rows - spawnHeight) / 2));
+            const spawnStartCol = Math.max(0, Math.floor((cols - spawnWidth) / 2));
+            const initialSpawnPositions = [];
+
+            for (let row = spawnStartRow; row < rows && initialSpawnPositions.length < targetPositions.length; row += 1) {
+                for (let col = spawnStartCol; col < spawnStartCol + spawnWidth && col < cols; col += 1) {
+                    initialSpawnPositions.push({ row, col });
+                    if (initialSpawnPositions.length >= targetPositions.length) {
+                        break;
+                    }
+                }
+            }
+
+            const initialSpawnPositionKeySet = new Set(
+                initialSpawnPositions.map((position) => toCellKey(position.row, position.col))
+            );
             const sortedLayoutPositionsByColor = [...initialLayoutOrder].sort((left, right) => {
                 const leftColor = targetMap[left.row][left.col];
                 const rightColor = targetMap[right.row][right.col];
@@ -4265,6 +4372,8 @@
                 totalTargetCells: targetPositions.length,
                 initialLayoutOrder,
                 initialLayoutIndex,
+                initialSpawnPositions,
+                initialSpawnPositionKeySet,
                 targetNeighborPairs,
                 sortedLayoutPositionsByColor,
                 sortedLayoutColors,
@@ -4469,6 +4578,20 @@
                     7: "#38704D",
                     8: "#101218",
                     9: "#757D4D"
+                }
+            },
+            shiba: {
+                palette: {
+                    0: "#FFFFFF",
+                    1: "#F1C37B",
+                    2: "#F7F0D7",
+                    3: "#A87B4F",
+                    4: "#F0B6BF",
+                    5: "#FBFAF6",
+                    6: "#16141B",
+                    7: "#4E555C",
+                    8: "#2E6F9F",
+                    9: "#D9DDE4"
                 }
             }
         };
@@ -4945,6 +5068,8 @@
         const pixelAdminColorHexPickerElement = document.getElementById("pixelAdminColorHexPicker");
         const pixelAdminPaletteElement = document.getElementById("pixelAdminPalette");
         const pixelAdminGridWrapElement = document.getElementById("pixelAdminGridWrap");
+        const pixelAdminGridShellElement = pixelAdminGridWrapElement?.parentElement || null;
+        const pixelAdminGridResizeBarElement = document.getElementById("pixelAdminGridResizeBar");
         const pixelAdminAxisTopElement = document.getElementById("pixelAdminAxisTop");
         const pixelAdminAxisBottomElement = document.getElementById("pixelAdminAxisBottom");
         const pixelAdminAxisLeftElement = document.getElementById("pixelAdminAxisLeft");
@@ -5039,7 +5164,9 @@
             selectedColorId: 0,
             canvasZoom: 1,
             canvasMetrics: null,
+            gridShellMinHeight: 220,
             panelWidth: null,
+            undoStack: [],
             isDirty: false,
             exportIsDirty: false,
             message: "`Shift + A`로 어드민을 열고 닫을 수 있습니다."
@@ -5047,6 +5174,7 @@
         const pixelAdminInteraction = {
             isDrawing: false,
             drawColorId: null,
+            strokeSnapshot: null,
             lastPaintedCellKey: null,
             pendingMessage: "",
             didPaint: false
@@ -5055,6 +5183,11 @@
             isActive: false,
             startX: 0,
             startWidth: 0
+        };
+        const pixelAdminGridResize = {
+            isActive: false,
+            startY: 0,
+            startHeight: 220
         };
         const boardInteraction = {
             scale: 1,
@@ -5483,6 +5616,8 @@
             const parsed = parsePixelAdminExport(pixelAdminExportElement.value, pixelAdminState.currentMapId);
             pixelAdminState.draftMap = clonePixelMap(parsed.draftMap);
             pixelAdminState.draftPalette = clonePaletteMeta(parsed.draftPalette);
+            pixelAdminState.undoStack = [];
+            pixelAdminInteraction.strokeSnapshot = null;
             if (parsed.draftDisplayName) {
                 pixelAdminState.draftDisplayName = parsed.draftDisplayName;
             }
@@ -5573,6 +5708,8 @@
                 })
             );
             delete pixelAdminState.draftPalette[colorId];
+            pixelAdminState.undoStack = [];
+            pixelAdminInteraction.strokeSnapshot = null;
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 mapId,
                 pixelAdminState.selectedColorId === colorId ? 0 : pixelAdminState.selectedColorId,
@@ -5612,6 +5749,7 @@
             pixelAdminState.draftDisplayName = getStageResolvedDisplayName(definition);
             pixelAdminState.canvasZoom = 1;
             pixelAdminState.canvasMetrics = null;
+            pixelAdminState.undoStack = [];
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 definition.id,
                 pixelAdminState.selectedColorId,
@@ -5621,6 +5759,7 @@
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.message = "`Shift + A`로 어드민을 열고 닫을 수 있습니다.";
+            pixelAdminInteraction.strokeSnapshot = null;
             if (shouldRender) {
                 renderPixelAdmin();
             }
@@ -5632,6 +5771,7 @@
                 syncPixelAdminWithActiveMap();
                 return;
             }
+            stopPixelAdminGridResize();
             renderPixelAdmin();
         }
 
@@ -5668,6 +5808,19 @@
             pixelAdminElement.classList.toggle("resizing", pixelAdminResize.isActive);
         }
 
+        function applyPixelAdminGridShellSize() {
+            if (!pixelAdminGridShellElement) {
+                return;
+            }
+
+            const minHeight = 220;
+            const maxHeight = Math.max(minHeight, Math.round(window.innerHeight * 1.35));
+            const resolvedHeight = clampNumber(pixelAdminState.gridShellMinHeight || minHeight, minHeight, maxHeight);
+            pixelAdminState.gridShellMinHeight = resolvedHeight;
+            pixelAdminGridShellElement.style.setProperty("--pixel-admin-grid-shell-min-height", `${resolvedHeight}px`);
+            pixelAdminElement?.classList.toggle("grid-resizing", pixelAdminGridResize.isActive);
+        }
+
         function startPixelAdminResize(event) {
             if (!pixelAdminElement || isCompactPixelAdminLayout()) {
                 return;
@@ -5693,6 +5846,28 @@
             }
         }
 
+        function startPixelAdminGridResize(event) {
+            if (!pixelAdminGridShellElement || isCompactPixelAdminLayout()) {
+                return;
+            }
+
+            event.preventDefault();
+            pixelAdminGridResize.isActive = true;
+            pixelAdminGridResize.startY = event.clientY;
+            pixelAdminGridResize.startHeight = pixelAdminGridShellElement.getBoundingClientRect().height;
+            pixelAdminElement?.classList.add("grid-resizing");
+        }
+
+        function updatePixelAdminGridResize(event) {
+            if (!pixelAdminGridResize.isActive) {
+                return;
+            }
+
+            const dragOffset = event.clientY - pixelAdminGridResize.startY;
+            pixelAdminState.gridShellMinHeight = pixelAdminGridResize.startHeight + dragOffset;
+            applyPixelAdminGridShellSize();
+        }
+
         function stopPixelAdminResize(event) {
             if (!pixelAdminResize.isActive) {
                 return;
@@ -5701,6 +5876,17 @@
             pixelAdminResize.isActive = false;
             pixelAdminElement?.classList.remove("resizing");
             applyPixelAdminPanelWidth();
+        }
+
+        function stopPixelAdminGridResize() {
+            if (!pixelAdminGridResize.isActive) {
+                pixelAdminElement?.classList.remove("grid-resizing");
+                return;
+            }
+
+            pixelAdminGridResize.isActive = false;
+            pixelAdminElement?.classList.remove("grid-resizing");
+            applyPixelAdminGridShellSize();
         }
 
         function syncPixelAdminGridMetrics(columnCount, rowCount = pixelAdminState.draftMap?.length || 0) {
@@ -5987,6 +6173,7 @@
         function startPixelAdminDrawing(colorId) {
             pixelAdminInteraction.isDrawing = true;
             pixelAdminInteraction.drawColorId = colorId;
+            pixelAdminInteraction.strokeSnapshot = pixelAdminState.draftMap ? clonePixelMap(pixelAdminState.draftMap) : null;
             pixelAdminInteraction.lastPaintedCellKey = null;
             pixelAdminInteraction.pendingMessage = "";
             pixelAdminInteraction.didPaint = false;
@@ -6006,6 +6193,14 @@
             }
 
             const shouldRender = pixelAdminInteraction.didPaint;
+            if (shouldRender && pixelAdminInteraction.strokeSnapshot) {
+                pixelAdminState.undoStack.push(pixelAdminInteraction.strokeSnapshot);
+                if (pixelAdminState.undoStack.length > PIXEL_ADMIN_UNDO_LIMIT) {
+                    pixelAdminState.undoStack.splice(0, pixelAdminState.undoStack.length - PIXEL_ADMIN_UNDO_LIMIT);
+                }
+            }
+
+            pixelAdminInteraction.strokeSnapshot = null;
             pixelAdminInteraction.pendingMessage = "";
             pixelAdminInteraction.didPaint = false;
 
@@ -6033,6 +6228,7 @@
                 updateMessage: false
             });
 
+            cellElement.focus({ preventScroll: true });
             pixelAdminInteraction.lastPaintedCellKey = cellKey;
             if (changed) {
                 pixelAdminInteraction.didPaint = true;
@@ -6190,6 +6386,7 @@
             pixelAdminElement.setAttribute("aria-hidden", String(!pixelAdminState.isOpen));
             pixelAdminToggleElement.setAttribute("aria-expanded", String(pixelAdminState.isOpen));
             applyPixelAdminPanelWidth();
+            applyPixelAdminGridShellSize();
 
             if (!pixelAdminState.isOpen) {
                 return;
@@ -6688,23 +6885,10 @@
         }
 
         function buildDerangedInitialColors() {
-            const groupedPositions = ACTIVE_MAP.sortedLayoutPositionsByColor;
-            const groupedColors = ACTIVE_MAP.sortedLayoutColors;
-            const maxCount = ACTIVE_MAP.maxTargetColorCount;
-            const colorCount = groupedColors.length;
-
-            if (maxCount > Math.floor(colorCount / 2)) {
-                return null;
-            }
-
-            const extraShift = colorCount > maxCount ? Math.floor(Math.random() * (colorCount - maxCount)) : 0;
-            const shift = maxCount + extraShift;
-            const shiftedColors = groupedColors.map((_, index) => groupedColors[(index + shift) % colorCount]);
-            const colorByPosition = new Map(
-                groupedPositions.map((position, index) => [toCellKey(position.row, position.col), shiftedColors[index]])
+            const colorPool = Object.entries(TARGET_COLOR_COUNTS).flatMap(([colorId, count]) =>
+                Array.from({ length: count }, () => Number(colorId))
             );
-
-            return INITIAL_LAYOUT_ORDER.map((position) => colorByPosition.get(toCellKey(position.row, position.col)));
+            return shuffle(colorPool);
         }
 
         function createBoardState() {
@@ -6713,49 +6897,16 @@
             }
 
             const createEmptyBoard = () => TARGET_MAP.map((row) => row.map((target) => (target ? 0 : 0)));
-            const targetColors = INITIAL_LAYOUT_ORDER.map((position) => TARGET_MAP[position.row][position.col]);
             const randomAttemptCount =
-                TOTAL_TARGET_CELLS > 320 ? 2 : TOTAL_TARGET_CELLS > 240 ? 3 : TOTAL_TARGET_CELLS > 180 ? 4 : 6;
-            const offsetAttemptCount =
-                TOTAL_TARGET_CELLS > 320 ? 12 : TOTAL_TARGET_CELLS > 240 ? 10 : TOTAL_TARGET_CELLS > 180 ? 8 : 6;
-            const candidateOffsets = [];
-            const preferredOffsets = ACTIVE_MAP.initialLayoutOffsets?.length ? ACTIVE_MAP.initialLayoutOffsets : [1];
-            const sampledOffsetStep = Math.max(1, Math.floor((targetColors.length - 1) / Math.max(1, offsetAttemptCount)));
+                TOTAL_TARGET_CELLS > 320 ? 3 : TOTAL_TARGET_CELLS > 240 ? 4 : TOTAL_TARGET_CELLS > 180 ? 5 : 7;
             let fallbackBoardState = null;
             let fallbackBoardQuality = null;
 
-            preferredOffsets.forEach((offset) => {
-                if (candidateOffsets.length >= offsetAttemptCount || !Number.isInteger(offset) || offset <= 0) {
-                    return;
-                }
-                if (!candidateOffsets.includes(offset)) {
-                    candidateOffsets.push(offset);
-                }
-            });
-
-            for (
-                let offset = Math.max(1, Math.floor(targetColors.length / 2));
-                candidateOffsets.length < offsetAttemptCount && offset < targetColors.length;
-                offset += sampledOffsetStep
-            ) {
-                if (!candidateOffsets.includes(offset)) {
-                    candidateOffsets.push(offset);
-                }
-            }
-
-            for (
-                let offset = sampledOffsetStep;
-                candidateOffsets.length < offsetAttemptCount && offset < targetColors.length;
-                offset += sampledOffsetStep
-            ) {
-                if (!candidateOffsets.includes(offset)) {
-                    candidateOffsets.push(offset);
-                }
-            }
-
             for (let attempt = 0; attempt < randomAttemptCount; attempt += 1) {
                 const sourceColors = buildDerangedInitialColors();
-                if (!sourceColors) break;
+                if (!sourceColors.length) {
+                    break;
+                }
                 const board = createEmptyBoard();
 
                 INITIAL_LAYOUT_ORDER.forEach((position, index) => {
@@ -6774,33 +6925,14 @@
                 }
             }
 
-            for (const offset of candidateOffsets) {
-                const board = createEmptyBoard();
-
-                INITIAL_LAYOUT_ORDER.forEach((position, index) => {
-                    board[position.row][position.col] = targetColors[(index + offset) % targetColors.length];
-                });
-
-                prepareInitialBoardCandidate(board);
-                if (removeMatchedInitialCells(board) && !hasMatchedInitialCells(board)) {
-                    return board;
-                }
-
-                const candidateQuality = getInitialBoardQuality(board);
-                if (!fallbackBoardQuality || isBetterInitialBoardQuality(candidateQuality, fallbackBoardQuality)) {
-                    fallbackBoardState = cloneBoardSnapshot(board);
-                    fallbackBoardQuality = candidateQuality;
-                }
-            }
-
             if (fallbackBoardState) {
                 return fallbackBoardState;
             }
 
             const fallbackBoard = createEmptyBoard();
-            const fallbackOffset = candidateOffsets[0] || 1;
+            const fallbackColors = buildDerangedInitialColors();
             INITIAL_LAYOUT_ORDER.forEach((position, index) => {
-                fallbackBoard[position.row][position.col] = targetColors[(index + fallbackOffset) % targetColors.length];
+                fallbackBoard[position.row][position.col] = fallbackColors[index] || 0;
             });
             prepareInitialBoardCandidate(fallbackBoard);
             removeMatchedInitialCells(fallbackBoard);
@@ -10451,6 +10583,29 @@
                     activeElement.tagName === "TEXTAREA" ||
                     activeElement.isContentEditable);
 
+            if (
+                (event.ctrlKey || event.metaKey) &&
+                !event.shiftKey &&
+                event.code === "KeyZ" &&
+                pixelAdminState.isOpen &&
+                pixelAdminGridElement?.contains(activeElement) &&
+                !pixelAdminInteraction.isDrawing
+            ) {
+                const previousDraftMap = pixelAdminState.undoStack.pop();
+                if (!previousDraftMap) {
+                    return;
+                }
+
+                event.preventDefault();
+                pixelAdminState.draftMap = clonePixelMap(previousDraftMap);
+                pixelAdminState.isDirty = true;
+                pixelAdminState.exportIsDirty = false;
+                pixelAdminState.message = "이전 그리드 편집을 취소했어요.";
+                schedulePixelAdminAutoSave();
+                renderPixelAdmin();
+                return;
+            }
+
             if (isTypingTarget) {
                 return;
             }
@@ -12361,6 +12516,10 @@
             startPixelAdminResize(event);
         });
 
+        pixelAdminGridResizeBarElement?.addEventListener("mousedown", (event) => {
+            startPixelAdminGridResize(event);
+        });
+
         pixelAdminGridWrapElement?.addEventListener(
             "wheel",
             (event) => {
@@ -12379,20 +12538,24 @@
 
         window.addEventListener("mousemove", (event) => {
             updatePixelAdminResize(event);
+            updatePixelAdminGridResize(event);
         });
 
         window.addEventListener("mouseup", () => {
             stopPixelAdminResize({});
+            stopPixelAdminGridResize();
             stopPixelAdminDrawing();
         });
 
         window.addEventListener("blur", () => {
             stopPixelAdminResize({});
+            stopPixelAdminGridResize();
             stopPixelAdminDrawing();
         });
 
         window.addEventListener("resize", () => {
             applyPixelAdminPanelWidth();
+            applyPixelAdminGridShellSize();
             updateResponsiveLayout();
             scheduleTutorialOverlayRender();
             if (pixelAdminState.isOpen) {
