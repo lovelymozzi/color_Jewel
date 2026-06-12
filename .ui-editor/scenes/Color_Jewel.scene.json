@@ -319,7 +319,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.wand"
+          "eventName": "item.clean"
         }
       ],
       "groupId": "grp-82"
@@ -384,7 +384,7 @@
             "textDepthColor": "#000000",
             "offsetX": 19,
             "offsetY": 17,
-            "bindingKey": "item.wand",
+            "bindingKey": "item.magnet",
             "zIndex": 3
           }
         ],
@@ -427,7 +427,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.wand"
+          "eventName": "item.magnet"
         }
       ],
       "groupId": "grp-82"

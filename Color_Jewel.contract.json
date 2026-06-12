@@ -455,7 +455,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.wand"
+          "eventName": "item.clean"
         }
       ]
     },
@@ -805,7 +805,7 @@
         {
           "slotIndex": 0,
           "staticContent": "2",
-          "bindingKey": "item.wand",
+          "bindingKey": "item.magnet",
           "fontSize": 16,
           "fontWeight": "bold",
           "fontFamily": "\"Lilita One\", cursive",
@@ -835,7 +835,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.wand"
+          "eventName": "item.magnet"
         }
       ]
     }

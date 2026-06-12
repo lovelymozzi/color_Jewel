@@ -2104,8 +2104,8 @@
         <p class="pixel-admin-help" id="pixelAdminHelp">최대 30x30 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. `#`는 자동으로 붙습니다.</p>
         <p class="pixel-admin-selection" id="pixelAdminSelection">선택된 색상</p>
         <div class="pixel-admin-palette-tools">
-            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" title="색상 추가" aria-label="색상 추가">+</button>
-            <button class="pixel-admin-action" id="pixelAdminErase" type="button" title="지우개" aria-label="지우개">E</button>
+            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" aria-label="색상 추가">+</button>
+            <button class="pixel-admin-action" id="pixelAdminErase" type="button" aria-label="지우개">E</button>
         </div>
         <div class="pixel-admin-color-editor">
             <label class="pixel-admin-field" for="pixelAdminColorHexText">
@@ -3492,9 +3492,11 @@
         }
 
         function clampActionChargesSnapshot(charges = DEFAULT_ACTION_CHARGES) {
+            const defaults = getDefaultActionCharges();
             return {
-                magic: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.magic, Number(charges?.magic ?? DEFAULT_ACTION_CHARGES.magic))),
-                clean: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.clean, Number(charges?.clean ?? DEFAULT_ACTION_CHARGES.clean)))
+                magic: Math.max(0, Math.min(defaults.magic, Number(charges?.magic ?? defaults.magic))),
+                clean: Math.max(0, Math.min(defaults.clean, Number(charges?.clean ?? defaults.clean))),
+                magnet: Math.max(0, Math.min(defaults.magnet, Number(charges?.magnet ?? defaults.magnet)))
             };
         }
 
@@ -3551,7 +3553,8 @@
                 cleanedSocketCells: [...cleanedSocketCells],
                 actionCharges: {
                     magic: Math.max(0, Number(actionCharges.magic || 0)),
-                    clean: Math.max(0, Number(actionCharges.clean || 0))
+                    clean: Math.max(0, Number(actionCharges.clean || 0)),
+                    magnet: Math.max(0, Number(actionCharges.magnet || 0))
                 },
                 moves: Math.max(0, Number(moves || 0)),
                 levelInitialState: currentLevelInitialState
@@ -3845,10 +3848,7 @@
             boardState = cloneBoardSnapshot(snapshot.boardState);
             trayState = [...snapshot.trayState];
             cleanedSocketCells = new Set(normalizeSnapshotCleanedSocketCells(snapshot.cleanedSocketCells, config));
-            actionCharges = {
-                magic: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.magic, Number(snapshot.actionCharges?.magic || 0))),
-                clean: Math.max(0, Math.min(DEFAULT_ACTION_CHARGES.clean, Number(snapshot.actionCharges?.clean || 0)))
-            };
+            actionCharges = clampActionChargesSnapshot(snapshot.actionCharges);
             actionOverlayState = null;
             clearSparkles();
             clearCelebrationTimers();
@@ -4661,10 +4661,20 @@
             ...ORTHOGONAL_DIRECTIONS,
             ...DIAGONAL_DIRECTIONS
         ]);
-        const DEFAULT_ACTION_CHARGES = Object.freeze({
+        const BASE_ACTION_CHARGES = Object.freeze({
             magic: 3,
-            clean: 2
+            clean: 2,
+            magnet: 0
         });
+        function getDefaultActionCharges(map = null) {
+            const activeMap = map || ACTIVE_MAP || null;
+            return {
+                ...BASE_ACTION_CHARGES,
+                magnet: activeMap?.id === "treasurechest" ? 2 : 0
+            };
+        }
+        const DEFAULT_ACTION_CHARGES = Object.freeze({ ...BASE_ACTION_CHARGES });
+        const MAGNET_TARGET_PAIR_COUNT = 10;
         const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
         const TOUCH_TAP_GUARD_MS = 520;
         const BOARD_PAN_DRAG_THRESHOLD_PX = 8;
@@ -6511,12 +6521,13 @@
                 nextBoardState,
                 Array.from({ length: POCKET_SIZE }, (_, index) => ACTIVE_MAP.initialTrayState?.[index] || 0),
                 [],
-                DEFAULT_ACTION_CHARGES
+                getDefaultActionCharges()
             );
         }
 
         function setStatus(message) {
-            return message;
+            const nextMessage = typeof message === "string" ? message.trim() : "";
+            return nextMessage || "";
         }
 
         function setSceneLayerDisplay(stableId, isVisible) {
@@ -6565,7 +6576,8 @@
         function getActionButtonFallbackElement(stableId, anchorButtonElement = null) {
             if (
                 stableId === "shape-ellipse-169-wand-clone" ||
-                stableId === "shape-ellipse-169-clean-clone"
+                stableId === "shape-ellipse-169-clean-clone" ||
+                stableId === "shape-ellipse-169-magnet-clone"
             ) {
                 const sourceElement = colorJewelSceneRenderer?.getElement?.("shape-ellipse-169");
                 const pressSurface =
@@ -6603,7 +6615,8 @@
 
             const counterBadgeLayout =
                 (stableId === "shape-ellipse-169-wand-clone" ||
-                    stableId === "shape-ellipse-169-clean-clone") &&
+                    stableId === "shape-ellipse-169-clean-clone" ||
+                    stableId === "shape-ellipse-169-magnet-clone") &&
                 anchorButtonElement
                     ? getActionButtonCounterBadgeLayout(anchorButtonElement)
                     : null;
@@ -6636,7 +6649,9 @@
 
         function syncActionButtonCounterBadge(buttonElement, count, tvStableId) {
             if (!buttonElement) {
-                setActionButtonFallbackIconState(tvStableId, count <= 0);
+                if (tvStableId) {
+                    setActionButtonFallbackIconState(tvStableId, count <= 0);
+                }
                 return;
             }
 
@@ -6650,17 +6665,21 @@
             }
 
             if (countBadgeText) {
+                countBadgeText.textContent = String(Math.max(0, count));
                 countBadgeText.style.display = shouldShowCountBadge ? "" : "none";
             }
 
-            setActionButtonFallbackIconState(tvStableId, !shouldShowCountBadge, buttonElement);
+            if (tvStableId) {
+                setActionButtonFallbackIconState(tvStableId, !shouldShowCountBadge, buttonElement);
+            }
         }
 
         function updateActionButtonState() {
             colorJewelSceneRenderer?.update({
                 item: {
                     wand: Math.max(0, actionCharges.magic),
-                    clean: Math.max(0, actionCharges.clean)
+                    clean: Math.max(0, actionCharges.clean),
+                    magnet: Math.max(0, actionCharges.magnet)
                 }
             });
             setSceneLayerDisplay("level-node-18", ACTIVE_MAP?.id !== "treasurechest");
@@ -6678,6 +6697,12 @@
                     count: actionCharges.clean,
                     label: "빗자루",
                     armed: false
+                },
+                {
+                    button: ACTIVE_MAP?.id === "treasurechest" ? bottomActionButton3TreasureElement : bottomActionButton3Element,
+                    count: Math.max(0, actionCharges.magnet),
+                    label: ACTIVE_MAP?.id === "treasurechest" ? "자석" : "특수 아이템",
+                    armed: false
                 }
             ];
 
@@ -6687,7 +6712,7 @@
                 }
 
                 button.style.opacity = "1";
-                button.setAttribute("title", count <= 0 ? `${label} 광고 버튼` : `${label} ${Math.max(0, count)}회`);
+                button.removeAttribute("title");
                 button.setAttribute("aria-disabled", "false");
                 button.setAttribute("aria-pressed", armed ? "true" : "false");
             });
@@ -6697,6 +6722,8 @@
             setActionButtonFallbackIconState("pictoicon-tv-png-164", false);
             syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169-wand-clone");
             syncActionButtonCounterBadge(bottomActionButton2Element, actionCharges.clean, "shape-ellipse-169-clean-clone");
+            syncActionButtonCounterBadge(bottomActionButton3Element, 0, null);
+            syncActionButtonCounterBadge(bottomActionButton3TreasureElement, actionCharges.magnet, "shape-ellipse-169-magnet-clone");
         }
 
         function setActionOverlay(nextOverlay) {
@@ -8501,6 +8528,262 @@
             };
         }
 
+        function getMagnetMismatchBuckets(boardSnapshot) {
+            const directedBuckets = new Map();
+
+            TARGET_POSITIONS.forEach((position) => {
+                if (isCleanedSocketCell(position.row, position.col)) {
+                    return;
+                }
+
+                const targetColor = TARGET_MAP[position.row][position.col] || 0;
+                const boardColor = boardSnapshot[position.row][position.col] || 0;
+                if (!targetColor || !boardColor || targetColor === boardColor) {
+                    return;
+                }
+
+                const key = `${targetColor}:${boardColor}`;
+                if (!directedBuckets.has(key)) {
+                    directedBuckets.set(key, []);
+                }
+                directedBuckets.get(key).push({
+                    row: position.row,
+                    col: position.col,
+                    targetColor,
+                    boardColor
+                });
+            });
+
+            return directedBuckets;
+        }
+
+        function pairMagnetMismatchCells(primaryCells, oppositeCells) {
+            const remainingCells = [...oppositeCells];
+            const steps = [];
+
+            primaryCells.forEach((primaryCell) => {
+                if (!remainingCells.length) {
+                    return;
+                }
+
+                let bestIndex = 0;
+                let bestDistance = Number.POSITIVE_INFINITY;
+
+                remainingCells.forEach((oppositeCell, index) => {
+                    const distance =
+                        Math.abs(primaryCell.row - oppositeCell.row) +
+                        Math.abs(primaryCell.col - oppositeCell.col);
+                    if (
+                        distance < bestDistance ||
+                        (distance === bestDistance &&
+                            (oppositeCell.row < remainingCells[bestIndex].row ||
+                                (oppositeCell.row === remainingCells[bestIndex].row &&
+                                    oppositeCell.col < remainingCells[bestIndex].col)))
+                    ) {
+                        bestDistance = distance;
+                        bestIndex = index;
+                    }
+                });
+
+                const oppositeCell = remainingCells.splice(bestIndex, 1)[0];
+                if (!oppositeCell) {
+                    return;
+                }
+
+                steps.push({
+                    leftCell: {
+                        row: primaryCell.row,
+                        col: primaryCell.col,
+                        currentColor: primaryCell.boardColor,
+                        targetColor: primaryCell.targetColor
+                    },
+                    rightCell: {
+                        row: oppositeCell.row,
+                        col: oppositeCell.col,
+                        currentColor: oppositeCell.boardColor,
+                        targetColor: oppositeCell.targetColor
+                    },
+                    distance: bestDistance
+                });
+            });
+
+            return steps;
+        }
+
+        function buildMagnetMovePlan() {
+            const boardSnapshot = boardState.map((row) => [...row]);
+            const mismatchBuckets = getMagnetMismatchBuckets(boardSnapshot);
+            const pairPlans = [];
+
+            mismatchBuckets.forEach((cells, key) => {
+                const [targetColor, boardColor] = key.split(":").map(Number);
+                if (!Number.isInteger(targetColor) || !Number.isInteger(boardColor) || targetColor >= boardColor) {
+                    return;
+                }
+
+                const oppositeCells = mismatchBuckets.get(`${boardColor}:${targetColor}`) || [];
+                const pairCount = Math.min(cells.length, oppositeCells.length);
+                if (pairCount <= 0) {
+                    return;
+                }
+
+                const pairedSteps = pairMagnetMismatchCells(cells.slice(0, pairCount), oppositeCells.slice(0, pairCount));
+                if (!pairedSteps.length) {
+                    return;
+                }
+
+                const limitedSteps = [...pairedSteps]
+                    .sort((left, right) =>
+                        left.distance - right.distance ||
+                        left.leftCell.row - right.leftCell.row ||
+                        left.leftCell.col - right.leftCell.col
+                    )
+                    .slice(0, MAGNET_TARGET_PAIR_COUNT);
+                const totalDistance = limitedSteps.reduce((sum, step) => sum + step.distance, 0);
+                pairPlans.push({
+                    primaryColor: targetColor,
+                    secondaryColor: boardColor,
+                    pairCount: limitedSteps.length,
+                    totalDistance,
+                    steps: limitedSteps
+                });
+            });
+
+            const selectedPairPlan = pairPlans.sort((left, right) =>
+                right.pairCount - left.pairCount ||
+                left.totalDistance - right.totalDistance ||
+                left.primaryColor - right.primaryColor ||
+                left.secondaryColor - right.secondaryColor
+            )[0];
+            const plannedSteps = [];
+            let usesOnlySelectedPair = Boolean(selectedPairPlan);
+            const usedCellKeys = new Set();
+
+            if (selectedPairPlan) {
+                selectedPairPlan.steps.forEach((step) => {
+                    const leftRow = step.leftCell.row;
+                    const leftCol = step.leftCell.col;
+                    const rightRow = step.rightCell.row;
+                    const rightCol = step.rightCell.col;
+
+                    plannedSteps.push(step);
+                    usedCellKeys.add(toCellKey(leftRow, leftCol));
+                    usedCellKeys.add(toCellKey(rightRow, rightCol));
+                    [boardSnapshot[leftRow][leftCol], boardSnapshot[rightRow][rightCol]] = [
+                        boardSnapshot[rightRow][rightCol],
+                        boardSnapshot[leftRow][leftCol]
+                    ];
+                });
+            }
+
+            while (plannedSteps.length < MAGNET_TARGET_PAIR_COUNT) {
+                const mismatchedCells = TARGET_POSITIONS.filter((position) => {
+                    if (isCleanedSocketCell(position.row, position.col)) {
+                        return false;
+                    }
+
+                    const targetColor = TARGET_MAP[position.row][position.col] || 0;
+                    const boardColor = boardSnapshot[position.row][position.col] || 0;
+                    return Boolean(targetColor && boardColor && targetColor !== boardColor);
+                });
+
+                if (mismatchedCells.length < 2) {
+                    break;
+                }
+
+                let bestSwap = null;
+
+                for (let leftIndex = 0; leftIndex < mismatchedCells.length - 1; leftIndex += 1) {
+                    const leftCell = mismatchedCells[leftIndex];
+                    if (usedCellKeys.has(toCellKey(leftCell.row, leftCell.col))) {
+                        continue;
+                    }
+                    const leftBoardColor = boardSnapshot[leftCell.row][leftCell.col];
+                    const leftTargetColor = TARGET_MAP[leftCell.row][leftCell.col];
+
+                    for (let rightIndex = leftIndex + 1; rightIndex < mismatchedCells.length; rightIndex += 1) {
+                        const rightCell = mismatchedCells[rightIndex];
+                        if (usedCellKeys.has(toCellKey(rightCell.row, rightCell.col))) {
+                            continue;
+                        }
+                        const rightBoardColor = boardSnapshot[rightCell.row][rightCell.col];
+                        const rightTargetColor = TARGET_MAP[rightCell.row][rightCell.col];
+
+                        if (!leftBoardColor || !rightBoardColor || leftBoardColor === rightBoardColor) {
+                            continue;
+                        }
+
+                        const solvedCellCount =
+                            Number(rightBoardColor === leftTargetColor) +
+                            Number(leftBoardColor === rightTargetColor);
+
+                        if (solvedCellCount <= 0) {
+                            continue;
+                        }
+
+                        const distance =
+                            Math.abs(leftCell.row - rightCell.row) +
+                            Math.abs(leftCell.col - rightCell.col);
+                        const candidate = {
+                            leftCell: {
+                                row: leftCell.row,
+                                col: leftCell.col,
+                                currentColor: leftBoardColor,
+                                targetColor: leftTargetColor
+                            },
+                            rightCell: {
+                                row: rightCell.row,
+                                col: rightCell.col,
+                                currentColor: rightBoardColor,
+                                targetColor: rightTargetColor
+                            },
+                            distance,
+                            solvedCellCount
+                        };
+
+                        if (
+                            !bestSwap ||
+                            candidate.solvedCellCount > bestSwap.solvedCellCount ||
+                            (candidate.solvedCellCount === bestSwap.solvedCellCount && candidate.distance < bestSwap.distance) ||
+                            (candidate.solvedCellCount === bestSwap.solvedCellCount &&
+                                candidate.distance === bestSwap.distance &&
+                                (candidate.leftCell.row < bestSwap.leftCell.row ||
+                                    (candidate.leftCell.row === bestSwap.leftCell.row &&
+                                        (candidate.leftCell.col < bestSwap.leftCell.col ||
+                                            (candidate.leftCell.col === bestSwap.leftCell.col &&
+                                                (candidate.rightCell.row < bestSwap.rightCell.row ||
+                                                    (candidate.rightCell.row === bestSwap.rightCell.row &&
+                                                        candidate.rightCell.col < bestSwap.rightCell.col)))))))
+                        ) {
+                            bestSwap = candidate;
+                        }
+                    }
+                }
+
+                if (!bestSwap) {
+                    break;
+                }
+
+                usesOnlySelectedPair = false;
+                plannedSteps.push(bestSwap);
+                usedCellKeys.add(toCellKey(bestSwap.leftCell.row, bestSwap.leftCell.col));
+                usedCellKeys.add(toCellKey(bestSwap.rightCell.row, bestSwap.rightCell.col));
+                [boardSnapshot[bestSwap.leftCell.row][bestSwap.leftCell.col], boardSnapshot[bestSwap.rightCell.row][bestSwap.rightCell.col]] = [
+                    boardSnapshot[bestSwap.rightCell.row][bestSwap.rightCell.col],
+                    boardSnapshot[bestSwap.leftCell.row][bestSwap.leftCell.col]
+                ];
+            }
+
+            return {
+                steps: plannedSteps,
+                nextBoardState: boardSnapshot,
+                selectedColors: usesOnlySelectedPair && selectedPairPlan
+                    ? [selectedPairPlan.primaryColor, selectedPairPlan.secondaryColor]
+                    : [],
+                movedGemCount: plannedSteps.length * 2
+            };
+        }
+
         async function animateBroomMoves(steps) {
             const totalSteps = steps.length;
             const stepDelayMs = getMagicFlightDurationMs(totalSteps);
@@ -8534,6 +8817,110 @@
             }
 
             if (!isCurrentGameSession(sessionVersion)) {
+                return;
+            }
+
+            isAnimating = false;
+        }
+
+        async function animateMagnetMoves(steps) {
+            const totalSteps = steps.length;
+            const totalGemMoves = Math.max(1, totalSteps * 2);
+            const liftUpDurationMs = 180;
+            const flightDurationMs = Math.max(130, Math.min(220, Math.floor(2600 / totalGemMoves)));
+            const sessionVersion = gameSessionVersion;
+
+            isAnimating = true;
+            selected = null;
+            const queuedFlights = [];
+
+            steps.forEach((step) => {
+                const leftRect = getBoardCellElement(step.leftCell.row, step.leftCell.col)?.getBoundingClientRect() || null;
+                const rightRect = getBoardCellElement(step.rightCell.row, step.rightCell.col)?.getBoundingClientRect() || null;
+                const leftGemColor = boardState[step.leftCell.row][step.leftCell.col];
+                const rightGemColor = boardState[step.rightCell.row][step.rightCell.col];
+                const leftLiftHeight = getSelectedGemLiftHeight(leftRect);
+                const rightLiftHeight = getSelectedGemLiftHeight(rightRect);
+
+                queuedFlights.push({
+                    colorId: leftGemColor,
+                    sourceRect: leftRect,
+                    targetRect: rightRect,
+                    targetCell: { row: step.rightCell.row, col: step.rightCell.col },
+                    liftHeight: leftLiftHeight,
+                    flyingGem: null
+                });
+                queuedFlights.push({
+                    colorId: rightGemColor,
+                    sourceRect: rightRect,
+                    targetRect: leftRect,
+                    targetCell: { row: step.leftCell.row, col: step.leftCell.col },
+                    liftHeight: rightLiftHeight,
+                    flyingGem: null
+                });
+
+                boardState[step.leftCell.row][step.leftCell.col] = 0;
+                boardState[step.rightCell.row][step.rightCell.col] = 0;
+            });
+
+            render();
+
+            queuedFlights.forEach((flight) => {
+                flight.flyingGem = createFloatingGemElement(flight.colorId, flight.sourceRect);
+            });
+
+            await Promise.all(
+                queuedFlights.map((flight) =>
+                    animateFloatingGemLift(flight.flyingGem, flight.liftHeight, liftUpDurationMs)
+                )
+            );
+
+            if (!isCurrentGameSession(sessionVersion)) {
+                queuedFlights.forEach((flight) => removeFloatingGemElement(flight.flyingGem));
+                isAnimating = false;
+                return;
+            }
+
+            await sleep(90);
+
+            for (let index = 0; index < queuedFlights.length; index += 1) {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    queuedFlights.forEach((flight) => removeFloatingGemElement(flight.flyingGem));
+                    isAnimating = false;
+                    return;
+                }
+
+                const flight = queuedFlights[index];
+                await animateFloatingGemToTarget(
+                    flight.flyingGem,
+                    flight.sourceRect,
+                    flight.targetRect,
+                    flight.liftHeight,
+                    flightDurationMs
+                );
+
+                if (!isCurrentGameSession(sessionVersion)) {
+                    queuedFlights.forEach((entry) => removeFloatingGemElement(entry.flyingGem));
+                    isAnimating = false;
+                    return;
+                }
+
+                boardState[flight.targetCell.row][flight.targetCell.col] = flight.colorId;
+                if (isCompletedTargetCell(flight.targetCell.row, flight.targetCell.col)) {
+                    markCorrectPlacementSparkle(flight.targetCell.row, flight.targetCell.col, { triggerHaptic: true });
+                }
+                removeFloatingGemElement(flight.flyingGem);
+                render();
+                void playPlaceSound();
+
+                if (index < queuedFlights.length - 1) {
+                    await sleep(Math.max(18, Math.floor(flightDurationMs * 0.18)));
+                }
+            }
+
+            if (!isCurrentGameSession(sessionVersion)) {
+                queuedFlights.forEach((flight) => removeFloatingGemElement(flight.flyingGem));
+                isAnimating = false;
                 return;
             }
 
@@ -8958,6 +9345,14 @@
 
             bindDirectPointerActivation(bottomActionButton2Element, () => {
                 void useCleanAction();
+            });
+
+            bindDirectPointerActivation(bottomActionButton3Element, () => {
+                void useSpecialAction();
+            });
+
+            bindDirectPointerActivation(bottomActionButton3TreasureElement, () => {
+                void useSpecialAction();
             });
 
             bindDirectPointerActivation(bottomActionButton4Element, () => {
@@ -10225,6 +10620,15 @@
             return Math.max(18, Math.min(46, Math.floor(1100 / safeCount)));
         }
 
+        function getSelectedGemLiftHeight(sourceRect) {
+            if (!sourceRect) {
+                return 8;
+            }
+
+            const renderedGemSize = Math.min(sourceRect.width, sourceRect.height) * 0.84;
+            return Math.max(7, Math.min(12, Math.round(renderedGemSize * 0.28)));
+        }
+
         async function animateMagicGemFlight(colorId, sourceRect, targetRect, durationMs = 32) {
             if (!sourceRect || !targetRect) {
                 return;
@@ -10263,6 +10667,151 @@
             }
 
             if (flyingGem.parentNode) {
+                flyingGem.parentNode.removeChild(flyingGem);
+            }
+        }
+
+        async function animateLiftedGemFlight(colorId, sourceRect, targetRect, durationMs = 160) {
+            if (!sourceRect || !targetRect) {
+                return;
+            }
+
+            const flyingGem = createGem(colorId);
+            flyingGem.classList.add("flying-gem");
+            flyingGem.style.left = `${sourceRect.left + sourceRect.width / 2}px`;
+            flyingGem.style.top = `${sourceRect.top + sourceRect.height / 2}px`;
+            flyingGem.style.width = `${Math.min(sourceRect.width, sourceRect.height) * 0.84}px`;
+            flyingGem.style.filter = "saturate(1.1) brightness(1.05) contrast(1.08) drop-shadow(0 14px 24px rgba(63, 33, 117, 0.28))";
+            document.body.appendChild(flyingGem);
+
+            const deltaX = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+            const deltaY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+            const liftHeight = getSelectedGemLiftHeight(sourceRect);
+
+            try {
+                if (typeof flyingGem.animate === "function") {
+                    const animation = flyingGem.animate(
+                        [
+                            { transform: "translate(-50%, -50%) scale(1)", opacity: 1, offset: 0 },
+                            { transform: `translate(-50%, calc(-50% - ${liftHeight}px)) scale(1.03)`, opacity: 1, offset: 0.22 },
+                            {
+                                transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px - ${liftHeight}px)) scale(1.03)`,
+                                opacity: 1,
+                                offset: 0.8
+                            },
+                            {
+                                transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(1.02)`,
+                                opacity: 1,
+                                offset: 1
+                            }
+                        ],
+                        {
+                            duration: durationMs,
+                            easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+                            fill: "forwards"
+                        }
+                    );
+                    await animation.finished;
+                } else {
+                    flyingGem.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+                    await sleep(durationMs);
+                }
+            } catch (error) {
+                await sleep(Math.max(18, Math.floor(durationMs * 0.5)));
+            }
+
+            if (flyingGem.parentNode) {
+                flyingGem.parentNode.removeChild(flyingGem);
+            }
+        }
+
+        function createFloatingGemElement(colorId, sourceRect) {
+            if (!sourceRect) {
+                return null;
+            }
+
+            const flyingGem = createGem(colorId);
+            flyingGem.classList.add("flying-gem");
+            flyingGem.style.left = `${sourceRect.left + sourceRect.width / 2}px`;
+            flyingGem.style.top = `${sourceRect.top + sourceRect.height / 2}px`;
+            flyingGem.style.width = `${Math.min(sourceRect.width, sourceRect.height) * 0.84}px`;
+            flyingGem.style.filter = "saturate(1.1) brightness(1.05) contrast(1.08) drop-shadow(0 14px 24px rgba(63, 33, 117, 0.28))";
+            flyingGem.style.transform = "translate(-50%, -50%) scale(1)";
+            document.body.appendChild(flyingGem);
+            return flyingGem;
+        }
+
+        async function animateFloatingGemLift(flyingGem, liftHeight, durationMs = 180) {
+            if (!flyingGem) {
+                return;
+            }
+
+            const finalTransform = `translate(-50%, calc(-50% - ${liftHeight}px)) scale(1.03)`;
+
+            try {
+                if (typeof flyingGem.animate === "function") {
+                    const animation = flyingGem.animate(
+                        [
+                            { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+                            { transform: finalTransform, opacity: 1 }
+                        ],
+                        {
+                            duration: durationMs,
+                            easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+                            fill: "forwards"
+                        }
+                    );
+                    await animation.finished;
+                } else {
+                    await sleep(durationMs);
+                }
+            } catch (error) {
+                await sleep(Math.max(18, Math.floor(durationMs * 0.5)));
+            }
+
+            flyingGem.style.transform = finalTransform;
+        }
+
+        async function animateFloatingGemToTarget(flyingGem, sourceRect, targetRect, liftHeight, durationMs = 160) {
+            if (!flyingGem || !sourceRect || !targetRect) {
+                return;
+            }
+
+            const deltaX = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+            const deltaY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+            const finalTransform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(1.02)`;
+
+            try {
+                if (typeof flyingGem.animate === "function") {
+                    const animation = flyingGem.animate(
+                        [
+                            { transform: `translate(-50%, calc(-50% - ${liftHeight}px)) scale(1.03)`, opacity: 1, offset: 0 },
+                            {
+                                transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px - ${liftHeight}px)) scale(1.03)`,
+                                opacity: 1,
+                                offset: 0.78
+                            },
+                            { transform: finalTransform, opacity: 1, offset: 1 }
+                        ],
+                        {
+                            duration: durationMs,
+                            easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+                            fill: "forwards"
+                        }
+                    );
+                    await animation.finished;
+                } else {
+                    await sleep(durationMs);
+                }
+            } catch (error) {
+                await sleep(Math.max(18, Math.floor(durationMs * 0.5)));
+            }
+
+            flyingGem.style.transform = finalTransform;
+        }
+
+        function removeFloatingGemElement(flyingGem) {
+            if (flyingGem?.parentNode) {
                 flyingGem.parentNode.removeChild(flyingGem);
             }
         }
@@ -10693,6 +11242,50 @@
             boardState = broomPlan.nextBoardState;
             trayState = broomPlan.nextTrayState;
             commitMove(`빗자루로 포켓의 보석 ${movedCount}개를 알맞은 칸에 자동 배치했어요.`, movedCount, false, null);
+        }
+
+        async function useSpecialAction() {
+            if (solved || isAnimating || isStageTransitioning) {
+                return;
+            }
+
+            if (isMagicTargetingMode()) {
+                cancelMagicTargeting("매직 영역 선택을 취소했어요.");
+            }
+
+            if (ACTIVE_MAP?.id !== "treasurechest") {
+                return;
+            }
+
+            const magnetPlan = buildMagnetMovePlan();
+            const movedCount = magnetPlan.movedGemCount || 0;
+            if (!movedCount) {
+                setStatus("자석으로 끌어올 보드 보석이 없어요.");
+                return;
+            }
+
+            actionCharges.magnet = Math.max(0, actionCharges.magnet - 1);
+            await animateMagnetMoves(magnetPlan.steps);
+            boardState = magnetPlan.nextBoardState;
+            const [primaryColorId, secondaryColorId] = magnetPlan.selectedColors || [];
+            if (primaryColorId && secondaryColorId) {
+                const primaryColorName = COLOR_PALETTE[primaryColorId]?.name || `C${primaryColorId}`;
+                const secondaryColorName = COLOR_PALETTE[secondaryColorId]?.name || `C${secondaryColorId}`;
+                commitMove(
+                    `자석으로 ${primaryColorName}·${secondaryColorName} 보석 ${movedCount}개를 서로의 자리로 정렬했어요.`,
+                    movedCount,
+                    false,
+                    null
+                );
+                return;
+            }
+
+            commitMove(
+                `자석으로 보드 보석 ${movedCount}개를 더 알맞은 자리로 정렬했어요.`,
+                movedCount,
+                false,
+                null
+            );
         }
 
         function findTrayClusterPlacement(indices, targetIndex) {
