@@ -821,15 +821,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 0;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: visible;
             pointer-events: none;
         }
 
         .stage-clear-scene-shell {
             position: relative;
             flex: none;
+            overflow: visible;
             pointer-events: none;
         }
 
@@ -837,6 +838,7 @@
             position: absolute;
             left: 0;
             top: 0;
+            overflow: visible;
             pointer-events: none;
             transform-origin: top left;
         }
@@ -7882,7 +7884,11 @@
                     sceneRootElement.style.left = "0";
                     sceneRootElement.style.right = "auto";
                     sceneRootElement.style.bottom = "auto";
+                    sceneRootElement.style.overflow = "visible";
                     sceneRootElement.style.pointerEvents = "none";
+                    sceneRootElement.querySelectorAll("[data-group]").forEach((groupElement) => {
+                        groupElement.style.overflow = "visible";
+                    });
                 }
                 stageClearSceneMountElement.setAttribute("aria-hidden", "false");
                 return true;
