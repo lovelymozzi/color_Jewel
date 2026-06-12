@@ -346,7 +346,15 @@
         .cell.board-cell {
             border-radius: 0;
             border: 0;
-            box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.10);
+            box-shadow:
+                inset 0 0 0 0.6px var(--tile-outline, rgba(255, 255, 255, 0.10)),
+                inset 0 -10px 14px rgba(0, 0, 0, 0);
+        }
+
+        .board-cell.low-contrast-target {
+            box-shadow:
+                inset 0 0 0 0.8px rgba(176, 151, 114, 0.46),
+                inset 0 -10px 14px rgba(176, 151, 114, 0.18);
         }
 
         .board-cell.empty-target::before {
@@ -362,8 +370,8 @@
                 linear-gradient(180deg, rgba(172, 142, 108, 0.028), rgba(172, 142, 108, 0.055)),
                 url("src/assets/jewel.png?v=20260611-1") center / contain no-repeat;
             background-blend-mode: color-burn, normal;
-            filter: brightness(1.02) saturate(1);
-            opacity: 0.42;
+            filter: var(--socket-ghost-filter, brightness(1.02) saturate(1));
+            opacity: var(--socket-ghost-opacity, 0.42);
             pointer-events: none;
         }
 
@@ -2241,12 +2249,20 @@
 
         function clonePaletteMeta(sourcePalette = {}) {
             return Object.fromEntries(
-                Object.entries(sourcePalette).map(([colorId, colorMeta]) => [
-                    Number(colorId),
-                    {
-                        color: normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color) || "#CCCCCC"
-                    }
-                ])
+                Object.entries(sourcePalette)
+                    .map(([colorId, colorMeta]) => {
+                        const normalizedColorId = Number(colorId);
+                        const normalizedColor = normalizeHexColor(
+                            typeof colorMeta === "string" ? colorMeta : colorMeta?.color
+                        );
+
+                        if (!Number.isInteger(normalizedColorId) || normalizedColorId <= 0 || !normalizedColor) {
+                            return null;
+                        }
+
+                        return [normalizedColorId, { color: normalizedColor }];
+                    })
+                    .filter(Boolean)
             );
         }
 
@@ -2796,6 +2812,39 @@
             [0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 9, 9, 0, 0]
         ];
 
+        const UNICORN_IMAGE_MAP = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 4, 3, 4, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0, 1, 10, 2, 1, 4, 4, 3, 4, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 1, 1, 10, 10, 1, 0, 0, 0, 0, 6, 4, 2, 5, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 10, 10, 1, 1, 0, 0, 6, 4, 6, 10, 6, 5, 4, 4, 6, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 9, 1, 1, 1, 1, 10, 10, 10, 1, 1, 4, 6, 6, 10, 10, 6, 6, 5, 5, 5, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 3, 1, 1, 1, 1, 10, 10, 10, 6, 4, 6, 10, 10, 10, 10, 6, 6, 6, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 3, 3, 3, 1, 1, 10, 1, 10, 6, 4, 6, 10, 10, 0, 7, 6, 1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 3, 3, 3, 1, 1, 1, 6, 5, 4, 6, 10, 9, 0, 0, 0, 5, 5, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 9, 2, 3, 2, 3, 2, 10, 6, 5, 4, 6, 2, 9, 9, 0, 0, 5, 5, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 3, 9, 3, 2, 3, 1, 1, 6, 5, 4, 6, 2, 9, 1, 1, 5, 5, 1, 0, 0, 0, 0, 0],
+            [0, 0, 6, 6, 6, 1, 1, 1, 1, 3, 3, 3, 3, 1, 6, 5, 5, 6, 6, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 4, 4, 6, 1, 1, 1, 1, 3, 3, 3, 10, 6, 5, 4, 6, 6, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 6, 5, 4, 1, 10, 1, 1, 9, 3, 3, 10, 6, 6, 5, 6, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 6, 5, 6, 1, 10, 0, 0, 0, 3, 0, 0, 6, 6, 6, 5, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 5, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 6, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 5, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 6, 8, 8, 8, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 4, 5, 6, 1, 1, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 1, 1, 10, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 6, 6, 5, 6, 1, 10, 0, 0, 1, 9, 9, 9, 9, 10, 0, 0, 9, 1, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0],
+            [0, 6, 6, 6, 5, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0],
+            [6, 6, 6, 5, 6, 1, 1, 1, 10, 1, 10, 10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0],
+            [6, 6, 6, 5, 6, 1, 1, 10, 1, 1, 10, 10, 0, 0, 0, 1, 10, 1, 1, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [6, 5, 5, 5, 6, 1, 1, 1, 1, 10, 1, 10, 0, 0, 0, 0, 1, 1, 1, 3, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 6, 6, 1, 1, 1, 1, 1, 1, 10, 1, 0, 0, 0, 0, 1, 1, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 10, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 1, 0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 3, 3, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+
         const SHIBA_IMAGE_MAP = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0],
@@ -3242,6 +3291,18 @@
                     completedColorsPerUnlock: 1,
                     pocketsPerUnlock: 1
                 }
+            },
+            {
+                id: "unicorn",
+                displayName: "유니콘",
+                baseImageMap: UNICORN_IMAGE_MAP,
+                scale: 1,
+                startMessageTemplate: "{title} 스테이지예요. 보석을 맞춰 무지개 갈기와 뿔을 가진 유니콘을 완성해 보세요.",
+                pocketUnlock: {
+                    initialOpenCount: 12,
+                    completedColorsPerUnlock: 1,
+                    pocketsPerUnlock: 1
+                }
             }
         ];
 
@@ -3628,14 +3689,27 @@
             }
         }
 
+        function getLevelInitialStateCacheSignature(definition, config = ACTIVE_MAP) {
+            if (!definition || !config) {
+                return "";
+            }
+
+            const baseSignature = `${config.id}:${config.rows}:${config.cols}:${getStageOverrideVersion(definition)}`;
+            if (!definition.adminTargetMap) {
+                return baseSignature;
+            }
+
+            return `${baseSignature}:${JSON.stringify(definition.adminTargetMap)}`;
+        }
+
         function readPersistedLevelInitialState(definition, config = ACTIVE_MAP) {
-            if (!definition || !config || definition.adminTargetMap || definition.adminPalette || definition.adminDisplayName) {
+            if (!definition || !config) {
                 return null;
             }
 
             const storagePayload = readLevelInitialStateCacheStorage();
             const cacheEntry = storagePayload[definition.id];
-            const cacheSignature = `${config.id}:${config.rows}:${config.cols}:${getStageOverrideVersion(definition)}`;
+            const cacheSignature = getLevelInitialStateCacheSignature(definition, config);
             if (!cacheEntry || cacheEntry.signature !== cacheSignature) {
                 return null;
             }
@@ -3645,20 +3719,13 @@
         }
 
         function persistLevelInitialState(definition, levelInitialState, config = ACTIVE_MAP) {
-            if (
-                !definition ||
-                !levelInitialState ||
-                !config ||
-                definition.adminTargetMap ||
-                definition.adminPalette ||
-                definition.adminDisplayName
-            ) {
+            if (!definition || !levelInitialState || !config) {
                 return false;
             }
 
             const storagePayload = readLevelInitialStateCacheStorage();
             storagePayload[definition.id] = {
-                signature: `${config.id}:${config.rows}:${config.cols}:${getStageOverrideVersion(definition)}`,
+                signature: getLevelInitialStateCacheSignature(definition, config),
                 state: {
                     mapId: levelInitialState.mapId,
                     rows: levelInitialState.rows,
@@ -4052,7 +4119,11 @@
                 return false;
             }
 
-            syncActiveMap(definitionIndex);
+            syncActiveMap(definitionIndex, {
+                syncPixelAdmin: false,
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
             currentLevelInitialState = normalizeLevelInitialStateSnapshot(snapshot.levelInitialState, config, allowedColorIds);
             boardState = cloneBoardSnapshot(snapshot.boardState);
             trayState = [...snapshot.trayState];
@@ -4593,6 +4664,21 @@
                     8: "#2E6F9F",
                     9: "#D9DDE4"
                 }
+            },
+            unicorn: {
+                palette: {
+                    0: "#FFFFFF",
+                    1: "#7D5034",
+                    2: "#F0EEF7",
+                    3: "#F5CF45",
+                    4: "#75C7EB",
+                    5: "#F5B2C8",
+                    6: "#8E74C7",
+                    7: "#151317",
+                    8: "#1F7B87",
+                    9: "#E6D8B8",
+                    10: "#C7D1DE"
+                }
             }
         };
 
@@ -4650,7 +4736,7 @@
             colorJewelSceneContractPromise = (
                 window.location.protocol === "file:"
                     ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.COLOR_JEWEL_CONTRACT)))
-                    : fetch(`./Color_Jewel.contract.json?v=${SCENE_CONTRACT_VERSION}`, { cache: "no-store" })
+                    : fetch(`./Color_Jewel.contract.json?v=${SCENE_CONTRACT_VERSION}`)
                         .then((response) => {
                             if (!response.ok) {
                                 throw new Error(`Color_Jewel contract load failed: ${response.status}`);
@@ -5329,6 +5415,9 @@
 
             const upcomingMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
             const upcomingDefinition = MAP_DEFINITIONS[upcomingMapIndex];
+            const previousMapIndex =
+                ((currentMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            const previousDefinition = MAP_DEFINITIONS[previousMapIndex];
             const upcomingOverrideVersion = getStageOverrideVersion(upcomingDefinition);
             const isUpcomingPrepared =
                 preparedNextMapIndex === upcomingMapIndex &&
@@ -5350,22 +5439,49 @@
                     const preservedInitialLayoutIndex = INITIAL_LAYOUT_INDEX;
                     const preservedTargetNeighborPairs = TARGET_NEIGHBOR_PAIRS;
                     const preservedTotalTargetCells = TOTAL_TARGET_CELLS;
-                    const preparedConfig = buildMapConfig(upcomingDefinition);
+                    const adjacentDefinitions = [
+                        {
+                            mapIndex: upcomingMapIndex,
+                            definition: upcomingDefinition,
+                            overrideVersion: upcomingOverrideVersion,
+                            storeAsPreparedNext: true
+                        },
+                        {
+                            mapIndex: previousMapIndex,
+                            definition: previousDefinition,
+                            overrideVersion: getStageOverrideVersion(previousDefinition),
+                            storeAsPreparedNext: false
+                        }
+                    ];
+                    let nextPreparedConfig = null;
+                    let nextPreparedInitialState = null;
 
-                    preparedNextMapIndex = upcomingMapIndex;
-                    preparedNextMapVersion = upcomingOverrideVersion;
-                    preparedNextMapConfig = preparedConfig;
-                    ACTIVE_MAP = preparedConfig;
-                    TARGET_MAP = preparedConfig.targetMap;
-                    ROWS = preparedConfig.rows;
-                    COLS = preparedConfig.cols;
-                    TARGET_POSITIONS = preparedConfig.targetPositions;
-                    TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
-                    INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
-                    INITIAL_LAYOUT_INDEX = preparedConfig.initialLayoutIndex;
-                    TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
-                    TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
-                    preparedNextLevelInitialState = buildCurrentLevelInitialState();
+                    adjacentDefinitions.forEach(({ mapIndex, definition, overrideVersion, storeAsPreparedNext }) => {
+                        const preparedConfig = buildMapConfig(definition);
+                        ACTIVE_MAP = preparedConfig;
+                        TARGET_MAP = preparedConfig.targetMap;
+                        ROWS = preparedConfig.rows;
+                        COLS = preparedConfig.cols;
+                        TARGET_POSITIONS = preparedConfig.targetPositions;
+                        TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
+                        INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
+                        INITIAL_LAYOUT_INDEX = preparedConfig.initialLayoutIndex;
+                        TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
+                        TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
+
+                        const preparedInitialState = buildCurrentLevelInitialState();
+                        if (!storeAsPreparedNext) {
+                            return;
+                        }
+
+                        preparedNextMapIndex = mapIndex;
+                        preparedNextMapVersion = overrideVersion;
+                        nextPreparedConfig = preparedConfig;
+                        nextPreparedInitialState = preparedInitialState;
+                    });
+
+                    preparedNextMapConfig = nextPreparedConfig;
+                    preparedNextLevelInitialState = nextPreparedInitialState;
                     ACTIVE_MAP = preservedActiveMap;
                     TARGET_MAP = preservedTargetMap;
                     ROWS = preservedRows;
@@ -5385,7 +5501,11 @@
         }
 
         function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
-            const colorIds = new Set(Object.keys(paletteMeta).map((colorId) => Number(colorId)));
+            const colorIds = new Set(
+                Object.keys(paletteMeta)
+                    .map((colorId) => Number(colorId))
+                    .filter((colorId) => Number.isInteger(colorId) && colorId > 0)
+            );
 
             sourceMap.forEach((row) => {
                 row.forEach((colorId) => {
@@ -5533,6 +5653,9 @@
 
             entryMatches.forEach((match) => {
                 const colorId = Number(match[1]);
+                if (colorId === 0) {
+                    throw new Error("C0은 빈칸 전용이에요. 밝은 영역도 C1 이상의 색상으로 넣어 주세요.");
+                }
                 const normalized = normalizeHexColor(match[2]);
                 if (!normalized) {
                     throw new Error(`C${colorId} 색상은 6자리 HEX여야 해요.`);
@@ -6304,7 +6427,7 @@
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(nextMapIndex, { renderPixelAdmin: false, prepareUpcomingMap: false });
+            syncActiveMap(nextMapIndex, { renderPixelAdmin: false });
             currentLevelInitialState =
                 preparedNextMapIndex === nextMapIndex &&
                 preparedNextMapVersion === nextOverrideVersion &&
@@ -6334,7 +6457,7 @@
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(previousMapIndex, { renderPixelAdmin: false, prepareUpcomingMap: false });
+            syncActiveMap(previousMapIndex, { renderPixelAdmin: false });
             currentLevelInitialState = null;
             resetGame({ regenerateLevelStart: true });
             pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
@@ -7964,7 +8087,7 @@
             stageClearSceneContractPromise = (
                 window.location.protocol === "file:"
                     ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.STAGE_CLEAR_CONTRACT)))
-                    : fetch("./Stage_Clear.contract.json", { cache: "no-store" })
+                    : fetch(`./Stage_Clear.contract.json?v=${SCENE_CONTRACT_VERSION}`)
                         .then((response) => {
                             if (!response.ok) {
                                 throw new Error(`Stage_Clear contract load failed: ${response.status}`);
@@ -7995,7 +8118,7 @@
             settingSceneContractPromise = (
                 window.location.protocol === "file:"
                     ? import("./scene-contracts.js").then((module) => JSON.parse(JSON.stringify(module.SETTING_CONTRACT)))
-                    : fetch("./setting.contract.json", { cache: "no-store" })
+                    : fetch(`./setting.contract.json?v=${SCENE_CONTRACT_VERSION}`)
                         .then((response) => {
                             if (!response.ok) {
                                 throw new Error(`setting contract load failed: ${response.status}`);
@@ -9980,6 +10103,8 @@
                 for (let col = 0; col < COLS; col += 1) {
                     const target = TARGET_MAP[row]?.[col] || 0;
                     const gem = boardState[row]?.[col] || 0;
+                    const targetColor = target ? COLOR_PALETTE[target].color : "";
+                    const gemColor = gem ? COLOR_PALETTE[gem].color : "";
                     const button = boardElement.children[(row * COLS) + col];
                     const cleaned = isCleanedSocketCell(row, col);
                     const isCorrectGem = target && (
@@ -9989,7 +10114,7 @@
                     const sparkleElapsedMs = isCorrectGem ? getCellSparkleElapsed(row, col, now) : null;
                     const shouldSparkle = sparkleElapsedMs != null;
                     const isSelectedCell = Boolean(selectedBoardCellKeys?.has(toCellKey(row, col)));
-                    const renderKey = `${target}|${gem}|${cleaned ? 1 : 0}|${isCorrectGem ? 1 : 0}|${shouldSparkle ? 1 : 0}|${isSelectedCell ? 1 : 0}|${shouldRenderGems ? 1 : 0}|${magicTargeting ? 1 : 0}`;
+                    const renderKey = `${target}|${targetColor}|${gem}|${gemColor}|${cleaned ? 1 : 0}|${isCorrectGem ? 1 : 0}|${shouldSparkle ? 1 : 0}|${isSelectedCell ? 1 : 0}|${shouldRenderGems ? 1 : 0}|${magicTargeting ? 1 : 0}`;
 
                     if (button.dataset.renderKey === renderKey) {
                         continue;
@@ -10006,6 +10131,9 @@
                     button.style.removeProperty("--tile-dark");
                     button.style.removeProperty("--tile-shadow");
                     button.style.removeProperty("--tile-light");
+                    button.style.removeProperty("--tile-outline");
+                    button.style.removeProperty("--socket-ghost-opacity");
+                    button.style.removeProperty("--socket-ghost-filter");
 
                     if (!target) {
                         button.classList.add("void");
@@ -10014,13 +10142,21 @@
                         continue;
                     }
 
-                    const targetColor = COLOR_PALETTE[target].color;
+                    const targetRgb = hexToRgb(targetColor);
+                    const targetBrightness = ((targetRgb.r * 299) + (targetRgb.g * 587) + (targetRgb.b * 114)) / 1000;
+                    const isLowContrastTarget = targetBrightness >= 246;
                     button.classList.add("board-cell");
                     button.style.background = targetColor;
                     button.style.setProperty("--tile-base", targetColor);
                     button.style.setProperty("--tile-dark", shadeColor(targetColor, -18));
                     button.style.setProperty("--tile-shadow", shadeColor(targetColor, -34));
                     button.style.setProperty("--tile-light", shadeColor(targetColor, 12));
+                    if (isLowContrastTarget) {
+                        button.classList.add("low-contrast-target");
+                        button.style.setProperty("--tile-outline", "rgba(176, 151, 114, 0.46)");
+                        button.style.setProperty("--socket-ghost-opacity", "0.72");
+                        button.style.setProperty("--socket-ghost-filter", "brightness(0.96) saturate(1.08) contrast(1.08)");
+                    }
                     button.setAttribute("aria-label", `${row + 1}행 ${col + 1}열 ${COLOR_PALETTE[target].name} 자리`);
 
                     if (gem === 0 && !cleaned) button.classList.add("empty-target");
@@ -10064,11 +10200,12 @@
 
             for (let index = startIndex; index < endIndex; index += 1) {
                 const gem = trayState[index];
+                const gemColor = gem ? COLOR_PALETTE[gem].color : "";
                 const isOpenedPocket = isPocketOpened(index, openedPocketIndices);
                 const isNextOpenPocket = index === nextOpenIndex && nextOpenIndex < POCKET_SIZE;
                 const button = container.children[index - startIndex];
                 const isSelectedSlot = Boolean(selectedTrayIndices?.has(index));
-                const renderKey = `${gem}|${isOpenedPocket ? 1 : 0}|${isNextOpenPocket ? 1 : 0}|${isSelectedSlot ? 1 : 0}|${shouldRenderGems ? 1 : 0}`;
+                const renderKey = `${gem}|${gemColor}|${isOpenedPocket ? 1 : 0}|${isNextOpenPocket ? 1 : 0}|${isSelectedSlot ? 1 : 0}|${shouldRenderGems ? 1 : 0}`;
 
                 if (button.dataset.renderKey === renderKey) {
                     continue;
@@ -12698,113 +12835,104 @@
                     return;
                 }
 
+                const colorJewelUiPromise = ensureColorJewelSceneUi();
+
                 if (titleLoadingOverlayElement && titleSceneMountElement) {
-                    try {
-                        const [SceneRenderer, titleContract] = await Promise.all([
+                    titleLoadingOverlayElement.style.background = "#fffef6";
+                    titleLoadingOverlayElement.classList.add("active");
+                    titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
+                    titleSceneMountElement.replaceChildren();
+                    titleSceneMountElement.setAttribute("aria-hidden", "false");
+                    titleMinimumVisiblePromise = Promise.all([
+                        Promise.all([
                             getSceneRendererCtor(),
-                            window.location.protocol === "file:"
-                                ? import("./scene-contracts.js")
-                                    .then((module) => JSON.parse(JSON.stringify(module.TITLE_CONTRACT)))
-                                : fetch("./title.contract.json", { cache: "no-store" })
-                                    .then((response) => {
-                                        if (!response.ok) {
-                                            throw new Error(`title contract load failed: ${response.status}`);
-                                        }
-                                        return response.json();
-                                    })
-                        ]);
+                            fetch(`./title.contract.json?v=${SCENE_CONTRACT_VERSION}`)
+                                .then((response) => {
+                                    if (!response.ok) {
+                                        throw new Error(`title contract load failed: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                        ]).then(([SceneRenderer, titleContract]) => {
+                            patchContractAssetPaths(titleContract);
 
-                        patchContractAssetPaths(titleContract);
-
-                        const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
-                        const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
-                        const mountWidth = titleSceneMountElement.clientWidth || designWidth;
-                        const mountHeight = titleSceneMountElement.clientHeight || designHeight;
-                        const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
-                        const scaledWidth = Math.round(designWidth * scale);
-                        const scaledHeight = Math.round(designHeight * scale);
-
-                        titleSceneMountElement.replaceChildren();
-
-                        const shell = document.createElement("div");
-                        shell.className = "title-scene-shell";
-                        shell.style.width = `${scaledWidth}px`;
-                        shell.style.height = `${scaledHeight}px`;
-
-                        const surface = document.createElement("div");
-                        surface.className = "title-scene-surface";
-                        surface.style.width = `${designWidth}px`;
-                        surface.style.height = `${designHeight}px`;
-                        surface.style.transform = `scale(${scale})`;
-
-                        shell.appendChild(surface);
-                        titleSceneMountElement.appendChild(shell);
-
-                        titleSceneRenderer = new SceneRenderer(surface, {
-                            basePath: "./src/"
-                        });
-                        titleSceneRenderer.loadSync(titleContract);
-                        titleSceneRenderer.show();
-
-                        const titleSceneRootElement = surface.firstElementChild;
-                        if (titleSceneRootElement) {
-                            titleSceneRootElement.style.top = "0";
-                            titleSceneRootElement.style.left = "0";
-                            titleSceneRootElement.style.right = "auto";
-                            titleSceneRootElement.style.bottom = "auto";
-                            titleSceneRootElement.style.pointerEvents = "none";
-                        }
-
-                        const titleLoaderElement = titleSceneRenderer.getElement("animation-5-png-6");
-                        titleLoaderElement?.classList.add("title-scene-loader");
-                        const titleLoaderImageElement = titleLoaderElement?.querySelector("img") || null;
-
-                        if (titleLoadingOverlayElement) {
+                            const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
+                            const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
+                            const mountWidth = titleSceneMountElement.clientWidth || designWidth;
+                            const mountHeight = titleSceneMountElement.clientHeight || designHeight;
+                            const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
+                            const scaledWidth = Math.round(designWidth * scale);
+                            const scaledHeight = Math.round(designHeight * scale);
                             const titleBackground = titleContract?.background || {};
+
                             if (titleBackground.type === "linear-gradient") {
                                 titleLoadingOverlayElement.style.background = `linear-gradient(${titleBackground.gradientAngle || 180}deg, ${titleBackground.color || "#fffef6"}, ${titleBackground.color2 || titleBackground.color || "#f7e3ab"})`;
                             } else {
                                 titleLoadingOverlayElement.style.background = titleBackground.color || "#fffef6";
                             }
-                        }
 
-                        titleLoadingOverlayElement.classList.add("active");
-                        titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
-                        titleSceneMountElement.setAttribute("aria-hidden", "false");
-                        titleMinimumVisiblePromise = new Promise((resolve) => {
-                            const beginMinimumVisibleTimer = () => {
-                                window.setTimeout(resolve, 2500);
-                            };
+                            const shell = document.createElement("div");
+                            shell.className = "title-scene-shell";
+                            shell.style.width = `${scaledWidth}px`;
+                            shell.style.height = `${scaledHeight}px`;
 
-                            if (!titleLoaderImageElement) {
-                                beginMinimumVisibleTimer();
-                                return;
+                            const surface = document.createElement("div");
+                            surface.className = "title-scene-surface";
+                            surface.style.width = `${designWidth}px`;
+                            surface.style.height = `${designHeight}px`;
+                            surface.style.transform = `scale(${scale})`;
+
+                            shell.appendChild(surface);
+                            titleSceneMountElement.appendChild(shell);
+
+                            titleSceneRenderer = new SceneRenderer(surface, {
+                                basePath: "./src/"
+                            });
+                            titleSceneRenderer.loadSync(titleContract);
+                            titleSceneRenderer.show();
+
+                            const titleSceneRootElement = surface.firstElementChild;
+                            if (titleSceneRootElement) {
+                                titleSceneRootElement.style.top = "0";
+                                titleSceneRootElement.style.left = "0";
+                                titleSceneRootElement.style.right = "auto";
+                                titleSceneRootElement.style.bottom = "auto";
+                                titleSceneRootElement.style.pointerEvents = "none";
                             }
 
-                            if (titleLoaderImageElement.complete) {
-                                beginMinimumVisibleTimer();
-                                return;
-                            }
+                            const titleLoaderElement = titleSceneRenderer.getElement("animation-5-png-6");
+                            titleLoaderElement?.classList.add("title-scene-loader");
 
-                            titleLoaderImageElement.addEventListener("load", beginMinimumVisibleTimer, { once: true });
-                            titleLoaderImageElement.addEventListener("error", beginMinimumVisibleTimer, { once: true });
-                        });
-                        await new Promise((resolve) => window.requestAnimationFrame(resolve));
-                    } catch (error) {
-                        console.warn("[Boot] title scene skipped:", error);
-                    }
+                            const titleSceneImages = [...surface.querySelectorAll("img")];
+                            const titleImageReadyPromise = titleSceneImages.length
+                                ? Promise.all(titleSceneImages.map((imageElement) => (
+                                    imageElement.complete
+                                        ? Promise.resolve()
+                                        : new Promise((resolve) => {
+                                            imageElement.addEventListener("load", resolve, { once: true });
+                                            imageElement.addEventListener("error", resolve, { once: true });
+                                        })
+                                )))
+                                : new Promise((resolve) => {
+                                    window.requestAnimationFrame(() => {
+                                        window.requestAnimationFrame(resolve);
+                                    });
+                                });
+
+                            return Promise.all([
+                                titleImageReadyPromise,
+                                sleep(1800)
+                            ]);
+                        }).catch((error) => {
+                            titleSceneMountElement.replaceChildren();
+                            titleSceneMountElement.setAttribute("aria-hidden", "true");
+                            console.warn("[Boot] title scene skipped:", error);
+                        }),
+                        sleep(1800)
+                    ]);
                 }
 
-                await ensureColorJewelSceneUi();
-                void getStageClearContract().then((contract) => {
-                    const stageClearImageExportPaths = (contract?.layers || [])
-                        .map((layer) => layer?.image?.exportPath || layer?.visual?.exportPath || "")
-                        .filter((path) => typeof path === "string" && path.trim());
-                    stageClearImageExportPaths.forEach((path) => {
-                        const preloadImage = new Image();
-                        preloadImage.src = `./src/${String(path).replace(/^\.\//, "").replace(/^assets\//, "assets/")}`;
-                    });
-                });
+                await colorJewelUiPromise;
                 initializeBottomActionButtons();
                 const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
                 pushLifecycleDebugEntry("runtime-restore", {
@@ -12821,7 +12949,7 @@
 
                 if (titleLoadingOverlayElement?.classList.contains("active")) {
                     titleLoadingOverlayElement.classList.remove("active");
-                    await sleep(240);
+                    await sleep(120);
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
                 } else if (titleLoadingOverlayElement) {
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
@@ -12840,14 +12968,21 @@
                     titleSceneMountElement.replaceChildren();
                     titleSceneMountElement.setAttribute("aria-hidden", "true");
                 }
+
+                window.requestAnimationFrame(() => {
+                    initializeBoardGestures();
+                });
             }
         }
 
         syncLifecycleDebugGlobals();
         bootLifecycleDebug();
         loadPersistedPixelAdminStageOverrides();
-        syncActiveMap(getFirstPlayableMapIndex());
-        initializeBoardGestures();
+        syncActiveMap(getInitialMapIndex(), {
+            syncPixelAdmin: false,
+            renderPixelAdmin: false,
+            prepareUpcomingMap: false
+        });
         void bootGame();
     </script>
 </body>
