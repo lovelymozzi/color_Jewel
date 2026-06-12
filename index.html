@@ -3253,7 +3253,7 @@
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
-        const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v2";
+        const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v3";
         const DEFAULT_APP_SETTINGS = Object.freeze({
             soundEffectsOn: true,
             bgmOn: true,
@@ -6724,17 +6724,26 @@
                 return true;
             }
 
+            const preferredClusterSize = Math.max(4, Math.min(6, Math.floor(getInitialClusterLimit() / 2)));
+            const candidateClusterDistance = Math.abs(candidate.maxClusterSize - preferredClusterSize);
+            const currentBestClusterDistance = Math.abs(currentBest.maxClusterSize - preferredClusterSize);
+
             return (
                 candidate.matchedCount < currentBest.matchedCount ||
                 (candidate.matchedCount === currentBest.matchedCount &&
                     candidate.oversizeCellCount < currentBest.oversizeCellCount) ||
                 (candidate.matchedCount === currentBest.matchedCount &&
                     candidate.oversizeCellCount === currentBest.oversizeCellCount &&
-                    candidate.maxClusterSize < currentBest.maxClusterSize) ||
+                    candidateClusterDistance < currentBestClusterDistance) ||
                 (candidate.matchedCount === currentBest.matchedCount &&
                     candidate.oversizeCellCount === currentBest.oversizeCellCount &&
-                    candidate.maxClusterSize === currentBest.maxClusterSize &&
-                    candidate.adjacencyScore < currentBest.adjacencyScore)
+                    candidateClusterDistance === currentBestClusterDistance &&
+                    candidate.adjacencyScore > currentBest.adjacencyScore) ||
+                (candidate.matchedCount === currentBest.matchedCount &&
+                    candidate.oversizeCellCount === currentBest.oversizeCellCount &&
+                    candidateClusterDistance === currentBestClusterDistance &&
+                    candidate.adjacencyScore === currentBest.adjacencyScore &&
+                    candidate.maxClusterSize > currentBest.maxClusterSize)
             );
         }
 
@@ -6885,6 +6894,113 @@
         }
 
         function buildDerangedInitialColors() {
+            const colorEntries = Object.entries(TARGET_COLOR_COUNTS)
+                .map(([colorId, count]) => ({ colorId: Number(colorId), count: Number(count) }))
+                .filter(({ count }) => count > 0)
+                .sort((left, right) => right.count - left.count || left.colorId - right.colorId);
+
+            if (!colorEntries.length || !INITIAL_LAYOUT_ORDER.length) {
+                return [];
+            }
+
+            const averageBlobSize = TOTAL_TARGET_CELLS > 320 ? 4 : TOTAL_TARGET_CELLS > 180 ? 3.5 : 3;
+            const preferredClusterSize = Math.max(4, Math.min(6, Math.floor(getInitialClusterLimit() / 2)));
+            const initialBlobCount = Math.max(1, Math.round(INITIAL_LAYOUT_ORDER.length / averageBlobSize));
+            const blobSeed = Math.floor(Math.random() * Math.max(1, TOTAL_TARGET_CELLS * 17));
+            const pendingBlobs = splitCellsIntoBlobs(shuffle(INITIAL_LAYOUT_ORDER), initialBlobCount, blobSeed)
+                .filter((blob) => blob.length)
+                .sort((left, right) => right.length - left.length);
+            const remainingCounts = new Map(colorEntries.map(({ colorId, count }) => [colorId, count]));
+            const assignedColors = new Map();
+            let splitSeed = blobSeed + 1;
+
+            while (pendingBlobs.length) {
+                const blob = pendingBlobs.shift();
+                const availableColors = [...remainingCounts.entries()].filter(([, count]) => count > 0);
+
+                if (!availableColors.length) {
+                    break;
+                }
+
+                const fittingColors = availableColors.filter(([, count]) => count >= blob.length);
+                if (!fittingColors.length && blob.length > 1) {
+                    const largestRemainingCount = Math.max(...availableColors.map(([, count]) => count));
+                    const splitCount = Math.min(
+                        blob.length,
+                        Math.max(2, Math.ceil(blob.length / Math.max(1, largestRemainingCount)))
+                    );
+
+                    splitCellsIntoBlobs(blob, splitCount, splitSeed)
+                        .filter((subBlob) => subBlob.length)
+                        .sort((left, right) => right.length - left.length)
+                        .reverse()
+                        .forEach((subBlob) => {
+                            pendingBlobs.unshift(subBlob);
+                        });
+                    splitSeed += 1;
+                    continue;
+                }
+
+                const candidateColors = (fittingColors.length ? fittingColors : availableColors)
+                    .map(([colorId, count], index) => {
+                        const matchedCells = blob.reduce(
+                            (total, position) => total + (TARGET_MAP[position.row][position.col] === colorId ? 1 : 0),
+                            0
+                        );
+                        const touchingCells = blob.reduce(
+                            (total, position) =>
+                                total +
+                                CARDINAL_DIRECTIONS.reduce((touches, direction) => {
+                                    const neighborColor = assignedColors.get(
+                                        toCellKey(position.row + direction.row, position.col + direction.col)
+                                    );
+                                    return touches + (neighborColor === colorId ? 1 : 0);
+                                }, 0),
+                            0
+                        );
+                        const continuityPenalty = touchingCells === 0 ? 1 : 0;
+                        const oversizeTouchPenalty = Math.max(0, touchingCells - preferredClusterSize);
+                        const tieBreaker = (index + splitSeed + colorId) % 7;
+
+                        return {
+                            colorId,
+                            count,
+                            matchedCells,
+                            continuityPenalty,
+                            oversizeTouchPenalty,
+                            touchingCells,
+                            tieBreaker
+                        };
+                    })
+                    .sort(
+                        (left, right) =>
+                            left.matchedCells - right.matchedCells ||
+                            left.continuityPenalty - right.continuityPenalty ||
+                            left.oversizeTouchPenalty - right.oversizeTouchPenalty ||
+                            right.touchingCells - left.touchingCells ||
+                            right.count - left.count ||
+                            left.tieBreaker - right.tieBreaker
+                    );
+
+                const nextColorId = candidateColors[0]?.colorId;
+                if (!nextColorId) {
+                    continue;
+                }
+
+                blob.forEach((position) => {
+                    assignedColors.set(toCellKey(position.row, position.col), nextColorId);
+                });
+                remainingCounts.set(nextColorId, Math.max(0, (remainingCounts.get(nextColorId) || 0) - blob.length));
+            }
+
+            const assignedColorsInOrder = INITIAL_LAYOUT_ORDER.map((position) =>
+                assignedColors.get(toCellKey(position.row, position.col)) || 0
+            );
+
+            if (assignedColorsInOrder.every((colorId) => colorId > 0)) {
+                return assignedColorsInOrder;
+            }
+
             const colorPool = Object.entries(TARGET_COLOR_COUNTS).flatMap(([colorId, count]) =>
                 Array.from({ length: count }, () => Number(colorId))
             );
