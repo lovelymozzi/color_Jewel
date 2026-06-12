@@ -8528,153 +8528,12 @@
             };
         }
 
-        function getMagnetMismatchBuckets(boardSnapshot) {
-            const directedBuckets = new Map();
-
-            TARGET_POSITIONS.forEach((position) => {
-                if (isCleanedSocketCell(position.row, position.col)) {
-                    return;
-                }
-
-                const targetColor = TARGET_MAP[position.row][position.col] || 0;
-                const boardColor = boardSnapshot[position.row][position.col] || 0;
-                if (!targetColor || !boardColor || targetColor === boardColor) {
-                    return;
-                }
-
-                const key = `${targetColor}:${boardColor}`;
-                if (!directedBuckets.has(key)) {
-                    directedBuckets.set(key, []);
-                }
-                directedBuckets.get(key).push({
-                    row: position.row,
-                    col: position.col,
-                    targetColor,
-                    boardColor
-                });
-            });
-
-            return directedBuckets;
-        }
-
-        function pairMagnetMismatchCells(primaryCells, oppositeCells) {
-            const remainingCells = [...oppositeCells];
-            const steps = [];
-
-            primaryCells.forEach((primaryCell) => {
-                if (!remainingCells.length) {
-                    return;
-                }
-
-                let bestIndex = 0;
-                let bestDistance = Number.POSITIVE_INFINITY;
-
-                remainingCells.forEach((oppositeCell, index) => {
-                    const distance =
-                        Math.abs(primaryCell.row - oppositeCell.row) +
-                        Math.abs(primaryCell.col - oppositeCell.col);
-                    if (
-                        distance < bestDistance ||
-                        (distance === bestDistance &&
-                            (oppositeCell.row < remainingCells[bestIndex].row ||
-                                (oppositeCell.row === remainingCells[bestIndex].row &&
-                                    oppositeCell.col < remainingCells[bestIndex].col)))
-                    ) {
-                        bestDistance = distance;
-                        bestIndex = index;
-                    }
-                });
-
-                const oppositeCell = remainingCells.splice(bestIndex, 1)[0];
-                if (!oppositeCell) {
-                    return;
-                }
-
-                steps.push({
-                    leftCell: {
-                        row: primaryCell.row,
-                        col: primaryCell.col,
-                        currentColor: primaryCell.boardColor,
-                        targetColor: primaryCell.targetColor
-                    },
-                    rightCell: {
-                        row: oppositeCell.row,
-                        col: oppositeCell.col,
-                        currentColor: oppositeCell.boardColor,
-                        targetColor: oppositeCell.targetColor
-                    },
-                    distance: bestDistance
-                });
-            });
-
-            return steps;
-        }
-
         function buildMagnetMovePlan() {
             const boardSnapshot = boardState.map((row) => [...row]);
-            const mismatchBuckets = getMagnetMismatchBuckets(boardSnapshot);
-            const pairPlans = [];
-
-            mismatchBuckets.forEach((cells, key) => {
-                const [targetColor, boardColor] = key.split(":").map(Number);
-                if (!Number.isInteger(targetColor) || !Number.isInteger(boardColor) || targetColor >= boardColor) {
-                    return;
-                }
-
-                const oppositeCells = mismatchBuckets.get(`${boardColor}:${targetColor}`) || [];
-                const pairCount = Math.min(cells.length, oppositeCells.length);
-                if (pairCount <= 0) {
-                    return;
-                }
-
-                const pairedSteps = pairMagnetMismatchCells(cells.slice(0, pairCount), oppositeCells.slice(0, pairCount));
-                if (!pairedSteps.length) {
-                    return;
-                }
-
-                const limitedSteps = [...pairedSteps]
-                    .sort((left, right) =>
-                        left.distance - right.distance ||
-                        left.leftCell.row - right.leftCell.row ||
-                        left.leftCell.col - right.leftCell.col
-                    )
-                    .slice(0, MAGNET_TARGET_PAIR_COUNT);
-                const totalDistance = limitedSteps.reduce((sum, step) => sum + step.distance, 0);
-                pairPlans.push({
-                    primaryColor: targetColor,
-                    secondaryColor: boardColor,
-                    pairCount: limitedSteps.length,
-                    totalDistance,
-                    steps: limitedSteps
-                });
-            });
-
-            const selectedPairPlan = pairPlans.sort((left, right) =>
-                right.pairCount - left.pairCount ||
-                left.totalDistance - right.totalDistance ||
-                left.primaryColor - right.primaryColor ||
-                left.secondaryColor - right.secondaryColor
-            )[0];
             const plannedSteps = [];
-            let usesOnlySelectedPair = Boolean(selectedPairPlan);
             const usedCellKeys = new Set();
-
-            if (selectedPairPlan) {
-                selectedPairPlan.steps.forEach((step) => {
-                    const leftRow = step.leftCell.row;
-                    const leftCol = step.leftCell.col;
-                    const rightRow = step.rightCell.row;
-                    const rightCol = step.rightCell.col;
-
-                    plannedSteps.push(step);
-                    usedCellKeys.add(toCellKey(leftRow, leftCol));
-                    usedCellKeys.add(toCellKey(rightRow, rightCol));
-                    [boardSnapshot[leftRow][leftCol], boardSnapshot[rightRow][rightCol]] = [
-                        boardSnapshot[rightRow][rightCol],
-                        boardSnapshot[leftRow][leftCol]
-                    ];
-                });
-            }
+            const usedColorIds = new Set();
+            const usedPairKeys = new Set();
 
             while (plannedSteps.length < MAGNET_TARGET_PAIR_COUNT) {
                 const mismatchedCells = TARGET_POSITIONS.filter((position) => {
@@ -8684,7 +8543,12 @@
 
                     const targetColor = TARGET_MAP[position.row][position.col] || 0;
                     const boardColor = boardSnapshot[position.row][position.col] || 0;
-                    return Boolean(targetColor && boardColor && targetColor !== boardColor);
+                    return Boolean(
+                        targetColor &&
+                        boardColor &&
+                        targetColor !== boardColor &&
+                        !usedCellKeys.has(toCellKey(position.row, position.col))
+                    );
                 });
 
                 if (mismatchedCells.length < 2) {
@@ -8692,20 +8556,15 @@
                 }
 
                 let bestSwap = null;
+                let fallbackSwap = null;
 
                 for (let leftIndex = 0; leftIndex < mismatchedCells.length - 1; leftIndex += 1) {
                     const leftCell = mismatchedCells[leftIndex];
-                    if (usedCellKeys.has(toCellKey(leftCell.row, leftCell.col))) {
-                        continue;
-                    }
                     const leftBoardColor = boardSnapshot[leftCell.row][leftCell.col];
                     const leftTargetColor = TARGET_MAP[leftCell.row][leftCell.col];
 
                     for (let rightIndex = leftIndex + 1; rightIndex < mismatchedCells.length; rightIndex += 1) {
                         const rightCell = mismatchedCells[rightIndex];
-                        if (usedCellKeys.has(toCellKey(rightCell.row, rightCell.col))) {
-                            continue;
-                        }
                         const rightBoardColor = boardSnapshot[rightCell.row][rightCell.col];
                         const rightTargetColor = TARGET_MAP[rightCell.row][rightCell.col];
 
@@ -8713,17 +8572,13 @@
                             continue;
                         }
 
-                        const solvedCellCount =
-                            Number(rightBoardColor === leftTargetColor) +
-                            Number(leftBoardColor === rightTargetColor);
-
-                        if (solvedCellCount <= 0) {
-                            continue;
-                        }
-
                         const distance =
                             Math.abs(leftCell.row - rightCell.row) +
                             Math.abs(leftCell.col - rightCell.col);
+                        const pairKey = [leftBoardColor, rightBoardColor].sort((left, right) => left - right).join(":");
+                        const newColorCount =
+                            Number(!usedColorIds.has(leftBoardColor)) +
+                            Number(!usedColorIds.has(rightBoardColor));
                         const candidate = {
                             leftCell: {
                                 row: leftCell.row,
@@ -8738,36 +8593,89 @@
                                 targetColor: rightTargetColor
                             },
                             distance,
-                            solvedCellCount
+                            solvedCellCount: 0,
+                            newColorCount,
+                            introducesNewPair: !usedPairKeys.has(pairKey),
+                            pairKey
                         };
+                        const fallbackScore = [
+                            candidate.newColorCount,
+                            Number(candidate.introducesNewPair),
+                            -candidate.distance,
+                            -candidate.leftCell.row,
+                            -candidate.leftCell.col,
+                            -candidate.rightCell.row,
+                            -candidate.rightCell.col
+                        ];
+                        let isBetterFallback = !fallbackSwap;
+                        if (!isBetterFallback) {
+                            for (let scoreIndex = 0; scoreIndex < fallbackScore.length; scoreIndex += 1) {
+                                if (fallbackScore[scoreIndex] === fallbackSwap.score[scoreIndex]) {
+                                    continue;
+                                }
+                                isBetterFallback = fallbackScore[scoreIndex] > fallbackSwap.score[scoreIndex];
+                                break;
+                            }
+                        }
+                        if (isBetterFallback) {
+                            fallbackSwap = {
+                                ...candidate,
+                                score: fallbackScore
+                            };
+                        }
 
-                        if (
-                            !bestSwap ||
-                            candidate.solvedCellCount > bestSwap.solvedCellCount ||
-                            (candidate.solvedCellCount === bestSwap.solvedCellCount && candidate.distance < bestSwap.distance) ||
-                            (candidate.solvedCellCount === bestSwap.solvedCellCount &&
-                                candidate.distance === bestSwap.distance &&
-                                (candidate.leftCell.row < bestSwap.leftCell.row ||
-                                    (candidate.leftCell.row === bestSwap.leftCell.row &&
-                                        (candidate.leftCell.col < bestSwap.leftCell.col ||
-                                            (candidate.leftCell.col === bestSwap.leftCell.col &&
-                                                (candidate.rightCell.row < bestSwap.rightCell.row ||
-                                                    (candidate.rightCell.row === bestSwap.rightCell.row &&
-                                                        candidate.rightCell.col < bestSwap.rightCell.col)))))))
-                        ) {
-                            bestSwap = candidate;
+                        const solvedCellCount =
+                            Number(rightBoardColor === leftTargetColor) +
+                            Number(leftBoardColor === rightTargetColor);
+
+                        if (solvedCellCount <= 0) {
+                            continue;
+                        }
+
+                        candidate.solvedCellCount = solvedCellCount;
+                        const bestScore = [
+                            candidate.solvedCellCount,
+                            candidate.newColorCount,
+                            Number(candidate.introducesNewPair),
+                            -candidate.distance,
+                            -candidate.leftCell.row,
+                            -candidate.leftCell.col,
+                            -candidate.rightCell.row,
+                            -candidate.rightCell.col
+                        ];
+                        let isBetterBest = !bestSwap;
+                        if (!isBetterBest) {
+                            for (let scoreIndex = 0; scoreIndex < bestScore.length; scoreIndex += 1) {
+                                if (bestScore[scoreIndex] === bestSwap.score[scoreIndex]) {
+                                    continue;
+                                }
+                                isBetterBest = bestScore[scoreIndex] > bestSwap.score[scoreIndex];
+                                break;
+                            }
+                        }
+                        if (isBetterBest) {
+                            bestSwap = {
+                                ...candidate,
+                                score: bestScore
+                            };
                         }
                     }
+                }
+
+                if (!bestSwap) {
+                    bestSwap = fallbackSwap;
                 }
 
                 if (!bestSwap) {
                     break;
                 }
 
-                usesOnlySelectedPair = false;
                 plannedSteps.push(bestSwap);
                 usedCellKeys.add(toCellKey(bestSwap.leftCell.row, bestSwap.leftCell.col));
                 usedCellKeys.add(toCellKey(bestSwap.rightCell.row, bestSwap.rightCell.col));
+                usedColorIds.add(bestSwap.leftCell.currentColor);
+                usedColorIds.add(bestSwap.rightCell.currentColor);
+                usedPairKeys.add(bestSwap.pairKey);
                 [boardSnapshot[bestSwap.leftCell.row][bestSwap.leftCell.col], boardSnapshot[bestSwap.rightCell.row][bestSwap.rightCell.col]] = [
                     boardSnapshot[bestSwap.rightCell.row][bestSwap.rightCell.col],
                     boardSnapshot[bestSwap.leftCell.row][bestSwap.leftCell.col]
@@ -8777,9 +8685,7 @@
             return {
                 steps: plannedSteps,
                 nextBoardState: boardSnapshot,
-                selectedColors: usesOnlySelectedPair && selectedPairPlan
-                    ? [selectedPairPlan.primaryColor, selectedPairPlan.secondaryColor]
-                    : [],
+                selectedColors: [],
                 movedGemCount: plannedSteps.length * 2
             };
         }
