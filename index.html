@@ -8732,8 +8732,8 @@
         async function animateMagnetMoves(steps) {
             const totalSteps = steps.length;
             const totalGemMoves = Math.max(1, totalSteps * 2);
-            const liftUpDurationMs = 180;
-            const flightDurationMs = Math.max(130, Math.min(220, Math.floor(2600 / totalGemMoves)));
+            const liftUpDurationMs = 140;
+            const flightDurationMs = Math.max(100, Math.min(175, Math.floor(2050 / totalGemMoves)));
             const sessionVersion = gameSessionVersion;
 
             isAnimating = true;
@@ -8787,7 +8787,7 @@
                 return;
             }
 
-            await sleep(90);
+            await sleep(48);
 
             for (let index = 0; index < queuedFlights.length; index += 1) {
                 if (!isCurrentGameSession(sessionVersion)) {
@@ -8820,7 +8820,7 @@
                 void playPlaceSound();
 
                 if (index < queuedFlights.length - 1) {
-                    await sleep(Math.max(18, Math.floor(flightDurationMs * 0.18)));
+                    await sleep(Math.max(10, Math.floor(flightDurationMs * 0.1)));
                 }
             }
 
