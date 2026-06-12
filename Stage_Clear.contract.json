@@ -33,7 +33,6 @@
       "x": 25,
       "y": 100,
       "zIndex": 1,
-      "visible": false,
       "visual": {
         "width": 320,
         "height": 240,
@@ -55,7 +54,7 @@
           "sizeMax": 9,
           "shape": "circle",
           "autoplay": true,
-          "loop": true,
+          "loop": false,
           "triggerKey": ""
         }
       },
@@ -87,7 +86,7 @@
             "sizeMax": 9,
             "shape": "circle",
             "autoplay": true,
-            "loop": true,
+            "loop": false,
             "triggerKey": ""
           }
         }
@@ -166,7 +165,6 @@
       "x": -354,
       "y": -277,
       "zIndex": 3,
-      "visible": false,
       "visual": {
         "model": {
           "shape": {
