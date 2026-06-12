@@ -6853,6 +6853,7 @@
             sfxEnabled: appSettings.soundEffectsOn,
             bgmEnabled: appSettings.bgmOn
         }) || null;
+        let shouldResumeBgmOnForeground = false;
 
         function syncAudioPreferenceState() {
             soundController?.setSfxEnabled?.(appSettings.soundEffectsOn);
@@ -7111,6 +7112,7 @@
                 queueAudioContextWarmup();
             }
             updateAppSettings({ bgmOn: isEnabled });
+            soundController?.setBgmEnabled?.(isEnabled, { resumePlayback: isEnabled });
             if (appSettings.soundEffectsOn) {
                 triggerButtonPressSound();
             }
@@ -9632,13 +9634,19 @@
                 navType: getNavigationDebugEntry()?.type || "unknown",
                 wasDiscarded: Boolean(document.wasDiscarded)
             });
-            queueAudioContextWarmup();
+            if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
+                queueAudioContextWarmup();
+                soundController?.setBgmEnabled?.(true, { resumePlayback: true });
+                shouldResumeBgmOnForeground = false;
+            }
         });
 
         window.addEventListener("pagehide", (event) => {
             pushLifecycleDebugEntry("pagehide", {
                 persisted: Boolean(event.persisted)
             });
+            shouldResumeBgmOnForeground = appSettings.bgmOn;
+            soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
             persistRuntimeSnapshot();
         });
 
@@ -9647,6 +9655,8 @@
                 pushLifecycleDebugEntry("visibilitychange", {
                     state: "hidden"
                 });
+                shouldResumeBgmOnForeground = appSettings.bgmOn;
+                soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
                 persistRuntimeSnapshot();
                 return;
             }
@@ -9655,7 +9665,11 @@
                 pushLifecycleDebugEntry("visibilitychange", {
                     state: "visible"
                 });
-                queueAudioContextWarmup();
+                if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
+                    queueAudioContextWarmup();
+                    soundController?.setBgmEnabled?.(true, { resumePlayback: true });
+                    shouldResumeBgmOnForeground = false;
+                }
             }
         });
 
@@ -9665,10 +9679,17 @@
 
         document.addEventListener("freeze", () => {
             pushLifecycleDebugEntry("freeze");
+            shouldResumeBgmOnForeground = appSettings.bgmOn;
+            soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
         });
 
         document.addEventListener("resume", () => {
             pushLifecycleDebugEntry("resume");
+            if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
+                queueAudioContextWarmup();
+                soundController?.setBgmEnabled?.(true, { resumePlayback: true });
+                shouldResumeBgmOnForeground = false;
+            }
         });
 
         window.addEventListener("error", (event) => {

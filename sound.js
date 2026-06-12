@@ -14,8 +14,10 @@
         let bgmLoopSequenceIndex = 0;
         let bgmOutputContext = null;
         let bgmOutputGain = null;
+        let bgmSuspended = false;
 
         const BGM_PHRASE_MS = 3600;
+        const BGM_OUTPUT_LEVEL = 1.18;
         const BGM_SEQUENCE = [
             { root: 220, accent: 329.63 },
             { root: 246.94, accent: 369.99 },
@@ -65,7 +67,7 @@
             bgmOutputGain?.disconnect?.();
             bgmOutputContext = context;
             bgmOutputGain = context.createGain();
-            bgmOutputGain.gain.setValueAtTime(bgmEnabled ? 1 : 0.0001, context.currentTime);
+            bgmOutputGain.gain.setValueAtTime(bgmEnabled && !bgmSuspended ? BGM_OUTPUT_LEVEL : 0.0001, context.currentTime);
             bgmOutputGain.connect(context.destination);
             return bgmOutputGain;
         }
@@ -321,12 +323,13 @@
 
         function scheduleNextBgmPhrase(delayMs = BGM_PHRASE_MS) {
             clearBgmLoopTimer();
-            if (!bgmEnabled) {
+            if (!bgmEnabled || bgmSuspended) {
                 return;
             }
 
             bgmLoopTimer = window.setTimeout(() => {
-                if (!bgmEnabled) {
+                bgmLoopTimer = null;
+                if (!bgmEnabled || bgmSuspended) {
                     return;
                 }
 
@@ -343,16 +346,25 @@
             return sfxEnabled;
         }
 
-        function setBgmEnabled(nextValue) {
+        function setBgmEnabled(nextValue, options = {}) {
+            const { forceSuspend = false, resumePlayback = false } = options;
             bgmEnabled = nextValue !== false;
+            if (!bgmEnabled) {
+                bgmSuspended = false;
+            } else if (forceSuspend) {
+                bgmSuspended = true;
+            } else if (resumePlayback) {
+                bgmSuspended = false;
+            }
+            const shouldPlayBgm = bgmEnabled && !bgmSuspended;
             if (bgmOutputGain && bgmOutputContext) {
                 const now = bgmOutputContext.currentTime;
                 const currentValue = Math.max(0.0001, Number(bgmOutputGain.gain.value || 0.0001));
                 bgmOutputGain.gain.cancelScheduledValues(now);
                 bgmOutputGain.gain.setValueAtTime(currentValue, now);
-                bgmOutputGain.gain.linearRampToValueAtTime(bgmEnabled ? 1 : 0.0001, now + 0.08);
+                bgmOutputGain.gain.linearRampToValueAtTime(shouldPlayBgm ? BGM_OUTPUT_LEVEL : 0.0001, now + 0.08);
             }
-            if (bgmEnabled) {
+            if (shouldPlayBgm) {
                 scheduleNextBgmPhrase(0);
             } else {
                 clearBgmLoopTimer();
@@ -453,7 +465,7 @@
         function warmup() {
             audioFallbackUnlocked = true;
             requestAudioPlayback(() => {});
-            if (bgmEnabled && !bgmLoopTimer) {
+            if (bgmEnabled && !bgmSuspended && !bgmLoopTimer) {
                 scheduleNextBgmPhrase(0);
             }
         }
