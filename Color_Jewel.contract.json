@@ -107,11 +107,26 @@
         "images": [
           {
             "exportPath": "assets/setting.png",
-            "width": 32,
-            "height": 32,
+            "width": 25,
+            "height": 25,
             "offsetX": 0,
             "offsetY": 0,
-            "zIndex": 2
+            "zIndex": 2,
+            "style": {
+              "shadow": {
+                "enabled": true,
+                "x": 0,
+                "y": 3,
+                "blur": 0,
+                "color": "#000000",
+                "opacity": 15
+              },
+              "tint": {
+                "mode": "off",
+                "color": "#ff3b30",
+                "strength": 100
+              }
+            }
           }
         ]
       },
@@ -578,7 +593,7 @@
         {
           "slotIndex": 0,
           "staticContent": "2",
-          "bindingKey": "item.wand",
+          "bindingKey": "item.magnet",
           "fontSize": 16,
           "fontWeight": "bold",
           "fontFamily": "\"Lilita One\", cursive",
@@ -608,7 +623,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.wand"
+          "eventName": "item.magnet"
         }
       ]
     },
@@ -631,7 +646,7 @@
           },
           "fill": {
             "type": "solid",
-            "color1": "#f97f8a",
+            "color1": "#ff6c5c",
             "color2": "#2e6ab4",
             "angle": 180,
             "depthIntensity": 50,
@@ -805,7 +820,7 @@
         {
           "slotIndex": 0,
           "staticContent": "2",
-          "bindingKey": "item.magnet",
+          "bindingKey": "item.wand",
           "fontSize": 16,
           "fontWeight": "bold",
           "fontFamily": "\"Lilita One\", cursive",
@@ -835,7 +850,7 @@
       "events": [
         {
           "trigger": "click",
-          "eventName": "item.magnet"
+          "eventName": "item.wand"
         }
       ]
     }

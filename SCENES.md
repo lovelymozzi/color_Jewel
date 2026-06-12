@@ -6,10 +6,10 @@
 <!-- SCENE:Color_Jewel BEGIN -->
 #### `Color_Jewel`  ·  contract: `./Color_Jewel.contract.json`
 - **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):
+  - `item.clean`  (click)
+  - `item.magnet`  (click)
   - `item.wand`  (click)
-  - `item.wand`  (click)
-  - `item.wand`  (click)
-- **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.wand`
+- **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.magnet`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
 
 <!-- SCENE:Stage_Clear BEGIN -->
