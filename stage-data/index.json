@@ -1,0 +1,88 @@
+{
+  "maps": [
+    {
+      "sequence": 1,
+      "id": "tutorial",
+      "displayName": "튜토리얼",
+      "displayNameNumbered": "01. 튜토리얼",
+      "file": "01_tutorial.json"
+    },
+    {
+      "sequence": 2,
+      "id": "bear",
+      "displayName": "곰돌이",
+      "displayNameNumbered": "02. 곰돌이",
+      "file": "02_bear.json"
+    },
+    {
+      "sequence": 3,
+      "id": "puppy",
+      "displayName": "강아지",
+      "displayNameNumbered": "03. 강아지",
+      "file": "03_puppy.json"
+    },
+    {
+      "sequence": 4,
+      "id": "heart",
+      "displayName": "CHERRY ICE",
+      "displayNameNumbered": "04. CHERRY ICE",
+      "file": "04_heart.json"
+    },
+    {
+      "sequence": 5,
+      "id": "cake",
+      "displayName": "케이크",
+      "displayNameNumbered": "05. 케이크",
+      "file": "05_cake.json"
+    },
+    {
+      "sequence": 6,
+      "id": "pudding",
+      "displayName": "푸딩",
+      "displayNameNumbered": "06. 푸딩",
+      "file": "06_pudding.json"
+    },
+    {
+      "sequence": 7,
+      "id": "nightmoon",
+      "displayName": "밤하늘과 달",
+      "displayNameNumbered": "07. 밤하늘과 달",
+      "file": "07_nightmoon.json"
+    },
+    {
+      "sequence": 8,
+      "id": "cat",
+      "displayName": "고양이",
+      "displayNameNumbered": "08. 고양이",
+      "file": "08_cat.json"
+    },
+    {
+      "sequence": 9,
+      "id": "succulent",
+      "displayName": "선인장",
+      "displayNameNumbered": "09. 선인장",
+      "file": "09_succulent.json"
+    },
+    {
+      "sequence": 10,
+      "id": "magichat",
+      "displayName": "마법모자",
+      "displayNameNumbered": "10. 마법모자",
+      "file": "10_magichat.json"
+    },
+    {
+      "sequence": 11,
+      "id": "treasurechest",
+      "displayName": "보물상자",
+      "displayNameNumbered": "11. 보물상자",
+      "file": "11_treasurechest.json"
+    },
+    {
+      "sequence": 12,
+      "id": "unicorn",
+      "displayName": "유니콘",
+      "displayNameNumbered": "12. 유니콘",
+      "file": "12_unicorn.json"
+    }
+  ]
+}
