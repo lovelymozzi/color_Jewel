@@ -1,0 +1,23 @@
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /sound.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /scene-renderer.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /Color_Jewel.contract.json?v=20260611-1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /title.contract.json?v=20260611-1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] code 404, message File not found
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/setting.png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/clean.png?v=1781495232652 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/magic.png?v=1781495232652 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/PictoIcon_Player_Play.Png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/rock.png?v=1781495232652 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/circle1.png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/magnet.png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/jewel_soket.png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/jewel_soket_outline.png HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/title.png?v=1781495232652 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:12] "GET /src/assets/animation%20(5).png?v=1781495232652 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:47:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Jun/2026 12:48:21] code 404, message File not found
+127.0.0.1 - - [15/Jun/2026 12:48:21] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [15/Jun/2026 12:50:56] "GET / HTTP/1.1" 200 -
