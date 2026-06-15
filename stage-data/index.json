@@ -83,6 +83,20 @@
       "displayName": "유니콘",
       "displayNameNumbered": "12. 유니콘",
       "file": "12_unicorn.json"
+    },
+    {
+      "sequence": 13,
+      "id": "seaturtle",
+      "displayName": "바다거북이",
+      "displayNameNumbered": "13. 바다거북이",
+      "file": "13_seaturtle.json"
+    },
+    {
+      "sequence": 14,
+      "id": "shiba",
+      "displayName": "시바견",
+      "displayNameNumbered": "14. 시바견",
+      "file": "14_shiba.json"
     }
   ]
 }
