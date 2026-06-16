@@ -530,11 +530,13 @@
             bgmOn: true,
             hapticsOn: true
         });
-        const SCENE_CONTRACT_VERSION = "20260616-8";
+        const SCENE_CONTRACT_VERSION = "20260616-10";
         const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
             ? { "ngrok-skip-browser-warning": "true" }
             : {};
         const TITLE_MINIMUM_VISIBLE_MS = 240;
+        const TITLE_READY_VISIBLE_MS = 1200;
+        const TITLE_FADE_OUT_MS = 240;
         const RUNTIME_SNAPSHOT_SAVE_DELAY_MS = 140;
         const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
@@ -4082,6 +4084,24 @@
 
         function sleep(ms) {
             return new Promise((resolve) => window.setTimeout(resolve, ms));
+        }
+
+        function waitForNextPaint(frameCount = 1) {
+            const remainingFrames = Math.max(1, Number(frameCount) || 1);
+
+            return new Promise((resolve) => {
+                const step = (framesLeft) => {
+                    window.requestAnimationFrame(() => {
+                        if (framesLeft <= 1) {
+                            resolve();
+                            return;
+                        }
+                        step(framesLeft - 1);
+                    });
+                };
+
+                step(remainingFrames);
+            });
         }
 
         function isCurrentGameSession(sessionVersion) {
@@ -9432,11 +9452,112 @@
 
         async function bootGame() {
             let titleMinimumVisiblePromise = Promise.resolve();
+            let colorJewelUiPromise = Promise.resolve(false);
 
             try {
                 if (window.location.protocol === "file:") {
                     window.location.replace("http://127.0.0.1:8000/");
                     return;
+                }
+
+                if (titleLoadingOverlayElement && titleSceneMountElement) {
+                    titleLoadingOverlayElement.style.background = "#fffef6";
+                    titleLoadingOverlayElement.classList.add("active");
+                    titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
+                    titleSceneMountElement.replaceChildren();
+                    titleSceneMountElement.setAttribute("aria-hidden", "false");
+
+                    titleMinimumVisiblePromise = Promise.all([
+                        (async () => {
+                            await waitForNextPaint();
+                            try {
+                                const [SceneRenderer, titleContract] = await Promise.all([
+                                    getSceneRendererCtor(),
+                                    fetch(`./title.contract.json?v=${SCENE_CONTRACT_VERSION}`, {
+                                        headers: NGROK_BYPASS_HEADERS
+                                    }).then((response) => {
+                                        if (!response.ok) {
+                                            throw new Error(`title contract load failed: ${response.status}`);
+                                        }
+                                        return response.json();
+                                    })
+                                ]);
+
+                                patchContractAssetPaths(titleContract);
+
+                                const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
+                                const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
+                                const mountWidth = titleSceneMountElement.clientWidth || designWidth;
+                                const mountHeight = titleSceneMountElement.clientHeight || designHeight;
+                                const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
+                                const scaledWidth = Math.round(designWidth * scale);
+                                const scaledHeight = Math.round(designHeight * scale);
+                                const titleBackground = titleContract?.background || {};
+
+                                if (titleBackground.type === "linear-gradient") {
+                                    titleLoadingOverlayElement.style.background = `linear-gradient(${titleBackground.gradientAngle || 180}deg, ${titleBackground.color || "#fffef6"}, ${titleBackground.color2 || titleBackground.color || "#f7e3ab"})`;
+                                } else {
+                                    titleLoadingOverlayElement.style.background = titleBackground.color || "#fffef6";
+                                }
+
+                                const shell = document.createElement("div");
+                                shell.className = "title-scene-shell";
+                                shell.style.width = `${scaledWidth}px`;
+                                shell.style.height = `${scaledHeight}px`;
+
+                                const surface = document.createElement("div");
+                                surface.className = "title-scene-surface";
+                                surface.style.width = `${designWidth}px`;
+                                surface.style.height = `${designHeight}px`;
+                                surface.style.transform = `scale(${scale})`;
+
+                                shell.appendChild(surface);
+                                titleSceneMountElement.appendChild(shell);
+
+                                titleSceneRenderer = new SceneRenderer(surface, {
+                                    basePath: "./src/"
+                                });
+                                titleSceneRenderer.loadSync(titleContract);
+                                titleSceneRenderer.show();
+
+                                const titleSceneRootElement = surface.firstElementChild;
+                                if (titleSceneRootElement) {
+                                    titleSceneRootElement.style.top = "0";
+                                    titleSceneRootElement.style.left = "0";
+                                    titleSceneRootElement.style.right = "auto";
+                                    titleSceneRootElement.style.bottom = "auto";
+                                    titleSceneRootElement.style.pointerEvents = "none";
+                                }
+
+                                const titleLoaderElement = titleSceneRenderer.getElement("animation-5-png-6");
+                                titleLoaderElement?.classList.add("title-scene-loader");
+
+                                const titleSceneImages = [...surface.querySelectorAll("img")];
+                                if (titleSceneImages.length) {
+                                    await Promise.all(titleSceneImages.map((imageElement) => (
+                                        imageElement.complete
+                                            ? Promise.resolve()
+                                            : new Promise((resolve) => {
+                                                imageElement.addEventListener("load", resolve, { once: true });
+                                                imageElement.addEventListener("error", resolve, { once: true });
+                                            })
+                                    )));
+                                } else {
+                                    await waitForNextPaint(2);
+                                }
+
+                                await waitForNextPaint(2);
+                                await sleep(TITLE_READY_VISIBLE_MS);
+                            } catch (error) {
+                                titleSceneMountElement.replaceChildren();
+                                titleSceneMountElement.setAttribute("aria-hidden", "true");
+                                console.warn("[Boot] title scene skipped:", error);
+                            }
+                        })(),
+                        sleep(TITLE_MINIMUM_VISIBLE_MS)
+                    ]);
+
+                    await waitForNextPaint(2);
                 }
 
                 const stageIndexResponse = await fetch(`./stage-data/index.json?v=${SCENE_CONTRACT_VERSION}`, {
@@ -9461,6 +9582,10 @@
                 loadPersistedPixelAdminStageOverrides();
                 rebuildRuntimeMapThemeOverrides();
 
+                if (!window.__pixelAdminWindowMode) {
+                    colorJewelUiPromise = ensureColorJewelSceneUi();
+                }
+
                 const initialMapIndex = getInitialMapIndex();
                 await activateMapIndex(initialMapIndex, {
                     syncPixelAdmin: false,
@@ -9477,105 +9602,6 @@
                     }
                     await ensurePixelAdminReady({ open: true });
                     return;
-                }
-
-                const colorJewelUiPromise = ensureColorJewelSceneUi();
-
-                if (titleLoadingOverlayElement && titleSceneMountElement) {
-                    titleLoadingOverlayElement.style.background = "#fffef6";
-                    titleLoadingOverlayElement.classList.add("active");
-                    titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
-                    titleSceneMountElement.replaceChildren();
-                    titleSceneMountElement.setAttribute("aria-hidden", "false");
-                    titleMinimumVisiblePromise = Promise.all([
-                        Promise.all([
-                            getSceneRendererCtor(),
-                            fetch(`./title.contract.json?v=${SCENE_CONTRACT_VERSION}`, {
-                                headers: NGROK_BYPASS_HEADERS
-                            })
-                                .then((response) => {
-                                    if (!response.ok) {
-                                        throw new Error(`title contract load failed: ${response.status}`);
-                                    }
-                                    return response.json();
-                                })
-                        ]).then(([SceneRenderer, titleContract]) => {
-                            patchContractAssetPaths(titleContract);
-
-                            const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
-                            const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
-                            const mountWidth = titleSceneMountElement.clientWidth || designWidth;
-                            const mountHeight = titleSceneMountElement.clientHeight || designHeight;
-                            const scale = Math.min(1, mountWidth / designWidth, mountHeight / designHeight);
-                            const scaledWidth = Math.round(designWidth * scale);
-                            const scaledHeight = Math.round(designHeight * scale);
-                            const titleBackground = titleContract?.background || {};
-
-                            if (titleBackground.type === "linear-gradient") {
-                                titleLoadingOverlayElement.style.background = `linear-gradient(${titleBackground.gradientAngle || 180}deg, ${titleBackground.color || "#fffef6"}, ${titleBackground.color2 || titleBackground.color || "#f7e3ab"})`;
-                            } else {
-                                titleLoadingOverlayElement.style.background = titleBackground.color || "#fffef6";
-                            }
-
-                            const shell = document.createElement("div");
-                            shell.className = "title-scene-shell";
-                            shell.style.width = `${scaledWidth}px`;
-                            shell.style.height = `${scaledHeight}px`;
-
-                            const surface = document.createElement("div");
-                            surface.className = "title-scene-surface";
-                            surface.style.width = `${designWidth}px`;
-                            surface.style.height = `${designHeight}px`;
-                            surface.style.transform = `scale(${scale})`;
-
-                            shell.appendChild(surface);
-                            titleSceneMountElement.appendChild(shell);
-
-                            titleSceneRenderer = new SceneRenderer(surface, {
-                                basePath: "./src/"
-                            });
-                            titleSceneRenderer.loadSync(titleContract);
-                            titleSceneRenderer.show();
-
-                            const titleSceneRootElement = surface.firstElementChild;
-                            if (titleSceneRootElement) {
-                                titleSceneRootElement.style.top = "0";
-                                titleSceneRootElement.style.left = "0";
-                                titleSceneRootElement.style.right = "auto";
-                                titleSceneRootElement.style.bottom = "auto";
-                                titleSceneRootElement.style.pointerEvents = "none";
-                            }
-
-                            const titleLoaderElement = titleSceneRenderer.getElement("animation-5-png-6");
-                            titleLoaderElement?.classList.add("title-scene-loader");
-
-                            const titleSceneImages = [...surface.querySelectorAll("img")];
-                            const titleImageReadyPromise = titleSceneImages.length
-                                ? Promise.all(titleSceneImages.map((imageElement) => (
-                                    imageElement.complete
-                                        ? Promise.resolve()
-                                        : new Promise((resolve) => {
-                                            imageElement.addEventListener("load", resolve, { once: true });
-                                            imageElement.addEventListener("error", resolve, { once: true });
-                                        })
-                                )))
-                                : new Promise((resolve) => {
-                                    window.requestAnimationFrame(() => {
-                                        window.requestAnimationFrame(resolve);
-                                    });
-                                });
-
-                            return Promise.all([
-                                titleImageReadyPromise,
-                                sleep(TITLE_MINIMUM_VISIBLE_MS)
-                            ]);
-                        }).catch((error) => {
-                            titleSceneMountElement.replaceChildren();
-                            titleSceneMountElement.setAttribute("aria-hidden", "true");
-                            console.warn("[Boot] title scene skipped:", error);
-                        }),
-                        sleep(TITLE_MINIMUM_VISIBLE_MS)
-                    ]);
                 }
 
                 await colorJewelUiPromise;
@@ -9616,7 +9642,7 @@
 
                 if (titleLoadingOverlayElement?.classList.contains("active")) {
                     titleLoadingOverlayElement.classList.remove("active");
-                    await sleep(120);
+                    await sleep(TITLE_FADE_OUT_MS);
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
                 } else if (titleLoadingOverlayElement) {
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "true");
