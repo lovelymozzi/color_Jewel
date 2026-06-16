@@ -118,6 +118,13 @@
       "displayName": "Submarine",
       "displayNameNumbered": "17. Submarine",
       "file": "17_submarine.json"
+    },
+    {
+      "sequence": 18,
+      "id": "carrot",
+      "displayName": "Carrot",
+      "displayNameNumbered": "18. Carrot",
+      "file": "18_carrot.json"
     }
   ]
 }
