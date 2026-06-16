@@ -1,7 +1,15 @@
+const pixelAdminWindowMode = new URLSearchParams(window.location.search).get("adminWindow") === "1";
+window.__pixelAdminWindowMode = pixelAdminWindowMode;
+
 const pixelAdminMarkup = `
-<button class="pixel-admin-toggle" id="pixelAdminToggle" type="button" aria-controls="pixelAdmin" aria-expanded="false">
+<div class="pixel-admin-launcher">
+    <button class="pixel-admin-toggle" id="pixelAdminToggle" type="button" aria-controls="pixelAdmin" aria-expanded="false">
         픽셀 어드민
     </button>
+    <button class="pixel-admin-popout" id="pixelAdminPopout" type="button" aria-label="Open the pixel admin in a new window">
+        Pop-out
+    </button>
+</div>
 
     <aside class="pixel-admin" id="pixelAdmin" aria-hidden="true">
         <div class="pixel-admin-resize-handle" id="pixelAdminResizeHandle" aria-hidden="true"></div>
@@ -81,6 +89,10 @@ const pixelAdminMarkup = `
 
 if (!document.getElementById("pixelAdminToggle")) {
     document.body.insertAdjacentHTML("beforeend", pixelAdminMarkup);
+}
+
+if (pixelAdminWindowMode) {
+    document.body.classList.add("pixel-admin-window-mode");
 }
 
 const PIXEL_ADMIN_UNDO_LIMIT = 60;
@@ -619,13 +631,14 @@ const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminStageClearElement = document.getElementById("pixelAdminStageClear");
         const pixelAdminReloadElement = document.getElementById("pixelAdminReload");
         const pixelAdminRestoreElement = document.getElementById("pixelAdminRestore");
-        const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
-        const pixelAdminCopyMiniElement = document.getElementById("pixelAdminCopyMini");
-        const pixelAdminPreviousLevelElement = document.getElementById("pixelAdminPreviousLevel");
-        const pixelAdminNextLevelElement = document.getElementById("pixelAdminNextLevel");
-        const pixelAdminResizeHandleElement = document.getElementById("pixelAdminResizeHandle");
-        const pixelAdminExportElement = document.getElementById("pixelAdminExport");
-        const pixelAdminMessageElement = document.getElementById("pixelAdminMessage");
+const pixelAdminCopyElement = document.getElementById("pixelAdminCopy");
+const pixelAdminCopyMiniElement = document.getElementById("pixelAdminCopyMini");
+const pixelAdminPreviousLevelElement = document.getElementById("pixelAdminPreviousLevel");
+const pixelAdminNextLevelElement = document.getElementById("pixelAdminNextLevel");
+const pixelAdminResizeHandleElement = document.getElementById("pixelAdminResizeHandle");
+const pixelAdminExportElement = document.getElementById("pixelAdminExport");
+const pixelAdminMessageElement = document.getElementById("pixelAdminMessage");
+const pixelAdminPopoutElement = document.getElementById("pixelAdminPopout");
 
 let pixelAdminToggleHoldTimer = null;
 let suppressPixelAdminToggleClick = false;
@@ -1405,7 +1418,7 @@ function syncPixelAdminDraftFromExportInput() {
         }
 
         function togglePixelAdmin() {
-            setPixelAdminOpen(!pixelAdminState.isOpen);
+            setPixelAdminOpen(pixelAdminWindowMode ? true : !pixelAdminState.isOpen);
         }
 
         function clearPixelAdminToggleHoldTimer() {
@@ -2026,6 +2039,17 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
             togglePixelAdmin();
         });
 
+        pixelAdminPopoutElement?.addEventListener("click", () => {
+            const popupUrl = new URL(window.location.href);
+            popupUrl.searchParams.set("adminWindow", "1");
+            const popupWindow = window.open(
+                popupUrl.toString(),
+                "color-jewel-admin",
+                "popup=yes,width=760,height=960,resizable=yes,scrollbars=yes"
+            );
+            popupWindow?.focus();
+        });
+
         pixelAdminToggleElement?.addEventListener("pointerdown", (event) => {
             startPixelAdminToggleHold(event);
         });
@@ -2043,6 +2067,15 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
         });
 
         pixelAdminCloseElement?.addEventListener("click", () => {
+            if (pixelAdminWindowMode) {
+                flushPendingPixelAdminStageStorage();
+                window.close();
+                if (!window.closed) {
+                    setPixelAdminOpen(false);
+                }
+                return;
+            }
+
             setPixelAdminOpen(false);
         });
 
@@ -2246,6 +2279,89 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", () => {
     flushPendingPixelAdminStageStorage();
+});
+
+window.addEventListener("storage", (event) => {
+    if (!event.key) {
+        return;
+    }
+
+    if (event.key === PIXEL_ADMIN_STAGE_STORAGE_KEY) {
+        pixelAdminStageStorageCache = null;
+        if (!Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length) {
+            return;
+        }
+
+        const activeMapId = getCurrentMapDefinition()?.id || null;
+        let activeMapDidChange = false;
+        let previousPayload = {};
+        let nextPayload = {};
+
+        if (event.oldValue) {
+            previousPayload = JSON.parse(event.oldValue);
+        }
+
+        if (event.newValue) {
+            nextPayload = JSON.parse(event.newValue);
+        }
+
+        if (activeMapId) {
+            const previousEntry = previousPayload?.[activeMapId] || null;
+            const nextEntry = nextPayload?.[activeMapId] || null;
+            activeMapDidChange = JSON.stringify(previousEntry) !== JSON.stringify(nextEntry);
+        }
+
+        loadPersistedPixelAdminStageOverrides();
+
+        if (activeMapDidChange) {
+            syncActiveMap(currentMapIndex, {
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            });
+            currentLevelInitialState = null;
+            resetGame({
+                regenerateLevelStart: true,
+                fastLevelStart: true,
+                persistLevelStart: false
+            });
+        }
+
+        if (pixelAdminState.isOpen) {
+            syncPixelAdminWithActiveMap(true, true);
+        }
+        return;
+    }
+
+    if (event.key !== CURRENT_MAP_STORAGE_KEY || !Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length) {
+        return;
+    }
+
+    const nextMapId = readPersistedCurrentMapId();
+    const nextMapIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === nextMapId);
+    if (nextMapIndex < 0 || nextMapIndex === currentMapIndex) {
+        return;
+    }
+
+    clearRuntimeSnapshot();
+    clearSolvedStageFailSafeTimer();
+    clearStageClearTimers();
+    clearCelebrationTimers();
+    isStageTransitioning = false;
+    selected = null;
+    syncActiveMap(nextMapIndex, {
+        renderPixelAdmin: false,
+        prepareUpcomingMap: false
+    });
+    currentLevelInitialState = null;
+    resetGame({
+        regenerateLevelStart: true,
+        fastLevelStart: true,
+        persistLevelStart: false
+    });
+
+    if (pixelAdminState.isOpen) {
+        syncPixelAdminWithActiveMap(true, true);
+    }
 });
 
 document.addEventListener("freeze", () => {

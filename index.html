@@ -9860,6 +9860,10 @@
                     prepareUpcomingMap: false
                 });
 
+                if (window.__pixelAdminWindowMode) {
+                    setPixelAdminOpen(true);
+                }
+
                 const colorJewelUiPromise = ensureColorJewelSceneUi();
 
                 if (titleLoadingOverlayElement && titleSceneMountElement) {

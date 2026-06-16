@@ -1,8 +1,16 @@
-.pixel-admin-toggle {
+.pixel-admin-launcher {
             position: fixed;
             top: 14px;
             right: 14px;
             z-index: 80;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pixel-admin-toggle,
+        .pixel-admin-popout {
+            position: static;
             appearance: none;
             -webkit-appearance: none;
             border: 1px solid rgba(203, 213, 225, 0.92);
@@ -18,6 +26,10 @@
             cursor: pointer;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        .pixel-admin-popout {
+            padding-inline: 12px;
         }
 
         .pixel-admin {
@@ -500,9 +512,13 @@
         }
 
 @media (max-width: 540px) {
-.pixel-admin-toggle {
+        .pixel-admin-launcher {
                 top: 10px;
                 right: 10px;
+            }
+
+            .pixel-admin-toggle,
+            .pixel-admin-popout {
                 padding: 9px 12px;
             }
 
@@ -524,3 +540,39 @@
                 display: none;
             }
 }
+
+body.pixel-admin-window-mode {
+            display: block;
+            min-height: 100vh;
+            padding: 0;
+            background: #e5edf5;
+            overflow: auto;
+        }
+
+        body.pixel-admin-window-mode .app {
+            display: none;
+        }
+
+        body.pixel-admin-window-mode .pixel-admin-launcher {
+            display: none;
+        }
+
+        body.pixel-admin-window-mode .pixel-admin {
+            position: relative;
+            top: auto;
+            right: auto;
+            bottom: auto;
+            width: min(100%, 760px);
+            min-height: calc(100vh - 24px);
+            max-height: none;
+            margin: 12px auto;
+            transform: none;
+            opacity: 1;
+            pointer-events: auto;
+            overflow-y: visible;
+        }
+
+        body.pixel-admin-window-mode .pixel-admin-resize-handle,
+        body.pixel-admin-window-mode .pixel-admin-grid-resize-bar {
+            display: none;
+        }
