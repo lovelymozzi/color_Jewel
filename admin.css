@@ -137,6 +137,89 @@
             gap: 6px;
         }
 
+        .pixel-admin-stage-create {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid rgba(203, 213, 225, 0.88);
+            border-radius: 18px;
+            background: rgba(248, 250, 252, 0.9);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .pixel-admin-stage-create.drag-over {
+            border-color: rgba(59, 130, 246, 0.92);
+            background: rgba(239, 246, 255, 0.96);
+            box-shadow: 0 0 0 4px rgba(191, 219, 254, 0.58);
+        }
+
+        .pixel-admin-stage-create-heading {
+            display: grid;
+            gap: 4px;
+        }
+
+        .pixel-admin-stage-create-eyebrow {
+            margin: 0;
+            color: rgba(59, 130, 246, 0.84);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+        }
+
+        .pixel-admin-stage-create-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .pixel-admin-stage-create-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .pixel-admin-stage-create-options {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .pixel-admin-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 12px;
+            border: 1px solid rgba(203, 213, 225, 0.92);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            color: #1f2937;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pixel-admin-check input {
+            margin: 0;
+        }
+
+        .pixel-admin-file-input {
+            padding-block: 8px;
+        }
+
+        .pixel-admin-stage-create-button {
+            min-height: 42px;
+        }
+
+        .pixel-admin-stage-create-note {
+            margin: 0;
+            color: rgba(71, 85, 105, 0.9);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
         .pixel-admin-close,
         .pixel-admin-action {
             appearance: none;
@@ -150,6 +233,14 @@
             font-weight: 800;
             padding: 10px 12px;
             cursor: pointer;
+        }
+
+        .pixel-admin-close:disabled,
+        .pixel-admin-action:disabled,
+        .pixel-admin-input:disabled,
+        .pixel-admin-color-input:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
         }
 
         .pixel-admin-close {
@@ -538,6 +629,11 @@
 
             .pixel-admin-grid-resize-bar {
                 display: none;
+            }
+
+            .pixel-admin-stage-create-grid,
+            .pixel-admin-stage-create-options {
+                grid-template-columns: minmax(0, 1fr);
             }
 }
 

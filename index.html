@@ -1607,7 +1607,6 @@
 
 
 
-    <script src="./admin.js"></script>
     <script src="./sound.js"></script>
     <script>
         function createPixelMap(rows, cols, fill = 0) {
@@ -2118,10 +2117,12 @@
         }
 
         let MAP_DEFINITIONS = [];
+        let pixelAdminScriptLoadPromise = null;
 
         const MAX_GRID_ROWS = 30;
         const MAX_GRID_COLS = 30;
         const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
+        const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
@@ -2132,6 +2133,7 @@
             hapticsOn: true
         });
         const SCENE_CONTRACT_VERSION = "20260611-1";
+        const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
             "assets/title.png",
@@ -2141,6 +2143,415 @@
             "assets/rock.png"
         ]);
         const LIFECYCLE_DEBUG_LIMIT = 96;
+        window.__pixelAdminWindowMode = pixelAdminWindowRequested;
+
+        function getMapDefinitionById(mapId) {
+            return MAP_DEFINITIONS.find((definition) => definition.id === mapId) || null;
+        }
+
+        function normalizeStageDisplayName(value) {
+            return String(value || "")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 24);
+        }
+
+        function getStageOverrideVersion(definitionOrMapId) {
+            const definition =
+                typeof definitionOrMapId === "string"
+                    ? getMapDefinitionById(definitionOrMapId)
+                    : definitionOrMapId;
+            return Math.max(1, Number(definition?.overrideVersion) || 1);
+        }
+
+        function getStageResolvedDisplayName(definition) {
+            return (
+                normalizeStageDisplayName(definition?.adminDisplayName) ||
+                normalizeStageDisplayName(definition?.displayName) ||
+                String(definition?.id || "").toUpperCase()
+            );
+        }
+
+        function getStageStartMessage(definition) {
+            const template =
+                (typeof definition?.startMessageTemplate === "string" && definition.startMessageTemplate.trim()) ||
+                definition?.startMessage ||
+                "배경색을 보면서 보석을 제자리로 정리해 보세요.";
+            if (!template.includes("{title}")) {
+                return template;
+            }
+
+            return template
+                .replaceAll("{title} ", "")
+                .replaceAll("{title}", "")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function getStagePaletteMeta(
+            definition,
+            sourceMap = definition?.adminTargetMap || definition?.baseImageMap || [],
+            paletteOverride = null
+        ) {
+            const adminPalette = definition?.adminPalette || {};
+            const stagePalette =
+                Object.keys(definition?.themeOverridePalette || {}).length
+                    ? definition.themeOverridePalette
+                    : definition?.palette || {};
+            const colorIds = new Set();
+
+            (Array.isArray(sourceMap) ? sourceMap : []).forEach((row) => {
+                (Array.isArray(row) ? row : []).forEach((colorId) => {
+                    if (colorId) {
+                        colorIds.add(colorId);
+                    }
+                });
+            });
+
+            Object.keys(adminPalette).forEach((colorId) => {
+                if (Number(colorId)) {
+                    colorIds.add(Number(colorId));
+                }
+            });
+
+            Object.keys(paletteOverride || {}).forEach((colorId) => {
+                if (Number(colorId)) {
+                    colorIds.add(Number(colorId));
+                }
+            });
+
+            return Object.fromEntries(
+                [...colorIds]
+                    .sort((left, right) => left - right)
+                    .map((colorId) => [
+                        colorId,
+                        {
+                            color:
+                                normalizeHexColor(
+                                    typeof paletteOverride?.[colorId] === "string"
+                                        ? paletteOverride[colorId]
+                                        : paletteOverride?.[colorId]?.color
+                                ) ||
+                                normalizeHexColor(
+                                    typeof adminPalette[colorId] === "string"
+                                        ? adminPalette[colorId]
+                                        : adminPalette[colorId]?.color
+                                ) ||
+                                normalizeHexColor(
+                                    typeof stagePalette[colorId] === "string"
+                                        ? stagePalette[colorId]
+                                        : stagePalette[colorId]?.color
+                                ) ||
+                                normalizeHexColor(MAP_THEME_OVERRIDES[definition?.id]?.palette?.[colorId]) ||
+                                normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color) ||
+                                "#CCCCCC"
+                        }
+                    ])
+            );
+        }
+
+        function buildStageCanvasMapFromBase(definition) {
+            const rawScaledMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
+            const scaledTargetMap = definition.balancedColors
+                ? balanceShapeColors(rawScaledMap, definition.colorSeed ?? 0)
+                : rawScaledMap;
+            return padMapToGrid(scaledTargetMap).map;
+        }
+
+        function getStageEditorCanvasMap(definition) {
+            if (!definition) {
+                return [];
+            }
+
+            const sourceMapRef = definition.adminTargetMap || definition.baseImageMap || null;
+            const cachedSignature = definition.__cachedStageEditorCanvasMapSignature;
+            const cachedMap = definition.__cachedStageEditorCanvasMap;
+            if (
+                cachedMap &&
+                cachedSignature &&
+                cachedSignature.sourceMapRef === sourceMapRef &&
+                cachedSignature.scale === definition.scale &&
+                cachedSignature.balancedColors === definition.balancedColors &&
+                cachedSignature.colorSeed === definition.colorSeed &&
+                cachedSignature.overrideVersion === definition.overrideVersion
+            ) {
+                return clonePixelMap(cachedMap);
+            }
+
+            const nextMap = definition.adminTargetMap
+                ? clonePixelMap(definition.adminTargetMap)
+                : buildStageCanvasMapFromBase(definition);
+            definition.__cachedStageEditorCanvasMap = nextMap;
+            definition.__cachedStageEditorCanvasMapSignature = {
+                sourceMapRef,
+                scale: definition.scale,
+                balancedColors: definition.balancedColors,
+                colorSeed: definition.colorSeed,
+                overrideVersion: definition.overrideVersion
+            };
+            return clonePixelMap(nextMap);
+        }
+
+        function isStageDefinitionLoaded(definition) {
+            return definition?.__stageLoaded === true;
+        }
+
+        function isPixelAdminOpen() {
+            return window.__pixelAdminState?.isOpen === true;
+        }
+
+        function invalidatePreparedMapCaches() {
+            if (preparedNextMapTimer) {
+                window.clearTimeout(preparedNextMapTimer);
+                preparedNextMapTimer = null;
+            }
+
+            preparedNextMapIndex = -1;
+            preparedNextMapVersion = 0;
+            preparedNextMapConfig = null;
+            preparedNextLevelInitialState = null;
+            preparedPreviousMapIndex = -1;
+            preparedPreviousMapVersion = 0;
+            preparedPreviousMapConfig = null;
+            preparedPreviousLevelInitialState = null;
+        }
+
+        function syncPixelAdminWithActiveMapIfReady(force = false, shouldRender = true) {
+            if (typeof window.syncPixelAdminWithActiveMap === "function") {
+                window.syncPixelAdminWithActiveMap(force, shouldRender);
+            }
+        }
+
+        function createStageCatalogDefinition(stageEntry) {
+            const sequence = Number(stageEntry?.sequence) || 0;
+            const fileName = String(stageEntry?.file || "").trim();
+            const exportName = fileName ? fileName.replace(/\.json$/i, "") : null;
+            return {
+                id: stageEntry?.id || exportName || `stage_${sequence || "unknown"}`,
+                sequence,
+                file: fileName || null,
+                exportName,
+                displayName: normalizeStageDisplayName(stageEntry?.displayName) || null,
+                displayNameNumbered:
+                    typeof stageEntry?.displayNameNumbered === "string" && stageEntry.displayNameNumbered.trim()
+                        ? stageEntry.displayNameNumbered.trim()
+                        : null,
+                scale: 1,
+                startMessageTemplate: "",
+                startMessage: "",
+                balancedColors: false,
+                colorSeed: 0,
+                palette: {},
+                themeOverridePalette: {},
+                baseImageMap: [],
+                initialBoardState: null,
+                initialTrayState: [],
+                __stageEntry: stageEntry && typeof stageEntry === "object" ? { ...stageEntry } : {},
+                __stageLoaded: false,
+                __stageLoadPromise: null
+            };
+        }
+
+        async function loadStagePayload(stageEntry) {
+            if (!stageEntry?.file) {
+                throw new Error("Stage entry is missing its file path.");
+            }
+
+            const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`);
+            if (!stageResponse.ok) {
+                throw new Error(`Stage data load failed (${stageEntry.file}): ${stageResponse.status}`);
+            }
+
+            return stageResponse.json();
+        }
+
+        async function ensureStageDefinitionLoaded(mapIndex) {
+            if (!Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length) {
+                throw new Error("Stage catalog is not ready.");
+            }
+
+            const resolvedIndex = ((mapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            const definition = MAP_DEFINITIONS[resolvedIndex];
+            if (!definition) {
+                throw new Error(`Unknown stage index: ${mapIndex}`);
+            }
+
+            if (isStageDefinitionLoaded(definition)) {
+                return definition;
+            }
+
+            if (definition.__stageLoadPromise) {
+                return definition.__stageLoadPromise;
+            }
+
+            const stageEntry = definition.__stageEntry || {};
+            definition.__stageLoadPromise = loadStagePayload(stageEntry).then((stagePayload) => {
+                Object.assign(definition, buildStageDefinition(stageEntry, stagePayload), {
+                    __stageEntry: stageEntry,
+                    __stageLoaded: true,
+                    __stageLoadPromise: null
+                });
+                invalidatePreparedMapCaches();
+                applyPersistedPixelAdminStageOverride(definition);
+                rebuildRuntimeMapThemeOverrides();
+                return definition;
+            }).catch((error) => {
+                definition.__stageLoadPromise = null;
+                throw error;
+            });
+
+            return definition.__stageLoadPromise;
+        }
+
+        async function prepareAdjacentStageDefinitions(activeMapIndex) {
+            if (!Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length || isPixelAdminOpen()) {
+                return;
+            }
+
+            const upcomingMapIndex = (activeMapIndex + 1) % MAP_DEFINITIONS.length;
+            const previousMapIndex =
+                ((activeMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
+            await Promise.all(
+                [...new Set([upcomingMapIndex, previousMapIndex])].map((mapIndex) => ensureStageDefinitionLoaded(mapIndex))
+            );
+
+            if (currentMapIndex !== activeMapIndex || isPixelAdminOpen()) {
+                return;
+            }
+
+            const currentDefinition = MAP_DEFINITIONS[currentMapIndex];
+            const upcomingDefinition = MAP_DEFINITIONS[upcomingMapIndex];
+            const previousDefinition = MAP_DEFINITIONS[previousMapIndex];
+            const upcomingOverrideVersion = getStageOverrideVersion(upcomingDefinition);
+            const preservedActiveMap = ACTIVE_MAP;
+            const preservedTargetMap = TARGET_MAP;
+            const preservedRows = ROWS;
+            const preservedCols = COLS;
+            const preservedTargetPositions = TARGET_POSITIONS;
+            const preservedTargetColorCounts = TARGET_COLOR_COUNTS;
+            const preservedInitialLayoutOrder = INITIAL_LAYOUT_ORDER;
+            const preservedInitialLayoutIndex = INITIAL_LAYOUT_INDEX;
+            const preservedTargetNeighborPairs = TARGET_NEIGHBOR_PAIRS;
+            const preservedTotalTargetCells = TOTAL_TARGET_CELLS;
+            const adjacentDefinitions = [
+                {
+                    mapIndex: upcomingMapIndex,
+                    definition: upcomingDefinition,
+                    overrideVersion: upcomingOverrideVersion,
+                    storeAsPreparedNext: true
+                },
+                {
+                    mapIndex: previousMapIndex,
+                    definition: previousDefinition,
+                    overrideVersion: getStageOverrideVersion(previousDefinition),
+                    storeAsPreparedNext: false
+                }
+            ];
+            let nextPreparedConfig = null;
+            let nextPreparedInitialState = null;
+            let previousPreparedConfig = null;
+            let previousPreparedInitialState = null;
+
+            adjacentDefinitions.forEach(({ mapIndex, definition, overrideVersion, storeAsPreparedNext }) => {
+                const preparedConfig = buildMapConfig(definition);
+                ACTIVE_MAP = preparedConfig;
+                TARGET_MAP = preparedConfig.targetMap;
+                ROWS = preparedConfig.rows;
+                COLS = preparedConfig.cols;
+                TARGET_POSITIONS = preparedConfig.targetPositions;
+                TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
+                INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
+                INITIAL_LAYOUT_INDEX = preparedConfig.initialLayoutIndex;
+                TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
+                TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
+
+                const preparedInitialState = buildCurrentLevelInitialState({
+                    persistState: false,
+                    fastMode: isPixelAdminOpen()
+                });
+                if (storeAsPreparedNext) {
+                    preparedNextMapIndex = mapIndex;
+                    preparedNextMapVersion = overrideVersion;
+                    nextPreparedConfig = preparedConfig;
+                    nextPreparedInitialState = preparedInitialState;
+                    return;
+                }
+
+                preparedPreviousMapIndex = mapIndex;
+                preparedPreviousMapVersion = overrideVersion;
+                previousPreparedConfig = preparedConfig;
+                previousPreparedInitialState = preparedInitialState;
+            });
+
+            if (currentMapIndex !== activeMapIndex || currentDefinition?.id !== MAP_DEFINITIONS[currentMapIndex]?.id) {
+                ACTIVE_MAP = preservedActiveMap;
+                TARGET_MAP = preservedTargetMap;
+                ROWS = preservedRows;
+                COLS = preservedCols;
+                TARGET_POSITIONS = preservedTargetPositions;
+                TARGET_COLOR_COUNTS = preservedTargetColorCounts;
+                INITIAL_LAYOUT_ORDER = preservedInitialLayoutOrder;
+                INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
+                TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
+                TOTAL_TARGET_CELLS = preservedTotalTargetCells;
+                return;
+            }
+
+            preparedNextMapConfig = nextPreparedConfig;
+            preparedNextLevelInitialState = nextPreparedInitialState;
+            preparedPreviousMapConfig = previousPreparedConfig;
+            preparedPreviousLevelInitialState = previousPreparedInitialState;
+            ACTIVE_MAP = preservedActiveMap;
+            TARGET_MAP = preservedTargetMap;
+            ROWS = preservedRows;
+            COLS = preservedCols;
+            TARGET_POSITIONS = preservedTargetPositions;
+            TARGET_COLOR_COUNTS = preservedTargetColorCounts;
+            INITIAL_LAYOUT_ORDER = preservedInitialLayoutOrder;
+            INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
+            TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
+            TOTAL_TARGET_CELLS = preservedTotalTargetCells;
+        }
+
+        async function activateMapIndex(nextMapIndex = 0, options = {}) {
+            await ensureStageDefinitionLoaded(nextMapIndex);
+            syncActiveMap(nextMapIndex, options);
+            return currentMapIndex;
+        }
+
+        function loadPixelAdminScript() {
+            if (window.__pixelAdminLoaded) {
+                return Promise.resolve();
+            }
+
+            if (pixelAdminScriptLoadPromise) {
+                return pixelAdminScriptLoadPromise;
+            }
+
+            pixelAdminScriptLoadPromise = new Promise((resolve, reject) => {
+                const scriptElement = document.createElement("script");
+                scriptElement.src = `./admin.js?v=${SCENE_CONTRACT_VERSION}`;
+                scriptElement.dataset.pixelAdminScript = "true";
+                scriptElement.onload = () => resolve();
+                scriptElement.onerror = () => {
+                    pixelAdminScriptLoadPromise = null;
+                    reject(new Error("Failed to load admin.js"));
+                };
+                document.head.appendChild(scriptElement);
+            });
+            return pixelAdminScriptLoadPromise;
+        }
+
+        async function ensurePixelAdminReady(options = {}) {
+            const { open = false } = options;
+            await loadPixelAdminScript();
+            if (typeof window.loadPersistedPixelAdminStageOverrides === "function" && !window.__pixelAdminOverridesLoaded) {
+                window.loadPersistedPixelAdminStageOverrides();
+            }
+            if (open && typeof window.setPixelAdminOpen === "function") {
+                window.setPixelAdminOpen(true);
+            }
+        }
 
         function withRuntimeSceneAssetBuster(path) {
             if (typeof path !== "string" || !path.trim()) {
@@ -2274,6 +2685,331 @@
             } catch (error) {
                 return false;
             }
+        }
+
+        function buildStageDefinition(stageEntry, stagePayload) {
+            const palette = clonePaletteMeta(stagePayload?.palette || {});
+            const themeOverridePalette = clonePaletteMeta(stagePayload?.themeOverridePalette || {});
+            const sequence = Number(stagePayload?.sequence ?? stageEntry?.sequence) || 0;
+            const normalizedImageMap = Array.isArray(stagePayload?.imageMap) ? clonePixelMap(stagePayload.imageMap) : [];
+            const normalizedInitialBoardState = Array.isArray(stagePayload?.initialBoardState)
+                ? clonePixelMap(stagePayload.initialBoardState)
+                : null;
+            const normalizedInitialTrayState = Array.isArray(stagePayload?.initialTrayState)
+                ? [...stagePayload.initialTrayState]
+                : [];
+            const sourceSignature = JSON.stringify({
+                imageMap: normalizedImageMap,
+                palette,
+                themeOverridePalette,
+                scale: Math.max(1, Number(stagePayload?.scale) || 1),
+                boardCellSize: Number(stagePayload?.boardCellSize) || null,
+                trayCellSize: Number(stagePayload?.trayCellSize) || null,
+                initialBoardState: normalizedInitialBoardState,
+                initialTrayState: normalizedInitialTrayState,
+                overrideVersion: Number(stagePayload?.overrideVersion) || 1
+            });
+
+            return {
+                id: stagePayload?.id || stageEntry?.id || `stage_${sequence || "unknown"}`,
+                sequence,
+                file: stageEntry?.file || null,
+                exportName:
+                    stagePayload?.exportName ||
+                    String(stageEntry?.file || "")
+                        .replace(/\.json$/i, "") ||
+                    null,
+                displayName:
+                    normalizeStageDisplayName(stagePayload?.displayName) ||
+                    normalizeStageDisplayName(stageEntry?.displayName) ||
+                    null,
+                displayNameNumbered:
+                    typeof stagePayload?.displayNameNumbered === "string" && stagePayload.displayNameNumbered.trim()
+                        ? stagePayload.displayNameNumbered.trim()
+                        : typeof stageEntry?.displayNameNumbered === "string" && stageEntry.displayNameNumbered.trim()
+                            ? stageEntry.displayNameNumbered.trim()
+                            : null,
+                scale: Math.max(1, Number(stagePayload?.scale) || 1),
+                boardCellSize: Number(stagePayload?.boardCellSize) || undefined,
+                trayCellSize: Number(stagePayload?.trayCellSize) || undefined,
+                startMessageTemplate: stagePayload?.startMessageTemplate || "",
+                startMessage: stagePayload?.startMessage || "",
+                overrideVersion: Number(stagePayload?.overrideVersion) || undefined,
+                balancedColors: stagePayload?.balancedColors === true,
+                colorSeed: Number(stagePayload?.colorSeed) || 0,
+                sourceSignature,
+                sourceRefs:
+                    stagePayload?.sourceRefs && typeof stagePayload.sourceRefs === "object" && !Array.isArray(stagePayload.sourceRefs)
+                        ? { ...stagePayload.sourceRefs }
+                        : null,
+                pocketUnlock:
+                    stagePayload?.pocketUnlock && typeof stagePayload.pocketUnlock === "object" && !Array.isArray(stagePayload.pocketUnlock)
+                        ? { ...stagePayload.pocketUnlock }
+                        : undefined,
+                palette,
+                themeOverridePalette,
+                cssVars:
+                    stagePayload?.cssVars && typeof stagePayload.cssVars === "object" && !Array.isArray(stagePayload.cssVars)
+                        ? { ...stagePayload.cssVars }
+                        : undefined,
+                baseImageMap: normalizedImageMap,
+                initialBoardState: normalizedInitialBoardState,
+                initialTrayState: normalizedInitialTrayState,
+                __stageEntry: stageEntry && typeof stageEntry === "object" ? { ...stageEntry } : {},
+                __stageLoaded: true,
+                __stageLoadPromise: null
+            };
+        }
+
+        function rebuildRuntimeMapThemeOverrides() {
+            MAP_THEME_OVERRIDES = Object.fromEntries(
+                MAP_DEFINITIONS.map((definition) => [
+                    definition.id,
+                    {
+                        palette: clonePaletteMeta(
+                            Object.keys(definition.themeOverridePalette || {}).length
+                                ? definition.themeOverridePalette
+                                : definition.palette || {}
+                        ),
+                        cssVars: definition.cssVars ? { ...definition.cssVars } : {}
+                    }
+                ])
+            );
+        }
+
+        function upsertRuntimeStageDefinition(stageEntry, stagePayload) {
+            const nextDefinition = buildStageDefinition(stageEntry, stagePayload);
+            const existingIndex = MAP_DEFINITIONS.findIndex(
+                (definition) => definition.id === nextDefinition.id || definition.file === nextDefinition.file
+            );
+
+            if (existingIndex >= 0) {
+                const existingDefinition = MAP_DEFINITIONS[existingIndex];
+                delete existingDefinition.__cachedMapConfig;
+                delete existingDefinition.__cachedMapConfigSignature;
+                delete existingDefinition.__cachedLevelInitialState;
+                delete existingDefinition.__cachedLevelInitialStateSignature;
+                delete existingDefinition.__cachedStageEditorCanvasMap;
+                delete existingDefinition.__cachedStageEditorCanvasMapSignature;
+                Object.assign(existingDefinition, nextDefinition);
+            } else {
+                MAP_DEFINITIONS.push(nextDefinition);
+            }
+
+            MAP_DEFINITIONS.sort((left, right) => {
+                const sequenceDiff = (Number(left?.sequence) || 0) - (Number(right?.sequence) || 0);
+                if (sequenceDiff) {
+                    return sequenceDiff;
+                }
+
+                return String(left?.id || "").localeCompare(String(right?.id || ""));
+            });
+            invalidatePreparedMapCaches();
+            rebuildRuntimeMapThemeOverrides();
+            return MAP_DEFINITIONS.findIndex((definition) => definition.id === nextDefinition.id);
+        }
+
+        function normalizeStoredPixelAdminMap(rawMap) {
+            if (!Array.isArray(rawMap) || !rawMap.length) {
+                return null;
+            }
+
+            const rows = rawMap.map((row) => {
+                if (!Array.isArray(row) || !row.length) {
+                    return null;
+                }
+
+                return row.map((cell) => {
+                    const normalized = Number(cell);
+                    return Number.isInteger(normalized) && normalized >= 0 ? normalized : null;
+                });
+            });
+
+            if (rows.some((row) => !row)) {
+                return null;
+            }
+
+            const columnCount = rows[0].length;
+            if (
+                !columnCount ||
+                rows.length > MAX_GRID_ROWS ||
+                columnCount > MAX_GRID_COLS ||
+                rows.some((row) => row.length !== columnCount || row.some((cell) => cell == null))
+            ) {
+                return null;
+            }
+
+            return rows;
+        }
+
+        function normalizeStoredPixelAdminPalette(rawPalette) {
+            if (!rawPalette || typeof rawPalette !== "object" || Array.isArray(rawPalette)) {
+                return {};
+            }
+
+            return Object.fromEntries(
+                Object.entries(rawPalette)
+                    .map(([colorId, colorMeta]) => {
+                        const normalizedColorId = Number(colorId);
+                        const normalizedColor = normalizeHexColor(
+                            typeof colorMeta === "string" ? colorMeta : colorMeta?.color
+                        );
+
+                        if (!Number.isInteger(normalizedColorId) || normalizedColorId <= 0 || !normalizedColor) {
+                            return null;
+                        }
+
+                        return [normalizedColorId, { color: normalizedColor }];
+                    })
+                    .filter(Boolean)
+            );
+        }
+
+        function readPixelAdminStageStorage() {
+            if (pixelAdminStageStorageCache) {
+                return pixelAdminStageStorageCache;
+            }
+
+            try {
+                const rawValue = window.localStorage.getItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
+                if (!rawValue) {
+                    pixelAdminStageStorageCache = {};
+                    return pixelAdminStageStorageCache;
+                }
+
+                const parsed = JSON.parse(rawValue);
+                pixelAdminStageStorageCache =
+                    parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+                return pixelAdminStageStorageCache;
+            } catch (error) {
+                pixelAdminStageStorageCache = {};
+                return pixelAdminStageStorageCache;
+            }
+        }
+
+        function writePixelAdminStageStorage(storagePayload) {
+            try {
+                if (!storagePayload || !Object.keys(storagePayload).length) {
+                    window.localStorage.removeItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
+                    pixelAdminStageStorageCache = {};
+                    return true;
+                }
+
+                window.localStorage.setItem(
+                    PIXEL_ADMIN_STAGE_STORAGE_KEY,
+                    JSON.stringify(storagePayload)
+                );
+                pixelAdminStageStorageCache = storagePayload;
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function applyPersistedPixelAdminStageOverride(definition) {
+            if (!definition?.id || !isStageDefinitionLoaded(definition)) {
+                return false;
+            }
+
+            const storagePayload = readPixelAdminStageStorage();
+            const override = storagePayload[definition.id];
+            if (!override || typeof override !== "object") {
+                definition.adminTargetMap = null;
+                definition.adminPalette = null;
+                definition.adminDisplayName = null;
+                invalidatePreparedMapCaches();
+                rebuildRuntimeMapThemeOverrides();
+                return false;
+            }
+
+            let didMutateStorage = false;
+            let shouldClearOverride = false;
+            if ((Number(override.overrideVersion) || 1) !== getStageOverrideVersion(definition)) {
+                delete storagePayload[definition.id];
+                didMutateStorage = true;
+                shouldClearOverride = true;
+            } else {
+                const normalizedMap = normalizeStoredPixelAdminMap(override.map);
+                if (!normalizedMap) {
+                    delete storagePayload[definition.id];
+                    didMutateStorage = true;
+                    shouldClearOverride = true;
+                } else {
+                    const normalizedPalette = normalizeStoredPixelAdminPalette(override.palette);
+                    const stagePalette = clonePaletteMeta(
+                        Object.keys(definition.themeOverridePalette || {}).length
+                            ? definition.themeOverridePalette
+                            : definition.palette || {}
+                    );
+                    const normalizedPaletteEntries = Object.entries(normalizedPalette);
+                    const normalizedPaletteLooksLegacyDefault =
+                        normalizedPaletteEntries.length > 0 &&
+                        normalizedPaletteEntries.every(([colorId, colorMeta]) => {
+                            const overrideColor = normalizeHexColor(
+                                typeof colorMeta === "string" ? colorMeta : colorMeta?.color
+                            );
+                            const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
+                            return overrideColor && defaultColor && overrideColor === defaultColor;
+                        });
+                    const stagePaletteDiffersFromDefault = Object.entries(stagePalette).some(([colorId, colorMeta]) => {
+                        const stageColor = normalizeHexColor(
+                            typeof colorMeta === "string" ? colorMeta : colorMeta?.color
+                        );
+                        const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
+                        return stageColor && stageColor !== defaultColor;
+                    });
+
+                    definition.adminTargetMap = clonePixelMap(normalizedMap);
+                    definition.adminPalette =
+                        stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault
+                            ? clonePaletteMeta(stagePalette)
+                            : normalizedPalette;
+                    definition.adminDisplayName = normalizeStageDisplayName(override.displayName) || null;
+                    invalidatePreparedMapCaches();
+
+                    if (stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault) {
+                        storagePayload[definition.id] = {
+                            ...override,
+                            palette: clonePaletteMeta(stagePalette)
+                        };
+                        didMutateStorage = true;
+                    }
+                }
+            }
+
+            if (shouldClearOverride) {
+                definition.adminTargetMap = null;
+                definition.adminPalette = null;
+                definition.adminDisplayName = null;
+                invalidatePreparedMapCaches();
+            }
+
+            if (didMutateStorage) {
+                writePixelAdminStageStorage(storagePayload);
+            }
+
+            return true;
+        }
+
+        function loadPersistedPixelAdminStageOverrides() {
+            const storagePayload = readPixelAdminStageStorage();
+            let didMutateStorage = false;
+
+            Object.keys(storagePayload).forEach((mapId) => {
+                if (!getMapDefinitionById(mapId)) {
+                    delete storagePayload[mapId];
+                    didMutateStorage = true;
+                }
+            });
+
+            if (didMutateStorage) {
+                writePixelAdminStageStorage(storagePayload);
+            }
+
+            MAP_DEFINITIONS.forEach((definition) => {
+                applyPersistedPixelAdminStageOverride(definition);
+            });
+            window.__pixelAdminOverridesLoaded = true;
         }
 
         function readLevelInitialStateCacheStorage() {
@@ -2722,7 +3458,7 @@
             return cleanedCells.filter((key) => typeof key === "string" && validKeys.has(key));
         }
 
-        function restoreRuntimeSnapshot() {
+        async function restoreRuntimeSnapshot() {
             const snapshot = readRuntimeSnapshot();
             if (!snapshot || snapshot.version !== 1 || !snapshot.mapId) {
                 return false;
@@ -2748,10 +3484,10 @@
                 return false;
             }
 
-            syncActiveMap(definitionIndex, {
+            await activateMapIndex(definitionIndex, {
                 syncPixelAdmin: false,
                 renderPixelAdmin: false,
-                prepareUpcomingMap: false
+                prepareUpcomingMap: true
             });
             currentLevelInitialState = normalizeLevelInitialStateSnapshot(snapshot.levelInitialState, config, allowedColorIds);
             boardState = cloneBoardSnapshot(snapshot.boardState);
@@ -2779,6 +3515,10 @@
 
 
         function buildMapConfig(definition) {
+            if (!isStageDefinitionLoaded(definition)) {
+                throw new Error(`Stage payload is not loaded for ${definition?.id || "unknown"}.`);
+            }
+
             const cachedConfig = definition.__cachedMapConfig;
             const cachedSignature = definition.__cachedMapConfigSignature;
             const sourceMapRef = definition.adminTargetMap || definition.baseImageMap || null;
@@ -2881,7 +3621,7 @@
 
             const config = {
                 ...definition,
-                displayName: getStageResolvedDisplayName(definition),
+                displayName: "",
                 startMessage: getStageStartMessage(definition),
                 targetMap,
                 initialBoardState,
@@ -3502,6 +4242,7 @@
         let lastTouchActivationAt = 0;
         let solvedStageFailSafeTimer = null;
         let lastCorrectPlacementHapticAt = 0;
+        let pixelAdminStageStorageCache = null;
         let levelInitialStateStorageCache = null;
         let runtimePaletteSignature = "";
         let appSettings = readPersistedAppSettings();
@@ -3636,7 +4377,7 @@
             TOTAL_TARGET_CELLS = ACTIVE_MAP.totalTargetCells;
             boardElement.style.gridTemplateColumns = `repeat(${COLS}, var(--board-cell-size))`;
             if (syncPixelAdmin) {
-                syncPixelAdminWithActiveMap(false, renderPixelAdmin);
+                syncPixelAdminWithActiveMapIfReady(false, renderPixelAdmin);
             }
 
             if (preparedNextMapTimer) {
@@ -3644,101 +4385,25 @@
                 preparedNextMapTimer = null;
             }
 
-            if (!prepareUpcomingMap || pixelAdminState.isOpen) {
+            if (!prepareUpcomingMap || isPixelAdminOpen()) {
                 return;
             }
 
-            const upcomingMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            const activeMapIndexForPreparation = currentMapIndex;
+            const upcomingMapIndex = (activeMapIndexForPreparation + 1) % MAP_DEFINITIONS.length;
             const upcomingDefinition = MAP_DEFINITIONS[upcomingMapIndex];
-            const previousMapIndex =
-                ((currentMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
-            const previousDefinition = MAP_DEFINITIONS[previousMapIndex];
             const upcomingOverrideVersion = getStageOverrideVersion(upcomingDefinition);
             const isUpcomingPrepared =
                 preparedNextMapIndex === upcomingMapIndex &&
                 preparedNextMapVersion === upcomingOverrideVersion &&
-                preparedNextMapConfig?.id === upcomingDefinition.id &&
-                preparedNextLevelInitialState?.mapId === upcomingDefinition.id;
+                preparedNextMapConfig?.id === upcomingDefinition?.id &&
+                preparedNextLevelInitialState?.mapId === upcomingDefinition?.id;
 
             if (!isUpcomingPrepared) {
                 preparedNextMapTimer = window.setTimeout(() => {
                     preparedNextMapTimer = null;
-
-                    const preservedActiveMap = ACTIVE_MAP;
-                    const preservedTargetMap = TARGET_MAP;
-                    const preservedRows = ROWS;
-                    const preservedCols = COLS;
-                    const preservedTargetPositions = TARGET_POSITIONS;
-                    const preservedTargetColorCounts = TARGET_COLOR_COUNTS;
-                    const preservedInitialLayoutOrder = INITIAL_LAYOUT_ORDER;
-                    const preservedInitialLayoutIndex = INITIAL_LAYOUT_INDEX;
-                    const preservedTargetNeighborPairs = TARGET_NEIGHBOR_PAIRS;
-                    const preservedTotalTargetCells = TOTAL_TARGET_CELLS;
-                    const adjacentDefinitions = [
-                        {
-                            mapIndex: upcomingMapIndex,
-                            definition: upcomingDefinition,
-                            overrideVersion: upcomingOverrideVersion,
-                            storeAsPreparedNext: true
-                        },
-                        {
-                            mapIndex: previousMapIndex,
-                            definition: previousDefinition,
-                            overrideVersion: getStageOverrideVersion(previousDefinition),
-                            storeAsPreparedNext: false
-                        }
-                    ];
-                    let nextPreparedConfig = null;
-                    let nextPreparedInitialState = null;
-                    let previousPreparedConfig = null;
-                    let previousPreparedInitialState = null;
-
-                    adjacentDefinitions.forEach(({ mapIndex, definition, overrideVersion, storeAsPreparedNext }) => {
-                        const preparedConfig = buildMapConfig(definition);
-                        ACTIVE_MAP = preparedConfig;
-                        TARGET_MAP = preparedConfig.targetMap;
-                        ROWS = preparedConfig.rows;
-                        COLS = preparedConfig.cols;
-                        TARGET_POSITIONS = preparedConfig.targetPositions;
-                        TARGET_COLOR_COUNTS = preparedConfig.targetColorCounts;
-                        INITIAL_LAYOUT_ORDER = preparedConfig.initialLayoutOrder;
-                        INITIAL_LAYOUT_INDEX = preparedConfig.initialLayoutIndex;
-                        TARGET_NEIGHBOR_PAIRS = preparedConfig.targetNeighborPairs;
-                        TOTAL_TARGET_CELLS = preparedConfig.totalTargetCells;
-
-                        const preparedInitialState = buildCurrentLevelInitialState({
-                            persistState: false,
-                            fastMode: pixelAdminState.isOpen
-                        });
-                        if (storeAsPreparedNext) {
-                            preparedNextMapIndex = mapIndex;
-                            preparedNextMapVersion = overrideVersion;
-                            nextPreparedConfig = preparedConfig;
-                            nextPreparedInitialState = preparedInitialState;
-                            return;
-                        }
-
-                        preparedPreviousMapIndex = mapIndex;
-                        preparedPreviousMapVersion = overrideVersion;
-                        previousPreparedConfig = preparedConfig;
-                        previousPreparedInitialState = preparedInitialState;
-                    });
-
-                    preparedNextMapConfig = nextPreparedConfig;
-                    preparedNextLevelInitialState = nextPreparedInitialState;
-                    preparedPreviousMapConfig = previousPreparedConfig;
-                    preparedPreviousLevelInitialState = previousPreparedInitialState;
-                    ACTIVE_MAP = preservedActiveMap;
-                    TARGET_MAP = preservedTargetMap;
-                    ROWS = preservedRows;
-                    COLS = preservedCols;
-                    TARGET_POSITIONS = preservedTargetPositions;
-                    TARGET_COLOR_COUNTS = preservedTargetColorCounts;
-                    INITIAL_LAYOUT_ORDER = preservedInitialLayoutOrder;
-                    INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
-                    TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
-                    TOTAL_TARGET_CELLS = preservedTotalTargetCells;
-                }, pixelAdminState.isOpen ? 180 : 48);
+                    void prepareAdjacentStageDefinitions(activeMapIndexForPreparation);
+                }, isPixelAdminOpen() ? 180 : 48);
             }
         }
 
@@ -5792,7 +6457,7 @@
             solvedStageFailSafeTimer = null;
         }
 
-        function advanceToNextStage(sessionVersion = gameSessionVersion, options = {}) {
+        async function advanceToNextStage(sessionVersion = gameSessionVersion, options = {}) {
             const { preserveStageClearOverlay = false } = options;
             if (!isCurrentGameSession(sessionVersion)) {
                 return false;
@@ -5811,7 +6476,7 @@
                 clearStageClearTimers();
             }
             isStageTransitioning = false;
-            syncActiveMap(nextMapIndex);
+            await activateMapIndex(nextMapIndex);
             currentLevelInitialState =
                 preparedNextMapIndex === nextMapIndex &&
                 preparedNextMapVersion === nextOverrideVersion &&
@@ -5867,16 +6532,18 @@
                     stageClearOverlayElement.classList.remove("active");
                 }
 
-                if (!advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay })) {
-                    return;
-                }
+                void advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay }).then((didAdvance) => {
+                    if (!didAdvance) {
+                        return;
+                    }
 
-                if (shouldFadeOverlay) {
-                    const stageClearCleanupTimer = window.setTimeout(() => {
-                        clearStageClearTimers();
-                    }, STAGE_CLEAR_FADE_OUT_MS + 34);
-                    stageClearTimers.push(stageClearCleanupTimer);
-                }
+                    if (shouldFadeOverlay) {
+                        const stageClearCleanupTimer = window.setTimeout(() => {
+                            clearStageClearTimers();
+                        }, STAGE_CLEAR_FADE_OUT_MS + 34);
+                        stageClearTimers.push(stageClearCleanupTimer);
+                    }
+                });
             }, STAGE_TRANSITION_DELAY_MS);
             stageClearTimers.push(fadeOutTimer);
         }
@@ -5896,7 +6563,7 @@
                     return;
                 }
 
-                advanceToNextStage(sessionVersion);
+                void advanceToNextStage(sessionVersion);
             }, stageClearDelay + STAGE_TRANSITION_DELAY_MS + 480);
         }
 
@@ -7919,8 +8586,10 @@
             }
 
             if (event.shiftKey && event.code === "KeyN") {
-                event.preventDefault();
-                goToFirstPlayableLevelCheat();
+                if (typeof window.goToFirstPlayableLevelCheat === "function") {
+                    event.preventDefault();
+                    void window.goToFirstPlayableLevelCheat();
+                }
                 return;
             }
 
@@ -8016,7 +8685,7 @@
         });
 
         function isTutorialMap() {
-            return ACTIVE_MAP.id === "tutorial";
+            return ACTIVE_MAP?.id === "tutorial";
         }
 
         function clearTutorialOverlay() {
@@ -9714,6 +10383,88 @@
             persistRuntimeSnapshot();
         }
 
+        window.applyPersistedPixelAdminStageOverride = applyPersistedPixelAdminStageOverride;
+        window.loadPersistedPixelAdminStageOverrides = loadPersistedPixelAdminStageOverrides;
+
+        window.addEventListener("storage", (event) => {
+            if (!event.key || !Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length) {
+                return;
+            }
+
+            if (event.key === PIXEL_ADMIN_STAGE_STORAGE_KEY) {
+                pixelAdminStageStorageCache = null;
+
+                const activeMapId = getCurrentMapDefinition()?.id || null;
+                let activeMapDidChange = false;
+                let previousPayload = {};
+                let nextPayload = {};
+
+                if (event.oldValue) {
+                    previousPayload = JSON.parse(event.oldValue);
+                }
+
+                if (event.newValue) {
+                    nextPayload = JSON.parse(event.newValue);
+                }
+
+                if (activeMapId) {
+                    const previousEntry = previousPayload?.[activeMapId] || null;
+                    const nextEntry = nextPayload?.[activeMapId] || null;
+                    activeMapDidChange = JSON.stringify(previousEntry) !== JSON.stringify(nextEntry);
+                }
+
+                loadPersistedPixelAdminStageOverrides();
+                rebuildRuntimeMapThemeOverrides();
+
+                if (!activeMapDidChange || !ACTIVE_MAP) {
+                    return;
+                }
+
+                syncActiveMap(currentMapIndex, {
+                    syncPixelAdmin: false,
+                    renderPixelAdmin: false,
+                    prepareUpcomingMap: false
+                });
+                currentLevelInitialState = null;
+                resetGame({
+                    regenerateLevelStart: true,
+                    fastLevelStart: true,
+                    persistLevelStart: false
+                });
+                return;
+            }
+
+            if (event.key !== CURRENT_MAP_STORAGE_KEY) {
+                return;
+            }
+
+            const nextMapId = readPersistedCurrentMapId();
+            const nextMapIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === nextMapId);
+            if (nextMapIndex < 0 || nextMapIndex === currentMapIndex) {
+                return;
+            }
+
+            clearRuntimeSnapshot();
+            clearSolvedStageFailSafeTimer();
+            clearStageClearTimers();
+            clearCelebrationTimers();
+            isStageTransitioning = false;
+            selected = null;
+
+            void activateMapIndex(nextMapIndex, {
+                syncPixelAdmin: false,
+                renderPixelAdmin: false,
+                prepareUpcomingMap: false
+            }).then(() => {
+                currentLevelInitialState = null;
+                resetGame({
+                    regenerateLevelStart: true,
+                    fastLevelStart: true,
+                    persistLevelStart: false
+                });
+            });
+        });
+
 
         window.addEventListener("resize", () => {
             updateResponsiveLayout();
@@ -9755,113 +10506,23 @@
                     throw new Error("stage-data/index.json에 사용할 스테이지가 없습니다.");
                 }
 
-                const loadedStages = await Promise.all(
-                    stageEntries.map(async (stageEntry) => {
-                        const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`);
-                        if (!stageResponse.ok) {
-                            throw new Error(`Stage data load failed (${stageEntry.file}): ${stageResponse.status}`);
-                        }
-
-                        return {
-                            stageEntry,
-                            stagePayload: await stageResponse.json()
-                        };
-                    })
-                );
-
-                MAP_DEFINITIONS = loadedStages.map(({ stageEntry, stagePayload }) => {
-                    const palette = clonePaletteMeta(stagePayload?.palette || {});
-                    const themeOverridePalette = clonePaletteMeta(stagePayload?.themeOverridePalette || {});
-                    const sequence = Number(stagePayload?.sequence ?? stageEntry?.sequence) || 0;
-                    const normalizedImageMap = Array.isArray(stagePayload?.imageMap) ? clonePixelMap(stagePayload.imageMap) : [];
-                    const normalizedInitialBoardState = Array.isArray(stagePayload?.initialBoardState)
-                        ? clonePixelMap(stagePayload.initialBoardState)
-                        : null;
-                    const normalizedInitialTrayState = Array.isArray(stagePayload?.initialTrayState)
-                        ? [...stagePayload.initialTrayState]
-                        : [];
-                    const sourceSignature = JSON.stringify({
-                        imageMap: normalizedImageMap,
-                        palette,
-                        themeOverridePalette,
-                        scale: Math.max(1, Number(stagePayload?.scale) || 1),
-                        boardCellSize: Number(stagePayload?.boardCellSize) || null,
-                        trayCellSize: Number(stagePayload?.trayCellSize) || null,
-                        initialBoardState: normalizedInitialBoardState,
-                        initialTrayState: normalizedInitialTrayState,
-                        overrideVersion: Number(stagePayload?.overrideVersion) || 1
-                    });
-                    return {
-                        id: stagePayload?.id || stageEntry?.id || `stage_${sequence || "unknown"}`,
-                        sequence,
-                        file: stageEntry?.file || null,
-                        exportName:
-                            stagePayload?.exportName ||
-                            String(stageEntry?.file || "")
-                                .replace(/\.json$/i, "") ||
-                            null,
-                        displayName:
-                            normalizeStageDisplayName(stagePayload?.displayName) ||
-                            normalizeStageDisplayName(stageEntry?.displayName) ||
-                            null,
-                        displayNameNumbered:
-                            typeof stagePayload?.displayNameNumbered === "string" && stagePayload.displayNameNumbered.trim()
-                                ? stagePayload.displayNameNumbered.trim()
-                                : typeof stageEntry?.displayNameNumbered === "string" && stageEntry.displayNameNumbered.trim()
-                                    ? stageEntry.displayNameNumbered.trim()
-                                    : null,
-                        scale: Math.max(1, Number(stagePayload?.scale) || 1),
-                        boardCellSize: Number(stagePayload?.boardCellSize) || undefined,
-                        trayCellSize: Number(stagePayload?.trayCellSize) || undefined,
-                        startMessageTemplate: stagePayload?.startMessageTemplate || "",
-                        startMessage: stagePayload?.startMessage || "",
-                        overrideVersion: Number(stagePayload?.overrideVersion) || undefined,
-                        balancedColors: stagePayload?.balancedColors === true,
-                        colorSeed: Number(stagePayload?.colorSeed) || 0,
-                        sourceSignature,
-                        sourceRefs:
-                            stagePayload?.sourceRefs && typeof stagePayload.sourceRefs === "object" && !Array.isArray(stagePayload.sourceRefs)
-                                ? { ...stagePayload.sourceRefs }
-                                : null,
-                        pocketUnlock:
-                            stagePayload?.pocketUnlock && typeof stagePayload.pocketUnlock === "object" && !Array.isArray(stagePayload.pocketUnlock)
-                                ? { ...stagePayload.pocketUnlock }
-                                : undefined,
-                        palette,
-                        themeOverridePalette,
-                        cssVars:
-                            stagePayload?.cssVars && typeof stagePayload.cssVars === "object" && !Array.isArray(stagePayload.cssVars)
-                                ? { ...stagePayload.cssVars }
-                                : undefined,
-                        baseImageMap: normalizedImageMap,
-                        initialBoardState: normalizedInitialBoardState,
-                        initialTrayState: normalizedInitialTrayState
-                    };
-                });
-
-                MAP_THEME_OVERRIDES = Object.fromEntries(
-                    MAP_DEFINITIONS.map((definition) => [
-                        definition.id,
-                        {
-                            palette: clonePaletteMeta(
-                                Object.keys(definition.themeOverridePalette || {}).length
-                                    ? definition.themeOverridePalette
-                                    : definition.palette || {}
-                            ),
-                            cssVars: definition.cssVars ? { ...definition.cssVars } : {}
-                        }
-                    ])
-                );
-
+                MAP_DEFINITIONS = stageEntries.map((stageEntry) => createStageCatalogDefinition(stageEntry));
                 loadPersistedPixelAdminStageOverrides();
-                syncActiveMap(getInitialMapIndex(), {
+                rebuildRuntimeMapThemeOverrides();
+
+                const initialMapIndex = getInitialMapIndex();
+                await activateMapIndex(initialMapIndex, {
                     syncPixelAdmin: false,
                     renderPixelAdmin: false,
-                    prepareUpcomingMap: false
+                    prepareUpcomingMap: !window.__pixelAdminWindowMode
                 });
 
                 if (window.__pixelAdminWindowMode) {
-                    setPixelAdminOpen(true);
+                    if (appElement) {
+                        appElement.style.display = "none";
+                    }
+                    await ensurePixelAdminReady({ open: true });
+                    return;
                 }
 
                 const colorJewelUiPromise = ensureColorJewelSceneUi();
@@ -9963,7 +10624,7 @@
 
                 await colorJewelUiPromise;
                 initializeBottomActionButtons();
-                const restoredRuntimeSnapshot = restoreRuntimeSnapshot();
+                const restoredRuntimeSnapshot = await restoreRuntimeSnapshot();
                 pushLifecycleDebugEntry("runtime-restore", {
                     restored: restoredRuntimeSnapshot
                 });

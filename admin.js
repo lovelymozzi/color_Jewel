@@ -11,80 +11,133 @@ const pixelAdminMarkup = `
     </button>
 </div>
 
-    <aside class="pixel-admin" id="pixelAdmin" aria-hidden="true">
-        <div class="pixel-admin-resize-handle" id="pixelAdminResizeHandle" aria-hidden="true"></div>
-        <div class="pixel-admin-header">
-            <div>
-                <p class="pixel-admin-eyebrow">어드민</p>
-                <h2 class="pixel-admin-title">픽셀 맵 에디터</h2>
-                <p class="pixel-admin-stage" id="pixelAdminStage">현재 스테이지 픽셀 맵</p>
-            </div>
-            <button class="pixel-admin-close" id="pixelAdminClose" type="button" aria-label="픽셀 어드민 닫기">닫기</button>
+<aside class="pixel-admin" id="pixelAdmin" aria-hidden="true">
+    <div class="pixel-admin-resize-handle" id="pixelAdminResizeHandle" aria-hidden="true"></div>
+    <div class="pixel-admin-header">
+        <div>
+            <p class="pixel-admin-eyebrow">ADMIN</p>
+            <h2 class="pixel-admin-title">Pixel Map Editor</h2>
+            <p class="pixel-admin-stage" id="pixelAdminStage">현재 스테이지 픽셀 맵</p>
         </div>
+        <button class="pixel-admin-close" id="pixelAdminClose" type="button" aria-label="픽셀 어드민 닫기">닫기</button>
+    </div>
 
-        <label class="pixel-admin-field pixel-admin-stage-editor" for="pixelAdminTitleInput">
-            <span class="pixel-admin-field-label">제목</span>
-            <input class="pixel-admin-input" id="pixelAdminTitleInput" type="text" maxlength="24" placeholder="스테이지 제목" />
+    <label class="pixel-admin-field pixel-admin-stage-editor" for="pixelAdminTitleInput">
+        <span class="pixel-admin-field-label">제목</span>
+        <input class="pixel-admin-input" id="pixelAdminTitleInput" type="text" maxlength="24" placeholder="스테이지 제목" />
+    </label>
+
+    <section class="pixel-admin-stage-create" aria-labelledby="pixelAdminCreateStageHeading">
+        <div class="pixel-admin-stage-create-heading">
+            <p class="pixel-admin-stage-create-eyebrow">NEW STAGE</p>
+            <h3 class="pixel-admin-stage-create-title" id="pixelAdminCreateStageHeading">이미지로 새 배경 스테이지 만들기</h3>
+        </div>
+        <label class="pixel-admin-field" for="pixelAdminCreateStageFile">
+            <span class="pixel-admin-field-label">이미지 파일</span>
+            <input class="pixel-admin-input pixel-admin-file-input" id="pixelAdminCreateStageFile" type="file" accept="image/*" />
         </label>
-
-        <p class="pixel-admin-help" id="pixelAdminHelp">최대 30x30 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. \`#\`는 자동으로 붙습니다.</p>
-        <p class="pixel-admin-selection" id="pixelAdminSelection">선택된 색상</p>
-        <div class="pixel-admin-palette-tools">
-            <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" aria-label="색상 추가">+</button>
-            <button class="pixel-admin-action" id="pixelAdminErase" type="button" aria-label="지우개">E</button>
-        </div>
-        <div class="pixel-admin-color-editor">
-            <label class="pixel-admin-field" for="pixelAdminColorHexText">
-                <span class="pixel-admin-field-label">HEX 코드</span>
-                <input class="pixel-admin-input" id="pixelAdminColorHexText" type="text" maxlength="6" placeholder="FFFFFF" inputmode="text" />
+        <div class="pixel-admin-stage-create-grid">
+            <label class="pixel-admin-field" for="pixelAdminCreateStageTitle">
+                <span class="pixel-admin-field-label">관리용 이름</span>
+                <input class="pixel-admin-input" id="pixelAdminCreateStageTitle" type="text" maxlength="24" placeholder="예: 14. Desert Fox" />
             </label>
-            <label class="pixel-admin-field" for="pixelAdminColorHexPicker">
-                <span class="pixel-admin-field-label">선택</span>
-                <input class="pixel-admin-color-input" id="pixelAdminColorHexPicker" type="color" value="#ffffff" />
+            <label class="pixel-admin-field" for="pixelAdminCreateStageId">
+                <span class="pixel-admin-field-label">새 스테이지 ID</span>
+                <input class="pixel-admin-input" id="pixelAdminCreateStageId" type="text" maxlength="32" placeholder="예: desert_fox" />
+            </label>
+            <label class="pixel-admin-field" for="pixelAdminCreateStageSequence">
+                <span class="pixel-admin-field-label">순서 (비우면 자동)</span>
+                <input class="pixel-admin-input" id="pixelAdminCreateStageSequence" type="number" min="1" max="999" inputmode="numeric" placeholder="자동" />
+            </label>
+            <label class="pixel-admin-field" for="pixelAdminCreateStageColors">
+                <span class="pixel-admin-field-label">색상 수</span>
+                <input class="pixel-admin-input" id="pixelAdminCreateStageColors" type="number" min="2" max="12" inputmode="numeric" value="10" />
             </label>
         </div>
-        <div class="pixel-admin-palette" id="pixelAdminPalette"></div>
-
-        <div class="pixel-admin-grid-shell">
-            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
-            <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
-                <div class="pixel-admin-axis-track" id="pixelAdminAxisTop"></div>
-            </div>
-            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
-            <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
-                <div class="pixel-admin-axis-track" id="pixelAdminAxisLeft"></div>
-            </div>
-            <div class="pixel-admin-grid-wrap" id="pixelAdminGridWrap">
-                <div class="pixel-admin-grid" id="pixelAdminGrid"></div>
-            </div>
-            <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
-                <div class="pixel-admin-axis-track" id="pixelAdminAxisRight"></div>
-            </div>
-            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
-            <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
-                <div class="pixel-admin-axis-track" id="pixelAdminAxisBottom"></div>
-            </div>
-            <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
-            <div class="pixel-admin-grid-resize-bar" id="pixelAdminGridResizeBar" aria-hidden="true"></div>
+        <div class="pixel-admin-stage-create-options">
+            <label class="pixel-admin-check">
+                <input id="pixelAdminCreateStageGrid" type="checkbox" />
+                <span>격자 이미지를 직접 읽기</span>
+            </label>
+            <label class="pixel-admin-check">
+                <input id="pixelAdminCreateStageDither" type="checkbox" checked />
+                <span>디더링 유지</span>
+            </label>
+            <label class="pixel-admin-field" for="pixelAdminCreateStageBgMode">
+                <span class="pixel-admin-field-label">배경 처리</span>
+                <select class="pixel-admin-input" id="pixelAdminCreateStageBgMode">
+                    <option value="auto">모서리 색 자동 제거</option>
+                    <option value="none">배경 유지</option>
+                    <option value="hex">특정 HEX 제거</option>
+                </select>
+            </label>
+            <label class="pixel-admin-field" for="pixelAdminCreateStageBgColor">
+                <span class="pixel-admin-field-label">배경 HEX</span>
+                <input class="pixel-admin-input" id="pixelAdminCreateStageBgColor" type="text" maxlength="7" placeholder="#FFFFFF" />
+            </label>
         </div>
+        <button class="pixel-admin-action pixel-admin-stage-create-button" id="pixelAdminCreateStage" type="button">새 스테이지 생성</button>
+        <p class="pixel-admin-stage-create-note" id="pixelAdminCreateStageNote">로컬 브리지가 켜져 있으면 이미지를 새 정식 스테이지로 저장합니다.</p>
+    </section>
 
-        <div class="pixel-admin-actions">
-            <button class="pixel-admin-action" id="pixelAdminApply" type="button">스테이지 적용</button>
-            <button class="pixel-admin-action" id="pixelAdminStageClear" type="button">스테이지 클리어</button>
-            <button class="pixel-admin-action" id="pixelAdminReload" type="button">현재값 다시 불러오기</button>
-            <button class="pixel-admin-action" id="pixelAdminRestore" type="button">기본값 복원</button>
-            <button class="pixel-admin-action" id="pixelAdminCopy" type="button">매트릭스 복사</button>
-            <button class="pixel-admin-action" id="pixelAdminPreviousLevel" type="button">이전 레벨</button>
-            <button class="pixel-admin-action" id="pixelAdminNextLevel" type="button">다음 레벨</button>
-        </div>
+    <p class="pixel-admin-help" id="pixelAdminHelp">최대 30x30 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. \`#\`는 자동으로 붙습니다.</p>
+    <p class="pixel-admin-selection" id="pixelAdminSelection">선택된 색상</p>
+    <div class="pixel-admin-palette-tools">
+        <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" aria-label="색상 추가">+</button>
+        <button class="pixel-admin-action" id="pixelAdminErase" type="button" aria-label="지우개">E</button>
+    </div>
+    <div class="pixel-admin-color-editor">
+        <label class="pixel-admin-field" for="pixelAdminColorHexText">
+            <span class="pixel-admin-field-label">HEX 코드</span>
+            <input class="pixel-admin-input" id="pixelAdminColorHexText" type="text" maxlength="6" placeholder="FFFFFF" inputmode="text" />
+        </label>
+        <label class="pixel-admin-field" for="pixelAdminColorHexPicker">
+            <span class="pixel-admin-field-label">선택</span>
+            <input class="pixel-admin-color-input" id="pixelAdminColorHexPicker" type="color" value="#ffffff" />
+        </label>
+    </div>
+    <div class="pixel-admin-palette" id="pixelAdminPalette"></div>
 
-        <div class="pixel-admin-export-toolbar">
-            <p class="pixel-admin-export-label">코드값</p>
-            <button class="pixel-admin-action pixel-admin-copy-mini" id="pixelAdminCopyMini" type="button">복사</button>
+    <div class="pixel-admin-grid-shell">
+        <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+        <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
+            <div class="pixel-admin-axis-track" id="pixelAdminAxisTop"></div>
         </div>
-        <textarea class="pixel-admin-export" id="pixelAdminExport" spellcheck="false"></textarea>
-        <p class="pixel-admin-note" id="pixelAdminMessage">\`Shift + A\`로 어드민을 열고 닫을 수 있습니다.</p>
-    </aside>
+        <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+        <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
+            <div class="pixel-admin-axis-track" id="pixelAdminAxisLeft"></div>
+        </div>
+        <div class="pixel-admin-grid-wrap" id="pixelAdminGridWrap">
+            <div class="pixel-admin-grid" id="pixelAdminGrid"></div>
+        </div>
+        <div class="pixel-admin-axis pixel-admin-axis-vertical" aria-hidden="true">
+            <div class="pixel-admin-axis-track" id="pixelAdminAxisRight"></div>
+        </div>
+        <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+        <div class="pixel-admin-axis pixel-admin-axis-horizontal" aria-hidden="true">
+            <div class="pixel-admin-axis-track" id="pixelAdminAxisBottom"></div>
+        </div>
+        <div class="pixel-admin-axis-corner" aria-hidden="true"></div>
+        <div class="pixel-admin-grid-resize-bar" id="pixelAdminGridResizeBar" aria-hidden="true"></div>
+    </div>
+
+    <div class="pixel-admin-actions">
+        <button class="pixel-admin-action" id="pixelAdminApply" type="button">스테이지 적용</button>
+        <button class="pixel-admin-action" id="pixelAdminStageClear" type="button">스테이지 클리어</button>
+        <button class="pixel-admin-action" id="pixelAdminReload" type="button">현재값 다시 불러오기</button>
+        <button class="pixel-admin-action" id="pixelAdminRestore" type="button">기본값 복원</button>
+        <button class="pixel-admin-action" id="pixelAdminCopy" type="button">매트릭스 복사</button>
+        <button class="pixel-admin-action" id="pixelAdminPreviousLevel" type="button">이전 레벨</button>
+        <button class="pixel-admin-action" id="pixelAdminNextLevel" type="button">다음 레벨</button>
+    </div>
+
+    <div class="pixel-admin-export-toolbar">
+        <p class="pixel-admin-export-label">코드값</p>
+        <button class="pixel-admin-action pixel-admin-copy-mini" id="pixelAdminCopyMini" type="button">복사</button>
+    </div>
+    <textarea class="pixel-admin-export" id="pixelAdminExport" spellcheck="false"></textarea>
+    <p class="pixel-admin-note" id="pixelAdminMessage">분리된 어드민 창에서 스테이지를 편집할 수 있습니다.</p>
+</aside>
 `;
 
 if (!document.getElementById("pixelAdminToggle")) {
@@ -232,7 +285,7 @@ function buildStageCanvasMapFromBase(definition) {
             const template =
                 (typeof definition?.startMessageTemplate === "string" && definition.startMessageTemplate.trim()) ||
                 definition?.startMessage ||
-                "배경색을 보면서 보석을 제자리로 정리해 보세요.";
+                "諛곌꼍?됱쓣 蹂대㈃??蹂댁꽍???쒖옄由щ줈 ?뺣━??蹂댁꽭??";
             return template.includes("{title}") ? template.replaceAll("{title}", title) : template;
         }
 
@@ -390,71 +443,81 @@ function persistPixelAdminStageOverride(definition) {
             return true;
         }
 
+        function applyPersistedPixelAdminStageOverride(definition) {
+            if (!definition?.id || !isStageDefinitionLoaded(definition)) {
+                return false;
+            }
+
+            const storagePayload = readPixelAdminStageStorage();
+            const override = storagePayload[definition.id];
+            if (!override || typeof override !== "object") {
+                return false;
+            }
+
+            let didMutateStorage = false;
+            if ((Number(override.overrideVersion) || 1) !== getStageOverrideVersion(definition)) {
+                delete storagePayload[definition.id];
+                didMutateStorage = true;
+            } else {
+                const normalizedMap = normalizeStoredPixelAdminMap(override.map);
+                if (!normalizedMap) {
+                    delete storagePayload[definition.id];
+                    didMutateStorage = true;
+                } else {
+                    const normalizedPalette = normalizeStoredPixelAdminPalette(override.palette);
+                    const stagePalette = clonePaletteMeta(
+                        Object.keys(definition.themeOverridePalette || {}).length
+                            ? definition.themeOverridePalette
+                            : definition.palette || {}
+                    );
+                    const normalizedPaletteEntries = Object.entries(normalizedPalette);
+                    const normalizedPaletteLooksLegacyDefault =
+                        normalizedPaletteEntries.length > 0 &&
+                        normalizedPaletteEntries.every(([colorId, colorMeta]) => {
+                            const overrideColor = normalizeHexColor(
+                                typeof colorMeta === "string" ? colorMeta : colorMeta?.color
+                            );
+                            const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
+                            return overrideColor && defaultColor && overrideColor === defaultColor;
+                        });
+                    const stagePaletteDiffersFromDefault = Object.entries(stagePalette).some(([colorId, colorMeta]) => {
+                        const stageColor = normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color);
+                        const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
+                        return stageColor && stageColor !== defaultColor;
+                    });
+
+                    definition.adminTargetMap = clonePixelMap(normalizedMap);
+                    definition.adminPalette =
+                        stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault
+                            ? clonePaletteMeta(stagePalette)
+                            : normalizedPalette;
+                    definition.adminDisplayName = normalizeStageDisplayName(override.displayName) || null;
+                    invalidatePreparedMapCaches();
+
+                    if (stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault) {
+                        storagePayload[definition.id] = {
+                            ...override,
+                            palette: clonePaletteMeta(stagePalette)
+                        };
+                        didMutateStorage = true;
+                    }
+                }
+            }
+
+            if (didMutateStorage) {
+                writePixelAdminStageStorage(storagePayload);
+            }
+
+            return true;
+        }
+
         function loadPersistedPixelAdminStageOverrides() {
             const storagePayload = readPixelAdminStageStorage();
             let didMutateStorage = false;
 
-            Object.entries(storagePayload).forEach(([mapId, override]) => {
-                const definition = getMapDefinitionById(mapId);
-                if (!definition || !override || typeof override !== "object") {
+            Object.keys(storagePayload).forEach((mapId) => {
+                if (!getMapDefinitionById(mapId)) {
                     delete storagePayload[mapId];
-                    didMutateStorage = true;
-                    return;
-                }
-
-                if ((Number(override.overrideVersion) || 1) !== getStageOverrideVersion(definition)) {
-                    delete storagePayload[mapId];
-                    didMutateStorage = true;
-                    return;
-                }
-
-                if ((override.sourceSignature || null) !== (definition.sourceSignature || null)) {
-                    delete storagePayload[mapId];
-                    didMutateStorage = true;
-                    return;
-                }
-
-                const normalizedMap = normalizeStoredPixelAdminMap(override.map);
-                if (!normalizedMap) {
-                    delete storagePayload[mapId];
-                    didMutateStorage = true;
-                    return;
-                }
-
-                const normalizedPalette = normalizeStoredPixelAdminPalette(override.palette);
-                const stagePalette = clonePaletteMeta(
-                    Object.keys(definition.themeOverridePalette || {}).length
-                        ? definition.themeOverridePalette
-                        : definition.palette || {}
-                );
-                const normalizedPaletteEntries = Object.entries(normalizedPalette);
-                const normalizedPaletteLooksLegacyDefault =
-                    normalizedPaletteEntries.length > 0 &&
-                    normalizedPaletteEntries.every(([colorId, colorMeta]) => {
-                        const overrideColor = normalizeHexColor(
-                            typeof colorMeta === "string" ? colorMeta : colorMeta?.color
-                        );
-                        const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
-                        return overrideColor && defaultColor && overrideColor === defaultColor;
-                    });
-                const stagePaletteDiffersFromDefault = Object.entries(stagePalette).some(([colorId, colorMeta]) => {
-                    const stageColor = normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color);
-                    const defaultColor = normalizeHexColor(DEFAULT_COLOR_PALETTE[colorId]?.color);
-                    return stageColor && stageColor !== defaultColor;
-                });
-
-                definition.adminTargetMap = clonePixelMap(normalizedMap);
-                definition.adminPalette =
-                    stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault
-                        ? clonePaletteMeta(stagePalette)
-                        : normalizedPalette;
-                definition.adminDisplayName = normalizeStageDisplayName(override.displayName) || null;
-
-                if (stagePaletteDiffersFromDefault && normalizedPaletteLooksLegacyDefault) {
-                    storagePayload[mapId] = {
-                        ...override,
-                        palette: clonePaletteMeta(stagePalette)
-                    };
                     didMutateStorage = true;
                 }
             });
@@ -462,6 +525,11 @@ function persistPixelAdminStageOverride(definition) {
             if (didMutateStorage) {
                 writePixelAdminStageStorage(storagePayload);
             }
+
+            MAP_DEFINITIONS.forEach((definition) => {
+                applyPersistedPixelAdminStageOverride(definition);
+            });
+            window.__pixelAdminOverridesLoaded = true;
         }
 
         function clearPixelAdminAutoSaveTimer() {
@@ -491,7 +559,7 @@ function persistPixelAdminStageOverride(definition) {
                 syncPixelAdminDraftFromExportInput();
             } catch (error) {
                 if (showFailureMessage) {
-                    pixelAdminState.message = error.message || "자동 저장에 실패했어요.";
+                    pixelAdminState.message = error.message || "?먮룞 ??μ뿉 ?ㅽ뙣?덉뼱??";
                     renderPixelAdmin();
                 }
                 return false;
@@ -514,7 +582,7 @@ function persistPixelAdminStageOverride(definition) {
             }
 
             if (showFailureMessage) {
-                pixelAdminState.message = "자동 저장에 실패했어요.";
+                pixelAdminState.message = "?먮룞 ??μ뿉 ?ㅽ뙣?덉뼱??";
                 renderPixelAdmin();
             }
 
@@ -555,12 +623,6 @@ function getMapDisplayName(mapId) {
                 row.forEach((colorId) => {
                     if (colorId) colorIds.add(colorId);
                 });
-            });
-
-            Object.keys(stagePalette).forEach((colorId) => {
-                if (Number(colorId)) {
-                    colorIds.add(Number(colorId));
-                }
             });
 
             Object.keys(adminPalette).forEach((colorId) => {
@@ -606,12 +668,26 @@ function getMapDisplayName(mapId) {
         }
 
 const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
+const PIXEL_ADMIN_STAGE_BRIDGE_URL = "http://127.0.0.1:8765";
+const PIXEL_ADMIN_STAGE_CATALOG_REFRESH_KEY = "color_jewel_stage_catalog_refresh_v1";
 
 const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminToggleElement = document.getElementById("pixelAdminToggle");
         const pixelAdminCloseElement = document.getElementById("pixelAdminClose");
         const pixelAdminStageElement = document.getElementById("pixelAdminStage");
         const pixelAdminTitleInputElement = document.getElementById("pixelAdminTitleInput");
+        const pixelAdminCreateStageFileElement = document.getElementById("pixelAdminCreateStageFile");
+        const pixelAdminCreateStageTitleElement = document.getElementById("pixelAdminCreateStageTitle");
+        const pixelAdminCreateStageIdElement = document.getElementById("pixelAdminCreateStageId");
+        const pixelAdminCreateStageSequenceElement = document.getElementById("pixelAdminCreateStageSequence");
+        const pixelAdminCreateStageColorsElement = document.getElementById("pixelAdminCreateStageColors");
+        const pixelAdminCreateStageGridElement = document.getElementById("pixelAdminCreateStageGrid");
+        const pixelAdminCreateStageDitherElement = document.getElementById("pixelAdminCreateStageDither");
+        const pixelAdminCreateStageBgModeElement = document.getElementById("pixelAdminCreateStageBgMode");
+        const pixelAdminCreateStageBgColorElement = document.getElementById("pixelAdminCreateStageBgColor");
+        const pixelAdminCreateStageElement = document.getElementById("pixelAdminCreateStage");
+        const pixelAdminCreateStageNoteElement = document.getElementById("pixelAdminCreateStageNote");
+        const pixelAdminCreateStagePanelElement = pixelAdminCreateStageNoteElement?.closest?.(".pixel-admin-stage-create") || null;
         const pixelAdminHelpElement = document.getElementById("pixelAdminHelp");
         const pixelAdminSelectionElement = document.getElementById("pixelAdminSelection");
         const pixelAdminAddColorElement = document.getElementById("pixelAdminAddColor");
@@ -670,8 +746,11 @@ const pixelAdminState = {
             pendingGameReset: null,
             deferHeavyRender: false,
             deferredHeavyRenderTimer: null,
-            message: "`Shift + A`로 어드민을 열고 닫을 수 있습니다."
+            createStageBusy: false,
+            createStageStatus: "로컬 브리지가 켜져 있으면 이미지를 새 정식 스테이지로 저장합니다.",
+            message: "분리된 어드민 창에서 스테이지를 편집할 수 있습니다."
         };
+window.__pixelAdminState = pixelAdminState;
         const pixelAdminInteraction = {
             isDrawing: false,
             drawColorId: null,
@@ -761,7 +840,7 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
 
         function getPixelAdminColorLabel(mapId, colorId, paletteMeta = null) {
             if (colorId === 0) {
-                return "지우개";
+                return "吏?곌컻";
             }
 
             return getDefaultPixelAdminColorLabel(mapId, colorId);
@@ -778,6 +857,46 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
                 .replace(/^_+|_+$/g, "")
                 .replace(/_+/g, "_")
                 .slice(0, 48);
+        }
+
+        function normalizePixelAdminGeneratedStageId(value, fallback = "") {
+            return String(value || fallback || "")
+                .replace(/^\s*\d{1,3}(?:\s*[._-]\s*|\s+)/, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "_")
+                .replace(/^_+|_+$/g, "")
+                .replace(/_+/g, "_")
+                .slice(0, 32);
+        }
+
+        function getPixelAdminSuggestedStageTitleFromFileName(fileName, sequence = "") {
+            const baseTitle = normalizeStageDisplayName(
+                String(fileName || "")
+                    .replace(/\.[^.]+$/, "")
+                    .replace(/[_-]+/g, " ")
+                    .replace(/^\s*\d{1,3}(?:\s*[._-]\s*|\s+)/, "")
+            );
+            const normalizedSequence = Math.max(0, Number(sequence) || 0);
+            if (!baseTitle || !normalizedSequence) {
+                return baseTitle;
+            }
+
+            return normalizeStageDisplayName(`${String(normalizedSequence).padStart(2, "0")}. ${baseTitle}`);
+        }
+
+        function readPixelAdminFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.addEventListener("load", () => {
+                    const result = String(reader.result || "");
+                    const commaIndex = result.indexOf(",");
+                    resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+                });
+                reader.addEventListener("error", () => {
+                    reject(reader.error || new Error("이미지 파일을 읽지 못했어요."));
+                });
+                reader.readAsDataURL(file);
+            });
         }
 
         function getPixelAdminTitleFromExportBaseName(value) {
@@ -805,6 +924,10 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
         }
 
         function getResolvedPixelAdminSelection(mapId, currentSelection, sourceMap, paletteMeta = {}) {
+            if (currentSelection === 0) {
+                return 0;
+            }
+
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
             if (paletteIds.includes(currentSelection)) {
                 return currentSelection;
@@ -851,17 +974,17 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
             const entryMatches = [...block.matchAll(/(\d+)\s*:\s*["']([^"']+)["']/g)];
 
             if (!entryMatches.length && block.trim()) {
-                throw new Error("팔레트 코드 형식을 이해하지 못했어요.");
+                throw new Error("?붾젅??肄붾뱶 ?뺤떇???댄빐?섏? 紐삵뻽?댁슂.");
             }
 
             entryMatches.forEach((match) => {
                 const colorId = Number(match[1]);
                 if (colorId === 0) {
-                    throw new Error("C0은 빈칸 전용이에요. 밝은 영역도 C1 이상의 색상으로 넣어 주세요.");
+                    throw new Error("C0? 鍮덉뭏 ?꾩슜?댁뿉?? 諛앹? ?곸뿭??C1 ?댁긽???됱긽?쇰줈 ?ｌ뼱 二쇱꽭??");
                 }
                 const normalized = normalizeHexColor(match[2]);
                 if (!normalized) {
-                    throw new Error(`C${colorId} 색상은 6자리 HEX여야 해요.`);
+                    throw new Error(`C${colorId} ?됱긽? 6?먮━ HEX?ъ빞 ?댁슂.`);
                 }
                 palette[colorId] = { color: normalized };
             });
@@ -873,7 +996,7 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
             const rowMatches = [...block.matchAll(/\[([^\[\]]*?)\]/g)];
 
             if (!rowMatches.length) {
-                throw new Error("매트릭스 행을 찾지 못했어요.");
+                throw new Error("留ㅽ듃由?뒪 ?됱쓣 李얠? 紐삵뻽?댁슂.");
             }
 
             const rows = rowMatches.map((match) => {
@@ -883,13 +1006,13 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
                     .filter(Boolean)
                     .map((value) => {
                         if (!/^-?\d+$/.test(value)) {
-                            throw new Error(`숫자가 아닌 셀이 있어요: ${value}`);
+                            throw new Error(`?レ옄媛 ?꾨땶 ????덉뼱?? ${value}`);
                         }
                         return Number(value);
                     });
 
                 if (!row.length) {
-                    throw new Error("비어 있는 행이 있어요.");
+                    throw new Error("鍮꾩뼱 ?덈뒗 ?됱씠 ?덉뼱??");
                 }
 
                 return row;
@@ -897,11 +1020,11 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
 
             const columnCount = rows[0].length;
             if (rows.some((row) => row.length !== columnCount)) {
-                throw new Error("모든 행의 칸 수가 같아야 해요.");
+                throw new Error("紐⑤뱺 ?됱쓽 移??섍? 媛숈븘???댁슂.");
             }
 
             if (rows.length > MAX_GRID_ROWS || columnCount > MAX_GRID_COLS) {
-                throw new Error(`매트릭스가 너무 커요. 최대 ${MAX_GRID_ROWS}x${MAX_GRID_COLS}까지 가능해요.`);
+                throw new Error(`留ㅽ듃由?뒪媛 ?덈Т 而ㅼ슂. 理쒕? ${MAX_GRID_ROWS}x${MAX_GRID_COLS}源뚯? 媛?ν빐??`);
             }
 
             return rows;
@@ -910,7 +1033,7 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
         function parsePixelAdminExport(text, mapId) {
             const source = String(text || "").trim();
             if (!source) {
-                throw new Error("코드 창이 비어 있어요.");
+                throw new Error("肄붾뱶 李쎌씠 鍮꾩뼱 ?덉뼱??");
             }
 
             const paletteMatch = source.match(/const\s+[A-Z0-9_]+_PALETTE\s*=\s*\{([\s\S]*?)\};/);
@@ -920,7 +1043,7 @@ function getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta = {}) {
                 source.match(/const\s+[A-Z0-9_]+\s*=\s*\[([\s\S]*?)\];/);
 
             if (!matrixMatch) {
-                throw new Error("매트릭스 const 블록을 찾지 못했어요.");
+                throw new Error("留ㅽ듃由?뒪 const 釉붾줉??李얠? 紐삵뻽?댁슂.");
             }
 
             const draftPalette = paletteMatch ? parsePixelAdminPaletteBlock(paletteMatch[1]) : {};
@@ -988,7 +1111,7 @@ function syncPixelAdminDraftFromExportInput() {
             };
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
-            pixelAdminState.message = `${getDefaultPixelAdminColorLabel(pixelAdminState.currentMapId, colorId)} 색상을 수정했어요.`;
+            pixelAdminState.message = `${getDefaultPixelAdminColorLabel(pixelAdminState.currentMapId, colorId)} ?됱긽???섏젙?덉뼱??`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
         }
@@ -1002,7 +1125,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.draftDisplayName = String(nextValue || "").slice(0, 24);
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
-            pixelAdminState.message = "스테이지 제목을 수정했어요. 잠시 후 자동 저장됩니다.";
+            pixelAdminState.message = "?ㅽ뀒?댁? ?쒕ぉ???섏젙?덉뼱?? ?좎떆 ???먮룞 ??λ맗?덈떎.";
             schedulePixelAdminAutoSave(700);
             renderPixelAdmin();
         }
@@ -1015,7 +1138,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.selectedColorId = nextColorId;
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
-            pixelAdminState.message = `C${nextColorId} 색상을 팔레트에 추가했어요.`;
+            pixelAdminState.message = `C${nextColorId} ?됱긽???붾젅?몄뿉 異붽??덉뼱??`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
         }
@@ -1049,8 +1172,8 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = erasedCellCount
-                ? `C${colorId} 색상을 삭제하고 ${erasedCellCount}개 셀을 비웠어요.`
-                : `C${colorId} 색상을 팔레트에서 삭제했어요.`;
+                ? `C${colorId} ?됱긽????젣?섍퀬 ${erasedCellCount}媛????鍮꾩썱?댁슂.`
+                : `C${colorId} ?됱긽???붾젅?몄뿉????젣?덉뼱??`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
         }
@@ -1090,7 +1213,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.isDirty = false;
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.exportNeedsRefresh = true;
-            pixelAdminState.message = "`Shift + A`로 어드민을 열고 닫을 수 있습니다.";
+            pixelAdminState.message = "분리된 어드민 창에서 스테이지를 편집할 수 있습니다.";
             pixelAdminInteraction.strokeSnapshot = null;
             if (shouldRender) {
                 renderPixelAdmin();
@@ -1114,6 +1237,10 @@ function syncPixelAdminDraftFromExportInput() {
             }
             pixelAdminState.deferHeavyRender = false;
             stopPixelAdminGridResize();
+            if (pixelAdminWindowMode) {
+                renderPixelAdmin();
+                return;
+            }
             if (pixelAdminState.pendingGameReset) {
                 const pendingGameReset = pixelAdminState.pendingGameReset;
                 pixelAdminState.pendingGameReset = null;
@@ -1440,7 +1567,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminToggleHoldTimer = window.setTimeout(() => {
                 pixelAdminToggleHoldTimer = null;
                 suppressPixelAdminToggleClick = true;
-                goToFirstPlayableLevelCheat();
+                void goToFirstPlayableLevelCheat();
             }, PIXEL_ADMIN_CHEAT_HOLD_MS);
         }
 
@@ -1471,7 +1598,7 @@ function syncPixelAdminDraftFromExportInput() {
             }
             cell.setAttribute(
                 "aria-label",
-                `${rowIndex + 1}행 ${colIndex + 1}열 ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 픽셀`
+                `${rowIndex + 1}??${colIndex + 1}??${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} ?쎌?`
             );
             cell.title = `${rowIndex + 1}, ${colIndex + 1} - ${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}`;
         }
@@ -1494,11 +1621,11 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.draftMap[rowIndex][colIndex] = colorId;
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
-            const nextMessage = `${rowIndex + 1}행 ${colIndex + 1}열을 ${getPixelAdminColorLabel(
+            const nextMessage = `${rowIndex + 1}??${colIndex + 1}?댁쓣 ${getPixelAdminColorLabel(
                 pixelAdminState.currentMapId,
                 colorId,
                 pixelAdminState.draftPalette
-            )}로 칠했어요.`;
+            )}濡?移좏뻽?댁슂.`;
             schedulePixelAdminAutoSave();
             if (updateMessage) {
                 pixelAdminState.message = nextMessage;
@@ -1599,7 +1726,7 @@ function syncPixelAdminDraftFromExportInput() {
             try {
                 syncPixelAdminDraftFromExportInput();
             } catch (error) {
-                pixelAdminState.message = error.message || "코드 내용을 적용하지 못했어요.";
+                pixelAdminState.message = error.message || "肄붾뱶 ?댁슜???곸슜?섏? 紐삵뻽?댁슂.";
                 renderPixelAdmin();
                 return;
             }
@@ -1611,11 +1738,23 @@ function syncPixelAdminDraftFromExportInput() {
                 normalizeStageDisplayName(definition.displayName) ||
                 null;
             const didPersist = persistPixelAdminStageOverride(definition);
+            flushPendingPixelAdminStageStorage();
             syncActiveMap(currentMapIndex, {
                 syncPixelAdmin: false,
                 renderPixelAdmin: false,
                 prepareUpcomingMap: false
             });
+            if (pixelAdminWindowMode) {
+                syncPixelAdminWithActiveMap(true, false);
+                pixelAdminState.isDirty = false;
+                pixelAdminState.exportIsDirty = false;
+                pixelAdminState.deferHeavyRender = true;
+                pixelAdminState.message = didPersist
+                    ? "????쎈?????筌?뗀苡??? ?遺얠쟿??癰궰野껋럩沅?????怨몄뒠??랁????館六??곸뒄."
+                    : "????쎈?????筌?뗀苡??? ?遺얠쟿??癰궰野껋럩沅?????怨몄뒠???筌????關肉????쎈솭??됰선??";
+                renderPixelAdmin();
+                return;
+            }
             currentLevelInitialState = null;
             pixelAdminState.pendingGameReset = null;
             resetGame({
@@ -1627,8 +1766,8 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.exportIsDirty = false;
             pixelAdminState.deferHeavyRender = true;
             pixelAdminState.message = didPersist
-                ? "이 스테이지에 캔버스와 팔레트 변경사항을 적용하고 저장했어요."
-                : "이 스테이지에 캔버스와 팔레트 변경사항을 적용했지만 저장에는 실패했어요.";
+                ? "???ㅽ뀒?댁???罹붾쾭?ㅼ? ?붾젅??蹂寃쎌궗??쓣 ?곸슜?섍퀬 ??ν뻽?댁슂."
+                : "???ㅽ뀒?댁???罹붾쾭?ㅼ? ?붾젅??蹂寃쎌궗??쓣 ?곸슜?덉?留???μ뿉???ㅽ뙣?덉뼱??";
             renderPixelAdmin();
         }
 
@@ -1651,11 +1790,20 @@ function syncPixelAdminDraftFromExportInput() {
             definition.adminPalette = null;
             definition.adminDisplayName = null;
             clearPersistedPixelAdminStageOverride(definition.id);
+            flushPendingPixelAdminStageStorage();
             syncActiveMap(currentMapIndex, {
                 syncPixelAdmin: false,
                 renderPixelAdmin: false,
                 prepareUpcomingMap: false
             });
+            if (pixelAdminWindowMode) {
+                syncPixelAdminWithActiveMap(true, false);
+                pixelAdminState.exportIsDirty = false;
+                pixelAdminState.deferHeavyRender = true;
+                pixelAdminState.message = "湲곕낯 罹붾쾭?ㅼ? ?붾젅?몃줈 蹂듭썝?덉뼱??";
+                renderPixelAdmin();
+                return;
+            }
             currentLevelInitialState = null;
             pixelAdminState.pendingGameReset = null;
             resetGame({
@@ -1670,10 +1818,12 @@ function syncPixelAdminDraftFromExportInput() {
             renderPixelAdmin();
         }
 
-        function goToNextLevelFromAdmin() {
-            const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
-            const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
-            const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
+        async function goToMapIndexFromAdmin(nextMapIndex, options = {}) {
+            const {
+                message = "",
+                preparedDirection = null
+            } = options;
+
             persistPixelAdminDraftState({ shouldRender: false });
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
@@ -1681,75 +1831,189 @@ function syncPixelAdminDraftFromExportInput() {
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(nextMapIndex, {
+            await activateMapIndex(nextMapIndex, {
                 renderPixelAdmin: false,
                 prepareUpcomingMap: false
             });
-            currentLevelInitialState =
+
+            if (
+                preparedDirection === "next" &&
                 preparedNextMapIndex === nextMapIndex &&
-                preparedNextMapVersion === nextOverrideVersion &&
+                preparedNextMapVersion === getStageOverrideVersion(getCurrentMapDefinition()) &&
                 preparedNextLevelInitialState?.mapId === ACTIVE_MAP?.id
-                    ? {
-                        mapId: preparedNextLevelInitialState.mapId,
-                        rows: preparedNextLevelInitialState.rows,
-                        cols: preparedNextLevelInitialState.cols,
-                        boardState: cloneBoardSnapshot(preparedNextLevelInitialState.boardState),
-                        trayState: [...preparedNextLevelInitialState.trayState],
-                        cleanedSocketCells: [...(preparedNextLevelInitialState.cleanedSocketCells || [])],
-                        actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
-                    }
-                    : null;
+            ) {
+                currentLevelInitialState = {
+                    mapId: preparedNextLevelInitialState.mapId,
+                    rows: preparedNextLevelInitialState.rows,
+                    cols: preparedNextLevelInitialState.cols,
+                    boardState: cloneBoardSnapshot(preparedNextLevelInitialState.boardState),
+                    trayState: [...preparedNextLevelInitialState.trayState],
+                    cleanedSocketCells: [...(preparedNextLevelInitialState.cleanedSocketCells || [])],
+                    actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
+                };
+            } else if (
+                preparedDirection === "previous" &&
+                preparedPreviousMapIndex === nextMapIndex &&
+                preparedPreviousMapVersion === getStageOverrideVersion(getCurrentMapDefinition()) &&
+                preparedPreviousLevelInitialState?.mapId === ACTIVE_MAP?.id
+            ) {
+                currentLevelInitialState = {
+                    mapId: preparedPreviousLevelInitialState.mapId,
+                    rows: preparedPreviousLevelInitialState.rows,
+                    cols: preparedPreviousLevelInitialState.cols,
+                    boardState: cloneBoardSnapshot(preparedPreviousLevelInitialState.boardState),
+                    trayState: [...preparedPreviousLevelInitialState.trayState],
+                    cleanedSocketCells: [...(preparedPreviousLevelInitialState.cleanedSocketCells || [])],
+                    actionCharges: clampActionChargesSnapshot(preparedPreviousLevelInitialState.actionCharges)
+                };
+            } else {
+                currentLevelInitialState = null;
+            }
+
+            if (pixelAdminWindowMode) {
+                syncPixelAdminWithActiveMap(true, false);
+                pixelAdminState.deferHeavyRender = true;
+                pixelAdminState.message =
+                    message ||
+                    `?꾩옱 ?ㅽ뀒?댁?瑜?${getMapDisplayName(getCurrentMapDefinition().id)}濡??대룞?덉뼱??`;
+                renderPixelAdmin();
+                return;
+            }
             pixelAdminState.pendingGameReset = null;
             resetGame({
                 regenerateLevelStart: !currentLevelInitialState,
                 fastLevelStart: !currentLevelInitialState,
                 persistLevelStart: false
             });
+            syncPixelAdminWithActiveMap(true, false);
             pixelAdminState.deferHeavyRender = true;
-            pixelAdminState.message = `다음 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
+            pixelAdminState.message =
+                message ||
+                `현재 스테이지를 ${getMapDisplayName(getCurrentMapDefinition().id)}로 이동했어요.`;
             renderPixelAdmin();
+        }
+
+        async function createPixelAdminStageFromImage() {
+            const imageFile = pixelAdminCreateStageFileElement?.files?.[0] || null;
+            if (!imageFile) {
+                pixelAdminState.createStageStatus = "먼저 이미지 파일을 골라 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const requestedSequence = Math.max(0, Number(pixelAdminCreateStageSequenceElement?.value) || 0);
+            const displayName = normalizeStageDisplayName(
+                requestedSequence
+                    ? String(pixelAdminCreateStageTitleElement?.value || "").replace(
+                          new RegExp(`^\\s*0*${requestedSequence}(?:\\s*[._-]\\s*|\\s+)`),
+                          ""
+                      )
+                    : pixelAdminCreateStageTitleElement?.value || ""
+            );
+            if (!displayName) {
+                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const stageId = normalizePixelAdminGeneratedStageId(
+                pixelAdminCreateStageIdElement?.value,
+                displayName
+            );
+            if (!stageId) {
+                pixelAdminState.createStageStatus = "새 스테이지 ID는 영문/숫자로 만들어 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const backgroundHex = normalizeHexColor(pixelAdminCreateStageBgColorElement?.value || "");
+            const backgroundMode = String(pixelAdminCreateStageBgModeElement?.value || "auto");
+            if (backgroundMode === "hex" && !backgroundHex) {
+                pixelAdminState.createStageStatus = "HEX 배경 제거를 쓰려면 #RRGGBB 값을 넣어 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            pixelAdminState.createStageBusy = true;
+            pixelAdminState.createStageStatus = "이미지를 픽셀화하고 새 스테이지 파일을 만드는 중이에요.";
+            renderPixelAdmin();
+
+            try {
+                const imageBase64 = await readPixelAdminFileAsBase64(imageFile);
+                const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/create-stage-from-image`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        imageName: imageFile.name,
+                        imageBase64,
+                        displayName,
+                        stageId,
+                        sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                        colors: pixelAdminCreateStageColorsElement?.value || 10,
+                        grid: pixelAdminCreateStageGridElement?.checked === true,
+                        dither: pixelAdminCreateStageDitherElement?.checked !== false,
+                        bgMode: backgroundMode,
+                        bgColor: backgroundHex
+                    })
+                });
+                const responsePayload = await response.json();
+                if (!response.ok || !responsePayload?.ok) {
+                    throw new Error(responsePayload?.error || `브리지 요청이 실패했어요. (${response.status})`);
+                }
+
+                const createdStageEntry = responsePayload.stageEntry;
+                const createdStagePayload = responsePayload.stagePayload;
+                const createdStageIndex = upsertRuntimeStageDefinition(createdStageEntry, createdStagePayload);
+                if (createdStageIndex < 0) {
+                    throw new Error("새 스테이지를 런타임 목록에 추가하지 못했어요.");
+                }
+
+                window.localStorage.setItem(
+                    PIXEL_ADMIN_STAGE_CATALOG_REFRESH_KEY,
+                    JSON.stringify({
+                        at: Date.now(),
+                        stageEntry: createdStageEntry,
+                        stagePayload: createdStagePayload,
+                        activate: true
+                    })
+                );
+
+                pixelAdminState.createStageStatus = `${createdStageEntry.displayNameNumbered} 스테이지를 만들었어요. 바로 열어볼게요.`;
+                pixelAdminCreateStageFileElement.value = "";
+                await goToMapIndexFromAdmin(createdStageIndex, {
+                    message: `${createdStageEntry.displayNameNumbered} 스테이지를 만들고 바로 열었어요.`
+                });
+            } catch (error) {
+                pixelAdminState.createStageStatus =
+                    error?.message ||
+                    "새 스테이지 생성에 실패했어요. 브리지가 켜져 있는지 확인해 주세요.";
+                renderPixelAdmin();
+            } finally {
+                pixelAdminState.createStageBusy = false;
+                renderPixelAdmin();
+            }
+        }
+
+        function goToNextLevelFromAdmin() {
+            const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            void goToMapIndexFromAdmin(nextMapIndex, {
+                preparedDirection: "next",
+                message: `다음 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(MAP_DEFINITIONS[nextMapIndex]?.id)}입니다.`
+            });
         }
 
         function goToPreviousLevelFromAdmin() {
             const previousMapIndex =
                 ((currentMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
-            persistPixelAdminDraftState({ shouldRender: false });
-            clearRuntimeSnapshot();
-            clearSolvedStageFailSafeTimer();
-            clearStageClearTimers();
-            clearCelebrationTimers();
-            isStageTransitioning = false;
-            selected = null;
-            syncActiveMap(previousMapIndex, {
-                renderPixelAdmin: false,
-                prepareUpcomingMap: false
+            void goToMapIndexFromAdmin(previousMapIndex, {
+                preparedDirection: "previous",
+                message: `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(MAP_DEFINITIONS[previousMapIndex]?.id)}입니다.`
             });
-            currentLevelInitialState =
-                preparedPreviousMapIndex === previousMapIndex &&
-                preparedPreviousMapVersion === getStageOverrideVersion(getCurrentMapDefinition()) &&
-                preparedPreviousLevelInitialState?.mapId === ACTIVE_MAP?.id
-                    ? {
-                        mapId: preparedPreviousLevelInitialState.mapId,
-                        rows: preparedPreviousLevelInitialState.rows,
-                        cols: preparedPreviousLevelInitialState.cols,
-                        boardState: cloneBoardSnapshot(preparedPreviousLevelInitialState.boardState),
-                        trayState: [...preparedPreviousLevelInitialState.trayState],
-                        cleanedSocketCells: [...(preparedPreviousLevelInitialState.cleanedSocketCells || [])],
-                        actionCharges: clampActionChargesSnapshot(preparedPreviousLevelInitialState.actionCharges)
-                    }
-                    : null;
-            pixelAdminState.pendingGameReset = null;
-            resetGame({
-                regenerateLevelStart: !currentLevelInitialState,
-                fastLevelStart: !currentLevelInitialState,
-                persistLevelStart: false
-            });
-            pixelAdminState.deferHeavyRender = true;
-            pixelAdminState.message = `이전 레벨로 이동했어요. 현재 스테이지는 ${getMapDisplayName(getCurrentMapDefinition().id)}입니다.`;
-            renderPixelAdmin();
         }
 
-        function goToFirstPlayableLevelCheat() {
+        async function goToFirstPlayableLevelCheat() {
             const targetMapIndex = getFirstPlayableMapIndex();
 
             clearRuntimeSnapshot();
@@ -1758,8 +2022,10 @@ function syncPixelAdminDraftFromExportInput() {
             clearCelebrationTimers();
             isStageTransitioning = false;
             selected = null;
-            syncActiveMap(targetMapIndex);
-            resetGame({ regenerateLevelStart: true });
+            await activateMapIndex(targetMapIndex);
+            if (!pixelAdminWindowMode) {
+                resetGame({ regenerateLevelStart: true });
+            }
         }
 
         async function copyPixelAdminExport() {
@@ -1769,12 +2035,12 @@ function syncPixelAdminDraftFromExportInput() {
 
             try {
                 await navigator.clipboard.writeText(pixelAdminExportElement.value);
-                pixelAdminState.message = "매트릭스를 클립보드에 복사했어요.";
+                pixelAdminState.message = "留ㅽ듃由?뒪瑜??대┰蹂대뱶??蹂듭궗?덉뼱??";
             } catch (error) {
                 pixelAdminExportElement.focus();
                 pixelAdminExportElement.select();
                 document.execCommand("copy");
-                pixelAdminState.message = "직접 복사할 수 있도록 내보내기 텍스트를 선택했어요.";
+                pixelAdminState.message = "吏곸젒 蹂듭궗?????덈룄濡??대낫?닿린 ?띿뒪?몃? ?좏깮?덉뼱??";
             }
 
             renderPixelAdmin();
@@ -1831,8 +2097,8 @@ function syncPixelAdminDraftFromExportInput() {
 
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
             pixelAdminHelpElement.textContent = shouldDeferHeavyRender
-                ? "새 스테이지를 불러오는 중이에요. 코드값, 팔레트, 그리드는 잠시 후 갱신됩니다."
-                : "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 그리드 위에서 마우스 휠로 확대/축소할 수 있고, HEX는 `#` 없이 6자리만 입력하면 채도는 자동으로 65 이하로 맞춰집니다.";
+                ? "스테이지를 불러오는 중이에요. 코드와 팔레트, 그리드는 잠시 후 다시 그려집니다."
+                : "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 마우스 휠로 확대/축소하고 HEX는 # 없이 6자리만 넣어도 됩니다.";
             pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             pixelAdminGridElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
@@ -1862,6 +2128,15 @@ function syncPixelAdminDraftFromExportInput() {
             }
             if (pixelAdminTitleInputElement) {
                 pixelAdminTitleInputElement.value = pixelAdminState.draftDisplayName || "";
+            }
+            if (pixelAdminCreateStageNoteElement) {
+                pixelAdminCreateStageNoteElement.textContent = pixelAdminState.createStageStatus;
+            }
+            if (pixelAdminCreateStageElement) {
+                pixelAdminCreateStageElement.disabled = pixelAdminState.createStageBusy;
+            }
+            if (pixelAdminCreateStageBgColorElement) {
+                pixelAdminCreateStageBgColorElement.disabled = pixelAdminCreateStageBgModeElement?.value !== "hex";
             }
             if (pixelAdminColorHexTextElement) {
                 pixelAdminColorHexTextElement.value = selectedColorMeta?.color?.replace(/^#/, "") || "";
@@ -1903,7 +2178,7 @@ function syncPixelAdminDraftFromExportInput() {
                     swatch.append(swatchChip, swatchLabel, swatchHex);
                     swatch.addEventListener("click", () => {
                         pixelAdminState.selectedColorId = colorId;
-                        pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}을(를) 선택했어요.`;
+                        pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}??瑜? ?좏깮?덉뼱??`;
                         renderPixelAdmin();
                     });
 
@@ -1914,8 +2189,8 @@ function syncPixelAdminDraftFromExportInput() {
                         deleteButton.type = "button";
                         deleteButton.className = "pixel-admin-swatch-delete";
                         deleteButton.textContent = "x";
-                        deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 삭제`);
-                        deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 삭제`;
+                        deleteButton.setAttribute("aria-label", `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} ?됱긽 ??젣`);
+                        deleteButton.title = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} ??젣`;
                         deleteButton.addEventListener("click", (event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1993,7 +2268,7 @@ function clearCurrentStageFromPixelAdmin() {
             }
 
             if (isAnimating || isStageTransitioning) {
-                pixelAdminState.message = "이동이나 전환이 끝난 뒤에 스테이지 클리어를 눌러 주세요.";
+                pixelAdminState.message = "?대룞?대굹 ?꾪솚???앸궃 ?ㅼ뿉 ?ㅽ뀒?댁? ?대━?대? ?뚮윭 二쇱꽭??";
                 renderPixelAdmin();
                 return;
             }
@@ -2009,11 +2284,11 @@ function clearCurrentStageFromPixelAdmin() {
             selected = null;
             completedColorIds = getCompletedColorIds();
             solved = checkSolved();
-            setStatus("현재 스테이지를 즉시 클리어했어요.");
+            setStatus("?꾩옱 ?ㅽ뀒?댁?瑜?利됱떆 ?대━?댄뻽?댁슂.");
             render();
 
             if (solved) {
-                pixelAdminState.message = "현재 스테이지를 클리어했어요.";
+                pixelAdminState.message = "?꾩옱 ?ㅽ뀒?댁?瑜??대━?댄뻽?댁슂.";
                 renderPixelAdmin();
                 triggerSolvedStageSequence(gameSessionVersion);
             }
@@ -2040,8 +2315,12 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
         });
 
         pixelAdminPopoutElement?.addEventListener("click", () => {
-            const popupUrl = new URL(window.location.href);
+            const popupUrl = new URL("./a/", document.baseURI || window.location.href);
             popupUrl.searchParams.set("adminWindow", "1");
+            const activeMapId = getCurrentMapDefinition()?.id;
+            if (activeMapId) {
+                popupUrl.searchParams.set("mapId", activeMapId);
+            }
             const popupWindow = window.open(
                 popupUrl.toString(),
                 "color-jewel-admin",
@@ -2114,6 +2393,140 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
 
         pixelAdminTitleInputElement?.addEventListener("input", (event) => {
             updatePixelAdminStageTitleDraft(event.target.value);
+        });
+
+        pixelAdminCreateStageFileElement?.addEventListener("change", () => {
+            const selectedFile = pixelAdminCreateStageFileElement.files?.[0] || null;
+            if (!selectedFile) {
+                return;
+            }
+
+            const suggestedTitle = getPixelAdminSuggestedStageTitleFromFileName(
+                selectedFile.name,
+                pixelAdminCreateStageSequenceElement?.value || ""
+            );
+            if (
+                pixelAdminCreateStageTitleElement &&
+                !pixelAdminCreateStageTitleElement.dataset.userEdited
+            ) {
+                pixelAdminCreateStageTitleElement.value = suggestedTitle;
+            }
+            if (
+                pixelAdminCreateStageIdElement &&
+                !pixelAdminCreateStageIdElement.dataset.userEdited
+            ) {
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", suggestedTitle || selectedFile.name);
+            }
+            pixelAdminState.createStageStatus = `${selectedFile.name} 이미지를 새 스테이지 재료로 골랐어요.`;
+            renderPixelAdmin();
+        });
+
+        pixelAdminCreateStageTitleElement?.addEventListener("input", (event) => {
+            const normalizedTitle = normalizeStageDisplayName(event.target.value);
+            event.target.value = normalizedTitle;
+            event.target.dataset.userEdited = normalizedTitle ? "true" : "";
+            if (!pixelAdminCreateStageIdElement) {
+                return;
+            }
+
+            if (!pixelAdminCreateStageIdElement.dataset.userEdited) {
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", normalizedTitle);
+            }
+        });
+
+        pixelAdminCreateStageSequenceElement?.addEventListener("input", (event) => {
+            if (!pixelAdminCreateStageTitleElement || pixelAdminCreateStageTitleElement.dataset.userEdited) {
+                return;
+            }
+
+            const selectedFile = pixelAdminCreateStageFileElement?.files?.[0] || null;
+            const suggestedTitle = getPixelAdminSuggestedStageTitleFromFileName(
+                selectedFile?.name || pixelAdminCreateStageTitleElement.value,
+                event.target.value
+            );
+            pixelAdminCreateStageTitleElement.value = suggestedTitle;
+            if (pixelAdminCreateStageIdElement && !pixelAdminCreateStageIdElement.dataset.userEdited) {
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", suggestedTitle);
+            }
+        });
+
+        pixelAdminCreateStageIdElement?.addEventListener("input", (event) => {
+            const normalizedStageId = normalizePixelAdminGeneratedStageId(event.target.value);
+            event.target.value = normalizedStageId;
+            event.target.dataset.userEdited = normalizedStageId ? "true" : "";
+        });
+
+        pixelAdminCreateStageBgColorElement?.addEventListener("input", (event) => {
+            const sanitized = String(event.target.value || "")
+                .toUpperCase()
+                .replace(/[^0-9A-F#]/g, "")
+                .replace(/(?!^)#/g, "")
+                .slice(0, 7);
+            event.target.value = sanitized.startsWith("#") || !sanitized ? sanitized : `#${sanitized}`;
+        });
+
+        pixelAdminCreateStageBgModeElement?.addEventListener("change", () => {
+            renderPixelAdmin();
+        });
+
+        pixelAdminCreateStageElement?.addEventListener("click", () => {
+            void createPixelAdminStageFromImage();
+        });
+
+        ["dragenter", "dragover"].forEach((eventName) => {
+            pixelAdminCreateStagePanelElement?.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                if (!event.dataTransfer) {
+                    return;
+                }
+
+                event.dataTransfer.dropEffect = "copy";
+                pixelAdminCreateStagePanelElement.classList.add("drag-over");
+            });
+        });
+
+        ["dragleave", "dragend"].forEach((eventName) => {
+            pixelAdminCreateStagePanelElement?.addEventListener(eventName, (event) => {
+                if (
+                    event.type === "dragleave" &&
+                    pixelAdminCreateStagePanelElement?.contains(event.relatedTarget)
+                ) {
+                    return;
+                }
+
+                pixelAdminCreateStagePanelElement.classList.remove("drag-over");
+            });
+        });
+
+        pixelAdminCreateStagePanelElement?.addEventListener("drop", (event) => {
+            event.preventDefault();
+            pixelAdminCreateStagePanelElement.classList.remove("drag-over");
+
+            const droppedFiles = event.dataTransfer?.files;
+            const droppedImageFile = droppedFiles?.[0] || null;
+            if (!droppedImageFile) {
+                pixelAdminState.createStageStatus = "드롭된 파일을 찾지 못했어요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            if (!String(droppedImageFile.type || "").startsWith("image/")) {
+                pixelAdminState.createStageStatus = "이미지 파일만 드롭할 수 있어요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            if (pixelAdminCreateStageFileElement) {
+                try {
+                    pixelAdminCreateStageFileElement.files = droppedFiles;
+                } catch (error) {
+                    pixelAdminState.createStageStatus = "이 브라우저에서는 드롭한 파일을 바로 연결하지 못했어요. 클릭해서 다시 골라 주세요.";
+                    renderPixelAdmin();
+                    return;
+                }
+
+                pixelAdminCreateStageFileElement.dispatchEvent(new Event("change", { bubbles: true }));
+            }
         });
 
         pixelAdminExportElement?.addEventListener("input", () => {
@@ -2261,11 +2674,15 @@ window.addEventListener("keydown", (event) => {
         return;
     }
 
-    if (event.shiftKey && event.code === "KeyA") {
-        event.preventDefault();
-        togglePixelAdmin();
-    }
 });
+
+window.applyPersistedPixelAdminStageOverride = applyPersistedPixelAdminStageOverride;
+window.loadPersistedPixelAdminStageOverrides = loadPersistedPixelAdminStageOverrides;
+window.syncPixelAdminWithActiveMap = syncPixelAdminWithActiveMap;
+window.setPixelAdminOpen = setPixelAdminOpen;
+window.togglePixelAdmin = togglePixelAdmin;
+window.goToFirstPlayableLevelCheat = goToFirstPlayableLevelCheat;
+window.__pixelAdminLoaded = true;
 
 window.addEventListener("pagehide", () => {
     flushPendingPixelAdminStageStorage();
@@ -2318,6 +2735,12 @@ window.addEventListener("storage", (event) => {
                 renderPixelAdmin: false,
                 prepareUpcomingMap: false
             });
+            if (pixelAdminWindowMode) {
+                if (pixelAdminState.isOpen) {
+                    syncPixelAdminWithActiveMap(true, true);
+                }
+                return;
+            }
             currentLevelInitialState = null;
             resetGame({
                 regenerateLevelStart: true,
@@ -2328,6 +2751,41 @@ window.addEventListener("storage", (event) => {
 
         if (pixelAdminState.isOpen) {
             syncPixelAdminWithActiveMap(true, true);
+        }
+        return;
+    }
+
+    if (event.key === PIXEL_ADMIN_STAGE_CATALOG_REFRESH_KEY) {
+        if (!event.newValue || !Array.isArray(MAP_DEFINITIONS)) {
+            return;
+        }
+
+        try {
+            const refreshPayload = JSON.parse(event.newValue);
+            const stageEntry = refreshPayload?.stageEntry || null;
+            const stagePayload = refreshPayload?.stagePayload || null;
+            if (!stageEntry || !stagePayload) {
+                return;
+            }
+
+            const createdStageIndex = upsertRuntimeStageDefinition(stageEntry, stagePayload);
+            if (createdStageIndex < 0) {
+                return;
+            }
+
+            if (refreshPayload.activate) {
+                pixelAdminState.createStageStatus = `${stageEntry.displayNameNumbered || stageEntry.file} 스테이지가 추가되어 바로 이동했어요.`;
+                void goToMapIndexFromAdmin(createdStageIndex, {
+                    message: `${stageEntry.displayNameNumbered || stageEntry.file} 스테이지를 불러왔어요.`
+                });
+                return;
+            }
+
+            if (pixelAdminState.isOpen) {
+                syncPixelAdminWithActiveMap(true, true);
+            }
+        } catch (error) {
+            console.error("[PixelAdmin] failed to apply created stage refresh", error);
         }
         return;
     }
@@ -2348,22 +2806,30 @@ window.addEventListener("storage", (event) => {
     clearCelebrationTimers();
     isStageTransitioning = false;
     selected = null;
-    syncActiveMap(nextMapIndex, {
+    void activateMapIndex(nextMapIndex, {
         renderPixelAdmin: false,
         prepareUpcomingMap: false
-    });
-    currentLevelInitialState = null;
-    resetGame({
-        regenerateLevelStart: true,
-        fastLevelStart: true,
-        persistLevelStart: false
-    });
+    }).then(() => {
+        if (pixelAdminWindowMode) {
+            if (pixelAdminState.isOpen) {
+                syncPixelAdminWithActiveMap(true, true);
+            }
+            return;
+        }
+        currentLevelInitialState = null;
+        resetGame({
+            regenerateLevelStart: true,
+            fastLevelStart: true,
+            persistLevelStart: false
+        });
 
-    if (pixelAdminState.isOpen) {
-        syncPixelAdminWithActiveMap(true, true);
-    }
+        if (pixelAdminState.isOpen) {
+            syncPixelAdminWithActiveMap(true, true);
+        }
+    });
 });
 
 document.addEventListener("freeze", () => {
     flushPendingPixelAdminStageStorage();
 });
+
