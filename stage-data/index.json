@@ -125,6 +125,83 @@
       "displayName": "Carrot",
       "displayNameNumbered": "18. Carrot",
       "file": "18_carrot.json"
+    },
+    {
+      "sequence": 19,
+      "id": "donuts",
+      "displayName": "Donuts",
+      "displayNameNumbered": "19. Donuts",
+      "file": "19_donuts.json"
+    },
+    {
+      "sequence": 20,
+      "id": "duck_boat",
+      "displayName": "Duck Boat",
+      "displayNameNumbered": "20. Duck Boat",
+      "file": "20_duck_boat.json"
+    },
+    {
+      "sequence": 21,
+      "id": "umbrella",
+      "displayName": "Umbrella",
+      "displayNameNumbered": "21. Umbrella",
+      "file": "21_umbrella.json"
+    },
+    {
+      "sequence": 22,
+      "id": "lantern",
+      "displayName": "Lantern",
+      "displayNameNumbered": "22. Lantern",
+      "file": "22_lantern.json"
+    },
+    {
+      "sequence": 23,
+      "id": "water_gun",
+      "displayName": "Water Gun",
+      "displayNameNumbered": "23. Water Gun",
+      "file": "23_water_gun.json"
+    },
+    {
+      "sequence": 24,
+      "id": "guitar",
+      "displayName": "Guitar",
+      "displayNameNumbered": "24. Guitar",
+      "file": "24_guitar.json"
+    },
+    {
+      "sequence": 25,
+      "id": "mango_shaved_ice",
+      "displayName": "Mango Shaved Ice",
+      "displayNameNumbered": "25. Mango Shaved Ice",
+      "file": "25_mango_shaved_ice.json"
+    },
+    {
+      "sequence": 26,
+      "id": "mint_ice_cream",
+      "displayName": "Mint Ice Cream",
+      "displayNameNumbered": "26. Mint Ice Cream",
+      "file": "26_mint_ice_cream.json"
+    },
+    {
+      "sequence": 27,
+      "id": "christmas_socks",
+      "displayName": "Christmas Socks",
+      "displayNameNumbered": "27. Christmas Socks",
+      "file": "27_christmas_socks.json"
+    },
+    {
+      "sequence": 28,
+      "id": "carrier",
+      "displayName": "Carrier",
+      "displayNameNumbered": "28. Carrier",
+      "file": "28_carrier.json"
+    },
+    {
+      "sequence": 29,
+      "id": "crown",
+      "displayName": "Crown",
+      "displayNameNumbered": "29. Crown",
+      "file": "29_crown.json"
     }
   ]
 }

@@ -317,6 +317,7 @@ function buildStageCanvasMapFromBase(definition) {
                 "아기 사자": "Baby Lion",
                 "아기사자": "Baby Lion",
                 "시바견": "Shiba",
+                "당근": "Carrot",
                 "바다거북": "Sea Turtle",
                 "보물상자": "Treasure Chest",
                 "마법모자": "Magic Hat"

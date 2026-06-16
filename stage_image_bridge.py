@@ -314,6 +314,7 @@ def build_preview_from_image_request(request_payload: dict) -> dict:
                     str(temp_path),
                     colors=colors,
                     expected_size=MAX_SIZE,
+                    exact=True,
                 )
                 if width > MAX_SIZE or height > MAX_SIZE:
                     raise ValueError(f"격자 감지 결과가 {width}x{height}여서 최대 30x30을 넘어요.")
@@ -340,7 +341,7 @@ def build_preview_from_image_request(request_payload: dict) -> dict:
         temp_path.unlink(missing_ok=True)
 
     art.name = metadata["export_name"]
-    validate_art(art, max_colors=colors)
+    validate_art(art, max_colors=MAX_COLORS if use_grid else colors)
     stage_payload = convert_art_to_payload(art, metadata)
     stage_entry = build_stage_entry(
         sequence=metadata["sequence"],
