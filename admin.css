@@ -158,6 +158,62 @@
             gap: 4px;
         }
 
+        .pixel-admin-stage-create-source {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .pixel-admin-source-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(203, 213, 225, 0.92);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.96);
+            cursor: pointer;
+        }
+
+        .pixel-admin-source-card:has(input:checked) {
+            border-color: rgba(59, 130, 246, 0.88);
+            background: rgba(239, 246, 255, 0.96);
+            box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.38);
+        }
+
+        .pixel-admin-source-card input {
+            margin: 2px 0 0;
+        }
+
+        .pixel-admin-source-copy {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .pixel-admin-source-copy strong {
+            color: #0f172a;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+
+        .pixel-admin-source-copy small {
+            color: rgba(71, 85, 105, 0.88);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .pixel-admin-stage-create-llm {
+            display: grid;
+            gap: 10px;
+        }
+
+        .pixel-admin-stage-create-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
         .pixel-admin-stage-create-eyebrow {
             margin: 0;
             color: rgba(59, 130, 246, 0.84);
@@ -205,8 +261,58 @@
             margin: 0;
         }
 
+        .pixel-admin-stage-create-file {
+            cursor: default;
+        }
+
+        .pixel-admin-stage-create-file-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 40px;
+            padding: 6px 10px;
+            border: 1px solid rgba(203, 213, 225, 0.92);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            cursor: pointer;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .pixel-admin-stage-create-file-box:hover,
+        .pixel-admin-stage-create-file-box:focus-visible {
+            border-color: rgba(59, 130, 246, 0.72);
+            box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.42);
+            outline: none;
+        }
+
+        .pixel-admin-stage-create-file-button {
+            flex: 0 0 auto;
+            min-height: 32px;
+            padding: 0 12px;
+            border-radius: 10px;
+        }
+
+        .pixel-admin-stage-create-file-name {
+            min-width: 0;
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .pixel-admin-file-input {
-            padding-block: 8px;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            border: 0;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
 
         .pixel-admin-stage-create-button {
@@ -283,6 +389,10 @@
             white-space: nowrap;
         }
 
+        .pixel-admin-field-wide {
+            grid-column: 1 / -1;
+        }
+
         .pixel-admin-input,
         .pixel-admin-color-input {
             width: 100%;
@@ -299,6 +409,23 @@
             box-sizing: border-box;
         }
 
+        .pixel-admin-textarea {
+            width: 100%;
+            min-width: 0;
+            min-height: 72px;
+            padding: 10px;
+            border: 1px solid rgba(203, 213, 225, 0.92);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            color: #111827;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
         .pixel-admin-color-input {
             padding: 4px;
             cursor: pointer;
@@ -310,7 +437,8 @@
         }
 
         .pixel-admin-input:disabled,
-        .pixel-admin-color-input:disabled {
+        .pixel-admin-color-input:disabled,
+        .pixel-admin-textarea:disabled {
             opacity: 0.45;
             cursor: not-allowed;
         }
@@ -631,6 +759,8 @@
                 display: none;
             }
 
+            .pixel-admin-stage-create-source,
+            .pixel-admin-stage-create-actions,
             .pixel-admin-stage-create-grid,
             .pixel-admin-stage-create-options {
                 grid-template-columns: minmax(0, 1fr);

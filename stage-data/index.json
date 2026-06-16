@@ -97,6 +97,13 @@
       "displayName": "시바견",
       "displayNameNumbered": "14. 시바견",
       "file": "14_shiba.json"
+    },
+    {
+      "sequence": 15,
+      "id": "baby_lion",
+      "displayName": "baby_lion",
+      "displayNameNumbered": "15. baby_lion",
+      "file": "15_baby_lion.json"
     }
   ]
 }

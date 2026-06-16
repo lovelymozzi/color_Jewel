@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>픽셀아트 스테이지 스튜디오</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2330; --muted:#6b7280;
+    --line:#e3e6ea; --accent:#2563eb; --accent-soft:#eaf1ff; --danger:#dc2626;
+    --ok:#16a34a; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  header h1{font-size:18px;font-weight:600;margin:0}
+  header .sub{color:var(--muted);font-size:13px}
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 61px)}
+  .controls{padding:20px;border-right:1px solid var(--line);background:var(--panel);overflow-y:auto}
+  .results{padding:20px;overflow-y:auto}
+  .field{margin-bottom:18px}
+  .field>label.lead{display:block;font-weight:600;font-size:13px;margin-bottom:8px}
+  .hint{color:var(--muted);font-size:12px;margin-top:4px}
+  .seg{display:flex;flex-direction:column;gap:6px}
+  .seg label{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px}
+  .seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+  .seg label:has(input:disabled){opacity:.5;cursor:not-allowed}
+  .seg input{margin-top:2px}
+  .row{display:flex;gap:10px;align-items:center}
+  .row>div{flex:1}
+  input[type=number],select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
+  input[type=number]:disabled,select:disabled{background:#f1f2f4;color:var(--muted)}
+  .check{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px}
+  .dropzone{border:1.5px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;font-size:13px;transition:.15s}
+  .dropzone.hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .dropzone strong{color:var(--ink)}
+  #fileList{font-size:12px;color:var(--muted);margin-top:6px;max-height:80px;overflow:auto}
+  button{font-family:inherit}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;font-weight:500;cursor:pointer}
+  .btn:hover{background:#f1f2f4}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:100%;padding:12px;font-size:14px}
+  .btn.primary:hover{filter:brightness(.95)}
+  .btn.primary:disabled{opacity:.6;cursor:not-allowed}
+  .btn.ghost-danger{color:var(--danger);border-color:#f3c9c9}
+  .btn.ghost-danger:hover{background:#fdeaea}
+  .results-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .results-bar .count{font-weight:600}
+  .results-bar .spacer{flex:1}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
+  .card .canvas-wrap{background:#fff;display:flex;align-items:center;justify-content:center;padding:10px;border-bottom:1px solid var(--line)}
+  .card canvas{image-rendering:pixelated;width:100%;height:auto;max-width:140px}
+  .card .meta{padding:10px;display:flex;flex-direction:column;gap:6px}
+  .card .meta input{padding:5px 7px;font-size:12px;border:1px solid var(--line);border-radius:6px;width:100%}
+  .card .meta .pair{display:flex;gap:6px}
+  .card .meta .pair input.seq{width:54px;flex:none}
+  .card .swatches{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+  .card .swatches i{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.1);display:block}
+  .card .actions{display:flex;gap:6px;padding:0 10px 10px}
+  .card .actions .btn{flex:1;padding:7px;font-size:12px}
+  .empty{color:var(--muted);text-align:center;padding:60px 20px;border:1.5px dashed var(--line);border-radius:var(--radius)}
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c2330;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:50}
+  #toast.show{opacity:1}
+  .bar-progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:10px;display:none}
+  .bar-progress.on{display:block}
+  .bar-progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+</style>
+</head>
+<body>
+<header>
+  <h1>픽셀아트 스테이지 스튜디오</h1>
+  <span class="sub">14_shiba.json 형식의 스테이지를 대량 생성합니다</span>
+</header>
+
+<div class="wrap">
+  <!-- ===== Controls ===== -->
+  <aside class="controls">
+    <!-- 1. Source -->
+    <div class="field">
+      <label class="lead">1 · 이미지 소스</label>
+      <div class="seg">
+        <label><input type="radio" name="src" value="auto" checked><span><strong>자동 소스 불러오기</strong><br><span class="hint">OpenMoji · Twemoji · Noto 동물·식물</span></span></label>
+        <label><input type="radio" name="src" value="upload"><span><strong>PNG 직접 업로드</strong><br><span class="hint">투명 배경 PNG 권장</span></span></label>
+        <label><input type="radio" name="src" value="llm" disabled><span><strong>LLM 호출</strong><br><span class="hint">로컬 픽셀아트 모델 · 추후 구현</span></span></label>
+      </div>
+
+      <div id="autoOpts" style="margin-top:10px">
+        <select id="emojiStyle">
+          <option value="openmoji">OpenMoji (기본)</option>
+          <option value="twemoji">Twemoji · 트위터</option>
+          <option value="noto">Noto Emoji · 구글</option>
+          <option value="mix">전체 랜덤 (스타일 섞기)</option>
+        </select>
+        <select id="category" style="margin-top:8px">
+          <option value="all">전체 (동물+식물)</option>
+          <option value="animal">동물</option>
+          <option value="plant">식물</option>
+        </select>
+        <div class="hint" id="catalogInfo"></div>
+      </div>
+
+      <div id="uploadOpts" style="margin-top:10px;display:none">
+        <div class="dropzone" id="dropzone">
+          <strong>클릭</strong> 또는 파일을 끌어다 놓기<br>
+          <span class="hint">PNG · 여러 개 선택 가능</span>
+        </div>
+        <input type="file" id="fileInput" accept="image/png,image/*" multiple hidden>
+        <div id="fileList"></div>
+      </div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <label class="check"><input type="checkbox" id="autoTrim" checked> 여백 자동 제거 (꽉 채우기)</label>
+        <div class="hint">원본의 투명 여백을 잘라내 그림을 프레임에 더 크게 채웁니다.</div>
+      </div>
+    </div>
+
+    <!-- 2. Palette -->
+    <div class="field">
+      <label class="lead">2 · 팔레트 색 개수</label>
+      <div class="row">
+        <div>
+          <label class="hint">최소</label>
+          <input type="number" id="pmin" value="6" min="2" max="24">
+        </div>
+        <div>
+          <label class="hint">최대</label>
+          <input type="number" id="pmax" value="14" min="2" max="24">
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="autoPalette"> 자동 (크기 비례 자동 분배)</label>
+      <div class="hint">콘텐츠 면적에 비례해 색 개수를 정합니다. 체크 해제 시 최소~최대 범위 안에서 선택.</div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="hint" style="flex:none">색 취합 간격</label>
+        <input type="range" id="mergeThreshold" min="0" max="120" value="0" step="5" style="flex:1">
+        <span id="mergeOut" style="width:28px;text-align:right;font-weight:500">0</span>
+      </div>
+      <div class="hint">높을수록 유사한 색을 하나로 묶어 색 수를 줄입니다. (0 = 병합 안 함)</div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="hint" style="flex:none">색 대비 강화</label>
+        <input type="range" id="contrastBoost" min="0" max="100" value="0" step="5" style="flex:1">
+        <span id="contrastOut" style="width:28px;text-align:right;font-weight:500">0</span>
+      </div>
+      <div class="hint">채도와 명암 대비를 키워 색을 더 또렷하고 선명하게 만듭니다. (0 = 원본 색)</div>
+    </div>
+
+    <!-- 3. Frame -->
+    <div class="field">
+      <label class="lead">3 · 프레임 크기 (가로×세로)</label>
+      <select id="frame">
+        <option value="20x20">20 × 20</option>
+        <option value="20x25">20 × 25</option>
+        <option value="30x30" selected>30 × 30</option>
+        <option value="30x35">30 × 35</option>
+      </select>
+      <div class="hint" id="frameInfo"></div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="drawFrame" checked> 출력 프레임 테두리 그리기 (14_shiba 동일)</label>
+      <div class="hint">끄면 짙은 외곽 테두리(팔레트 1번) 없이 그림만 채웁니다.</div>
+    </div>
+
+    <!-- 4. Count -->
+    <div class="field">
+      <label class="lead">4 · 제작 개수</label>
+      <input type="number" id="count" value="6" min="1" max="100">
+      <div class="hint">1회 최대 100개</div>
+    </div>
+
+    <!-- 5. Start sequence -->
+    <div class="field">
+      <label class="lead">5 · 시작 시퀀스 번호</label>
+      <input type="number" id="startSeq" value="1" min="1">
+      <div class="hint">exportName / displayNameNumbered 에 사용</div>
+    </div>
+
+    <button class="btn primary" id="genBtn">생성하기</button>
+    <div class="bar-progress" id="progress"><i></i></div>
+  </aside>
+
+  <!-- ===== Results ===== -->
+  <main class="results">
+    <div class="results-bar">
+      <span class="count" id="resCount">제작된 맵 0개</span>
+      <span class="spacer"></span>
+      <button class="btn" id="exportBtn">전체 내보내기 (ZIP)</button>
+      <button class="btn ghost-danger" id="clearBtn">전체 삭제</button>
+    </div>
+    <div id="resultsArea">
+      <div class="empty">아직 생성된 맵이 없습니다. 왼쪽에서 옵션을 설정하고 <strong>생성하기</strong>를 누르세요.</div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ============================================================
+   OpenMoji catalog (animal / plant)
+   color PNG: https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/618x618/<HEX>.png
+   ============================================================ */
+const EMOJI_STYLES = {
+  openmoji: { label:"OpenMoji", url:h=>`https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/618x618/${h}.png` },
+  twemoji:  { label:"Twemoji",  url:h=>`https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/${h.toLowerCase()}.png` },
+  noto:     { label:"Noto",     url:h=>`https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/emoji_u${h.toLowerCase()}.png` }
+};
+const STYLE_KEYS = Object.keys(EMOJI_STYLES);
+const CATALOG = [
+  // animals
+  ["1F415","dog","강아지","animal"],["1F408","cat","고양이","animal"],["1F98A","fox","여우","animal"],
+  ["1F43C","panda","팬더","animal"],["1F428","koala","코알라","animal"],["1F981","lion","사자","animal"],
+  ["1F42F","tiger","호랑이","animal"],["1F437","pig","돼지","animal"],["1F430","rabbit","토끼","animal"],
+  ["1F438","frog","개구리","animal"],["1F435","monkey","원숭이","animal"],["1F43B","bear","곰","animal"],
+  ["1F42E","cow","소","animal"],["1F414","chicken","닭","animal"],["1F427","penguin","펭귄","animal"],
+  ["1F98C","deer","사슴","animal"],["1F40E","horse","말","animal"],["1F411","sheep","양","animal"],
+  ["1F42D","mouse","쥐","animal"],["1F439","hamster","햄스터","animal"],["1F43A","wolf","늑대","animal"],
+  ["1F99D","raccoon","너구리","animal"],["1F987","bat","박쥐","animal"],["1F985","eagle","독수리","animal"],
+  ["1F986","duck","오리","animal"],["1F989","owl","부엉이","animal"],["1F424","chick","병아리","animal"],
+  ["1F426","bird","새","animal"],["1F43F","chipmunk","다람쥐","animal"],["1F992","giraffe","기린","animal"],
+  ["1F418","elephant","코끼리","animal"],["1F993","zebra","얼룩말","animal"],["1F98F","rhino","코뿔소","animal"],
+  ["1F99B","hippo","하마","animal"],["1F408","cat2","고양이2","animal"],
+  // plants
+  ["1F337","tulip","튤립","plant"],["1F339","rose","장미","plant"],["1F33B","sunflower","해바라기","plant"],
+  ["1F33C","blossom","꽃","plant"],["1F338","cherry-blossom","벚꽃","plant"],["1F340","clover","네잎클로버","plant"],
+  ["1F333","tree","나무","plant"],["1F332","evergreen","침엽수","plant"],["1F334","palm-tree","야자수","plant"],
+  ["1F335","cactus","선인장","plant"],["1F341","maple-leaf","단풍잎","plant"],["1F342","fallen-leaf","낙엽","plant"],
+  ["1F33F","herb","허브","plant"],["1F343","leaf","나뭇잎","plant"],["1F344","mushroom","버섯","plant"],
+  ["1F330","chestnut","밤","plant"],["1F490","bouquet","꽃다발","plant"]
+];
+
+const FRAME_COLOR = "#404050"; // palette index 1, same as 14_shiba.json
+const els = id => document.getElementById(id);
+let results = []; // {seq,id,ko,W,H,imageMap,palette}
+
+/* ---------- frame geometry (replicates 14_shiba.json) ---------- */
+function frameDims(W, H){
+  const hPad = Math.floor(W * 4 / 30);        // 30->4, 20->2
+  const contentW = W - 2 * hPad - 2;          // minus 2 borders
+  const contentH = H - 2;                      // top + bottom border, no vertical pad
+  return { hPad, contentW, contentH, colOffset: hPad + 1, rowOffset: 1 };
+}
+
+/* ---------- median-cut quantization ---------- */
+function channelRange(box){
+  let rmin=255,rmax=0,gmin=255,gmax=0,bmin=255,bmax=0;
+  for(const p of box){
+    if(p[0]<rmin)rmin=p[0]; if(p[0]>rmax)rmax=p[0];
+    if(p[1]<gmin)gmin=p[1]; if(p[1]>gmax)gmax=p[1];
+    if(p[2]<bmin)bmin=p[2]; if(p[2]>bmax)bmax=p[2];
+  }
+  return {r:rmax-rmin, g:gmax-gmin, b:bmax-bmin};
+}
+function avgColor(box){
+  let r=0,g=0,b=0;
+  for(const p of box){r+=p[0];g+=p[1];b+=p[2];}
+  const n=box.length||1;
+  return [Math.round(r/n),Math.round(g/n),Math.round(b/n)];
+}
+function medianCut(pixels, k){
+  if(pixels.length===0) return [];
+  let boxes=[pixels];
+  while(boxes.length<k){
+    let idx=-1,maxR=-1,chan=0;
+    for(let i=0;i<boxes.length;i++){
+      if(boxes[i].length<2) continue;
+      const r=channelRange(boxes[i]);
+      const m=Math.max(r.r,r.g,r.b);
+      if(m>maxR){maxR=m;idx=i;chan=(r.r>=r.g&&r.r>=r.b)?0:(r.g>=r.b?1:2);}
+    }
+    if(idx<0) break;
+    const box=boxes[idx];
+    box.sort((a,b)=>a[chan]-b[chan]);
+    const mid=box.length>>1;
+    boxes.splice(idx,1,box.slice(0,mid),box.slice(mid));
+  }
+  return boxes.map(avgColor);
+}
+const toHex = c => "#"+c.map(v=>v.toString(16).padStart(2,"0")).join("").toUpperCase();
+const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+
+/* ---------- HSL helpers for contrast boost ---------- */
+function rgbToHsl(c){
+  const r=c[0]/255,g=c[1]/255,b=c[2]/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
+  if(mx!==mn){
+    const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn);
+    if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4;
+    h/=6;
+  }
+  return [h,s,l];
+}
+function hue2rgb(p,q,t){ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; }
+function hslToRgb(h,s,l){
+  let r,g,b;
+  if(s===0){ r=g=b=l; }
+  else{ const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q; r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3); }
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function boostContrast(c,k){ // k 0..1 : raise saturation + stretch lightness around mid
+  if(k<=0) return c;
+  let [h,s,l]=rgbToHsl(c);
+  s=clamp(s*(1+k*1.3),0,1);
+  l=clamp(0.5+(l-0.5)*(1+k*0.7),0,1);
+  return hslToRgb(h,s,l);
+}
+
+function chooseK(W,H){
+  const {contentW,contentH}=frameDims(W,H);
+  const area=contentW*contentH;
+  const auto=Math.max(2,Math.round(area/50));
+  if(els("autoPalette").checked) return clamp(auto,4,18);
+  const pmin=clamp(parseInt(els("pmin").value)||6,2,24);
+  const pmax=clamp(parseInt(els("pmax").value)||14,2,24);
+  return clamp(auto, Math.min(pmin,pmax), Math.max(pmin,pmax));
+}
+
+/* ---------- preprocess: trim transparent margins so the subject fills the frame ---------- */
+function opaqueBBox(d,w,h){
+  let nx0=w-1,ny0=h-1,nx1=0,ny1=0,found=false;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    if(d[(y*w+x)*4+3]>=20){ found=true; if(x<nx0)nx0=x; if(x>nx1)nx1=x; if(y<ny0)ny0=y; if(y>ny1)ny1=y; }
+  }
+  return found?{x0:nx0,y0:ny0,x1:nx1,y1:ny1}:null;
+}
+function preprocess(img){
+  if(!els("autoTrim").checked) return img;
+  const cap=256, sc=Math.min(1,cap/Math.max(img.width,img.height));
+  const w=Math.max(1,Math.round(img.width*sc)), h=Math.max(1,Math.round(img.height*sc));
+  const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+  const ctx=cv.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(img,0,0,w,h);
+  const box=opaqueBBox(ctx.getImageData(0,0,w,h).data,w,h);
+  if(!box) return cv;
+  const cw=box.x1-box.x0+1, ch=box.y1-box.y0+1;
+  if(box.x0===0&&box.y0===0&&cw===w&&ch===h) return cv;
+  const out=document.createElement("canvas"); out.width=cw; out.height=ch;
+  out.getContext("2d").drawImage(cv, box.x0,box.y0,cw,ch, 0,0,cw,ch);
+  return out;
+}
+
+/* ---------- core: image -> imageMap + palette ---------- */
+function convert(img, W, H){
+  const {contentW,contentH,colOffset,rowOffset}=frameDims(W,H);
+  const c=document.createElement("canvas");
+  c.width=contentW; c.height=contentH;
+  const ctx=c.getContext("2d",{willReadFrequently:true});
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality="high";
+  ctx.clearRect(0,0,contentW,contentH);
+  const scale=Math.min(contentW/img.width, contentH/img.height);
+  const dw=img.width*scale, dh=img.height*scale;
+  ctx.drawImage(img,(contentW-dw)/2,(contentH-dh)/2,dw,dh);
+  const data=ctx.getImageData(0,0,contentW,contentH).data;
+
+  // collect opaque pixels
+  const opaque=[];
+  for(let i=0;i<contentW*contentH;i++){
+    if(data[i*4+3]>=128) opaque.push([data[i*4],data[i*4+1],data[i*4+2]]);
+  }
+  const K=chooseK(W,H);
+  const reps=medianCut(opaque.map(p=>p.slice()), K);
+
+  // assign each cell to nearest rep (+ count pixels per rep)
+  const cellRep=new Array(contentW*contentH).fill(-1);
+  const used=new Set();
+  const count=new Array(reps.length).fill(0);
+  for(let i=0;i<contentW*contentH;i++){
+    if(data[i*4+3]<128) continue;
+    const r=data[i*4],g=data[i*4+1],b=data[i*4+2];
+    let best=0,bd=Infinity;
+    for(let j=0;j<reps.length;j++){
+      const dr=r-reps[j][0],dg=g-reps[j][1],db=b-reps[j][2];
+      const d=dr*dr+dg*dg+db*db;
+      if(d<bd){bd=d;best=j;}
+    }
+    cellRep[i]=best; used.add(best); count[best]++;
+  }
+
+  // optional similar-color merge: collapse colors closer than threshold
+  const threshold=parseInt(els("mergeThreshold").value)||0;
+  const contrastK=(parseInt(els("contrastBoost").value)||0)/100;
+  let groups=[];
+  for(let j=0;j<reps.length;j++) if(used.has(j)) groups.push({ids:[j], color:reps[j].slice(), count:count[j]});
+  const cdist=(a,b)=>Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2);
+  if(threshold>0){
+    while(groups.length>1){
+      let bi=-1,bj=-1,bd=Infinity;
+      for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+        const d=cdist(groups[i].color,groups[j].color);
+        if(d<bd){bd=d;bi=i;bj=j;}
+      }
+      if(bd>=threshold) break;
+      const gi=groups[bi],gj=groups[bj],tot=gi.count+gj.count;
+      gi.color=[0,1,2].map(k=>Math.round((gi.color[k]*gi.count+gj.color[k]*gj.count)/tot)); // weighted avg
+      gi.ids=gi.ids.concat(gj.ids); gi.count=tot;
+      groups.splice(bj,1);
+    }
+  }
+
+  // palette numbering: with frame -> 1=frame, content from 2; without -> content from 1
+  const drawFrame=els("drawFrame").checked;
+  const palette={};
+  let base=1;
+  if(drawFrame){ palette["1"]=FRAME_COLOR; base=2; }
+  const repToPal={};
+  groups.forEach((g,gi)=>{ const num=gi+base; palette[String(num)]=toHex(boostContrast(g.color,contrastK)); g.ids.forEach(id=>repToPal[id]=num); });
+
+  // build full imageMap (all 0)
+  const map=[];
+  for(let y=0;y<H;y++) map.push(new Array(W).fill(0));
+  // content
+  for(let cy=0;cy<contentH;cy++)for(let cx=0;cx<contentW;cx++){
+    const rep=cellRep[cy*contentW+cx];
+    if(rep>=0) map[rowOffset+cy][colOffset+cx]=repToPal[rep];
+  }
+  // frame border (value 1) — optional
+  if(drawFrame){
+    const left=frameDims(W,H).hPad, right=W-1-frameDims(W,H).hPad;
+    for(let x=left;x<=right;x++){ map[0][x]=1; map[H-1][x]=1; }
+    for(let y=0;y<H;y++){ map[y][left]=1; map[y][right]=1; }
+  }
+
+  return {imageMap:map, palette, W, H};
+}
+
+/* ---------- export schema (identical shape to 14_shiba.json) ---------- */
+function buildJSON(item){
+  const {seq,id,ko,imageMap,palette}=item;
+  const exportName=`${seq}_${id}`;
+  const theme={"0":"#FFFFFF"};
+  for(const k of Object.keys(palette)) theme[k]=palette[k];
+  return {
+    sequence:seq,
+    exportName,
+    displayNameNumbered:`${seq}. ${ko}`,
+    id,
+    displayName:ko,
+    scale:1,
+    startMessageTemplate:"{title} 스테이지예요. 색을 맞춰 그림을 완성해 보세요.",
+    sourceRefs:{ baseImageMap:`${id.toUpperCase().replace(/[^A-Z0-9]/g,"_")}_IMAGE_MAP`, initialBoardState:null, initialTrayState:null },
+    pocketUnlock:{ initialOpenCount:Object.keys(palette).length, completedColorsPerUnlock:1, pocketsPerUnlock:1 },
+    imageMap,
+    palette,
+    themeOverridePalette:theme
+  };
+}
+
+/* ---------- rendering ---------- */
+function loadImage(src, cross){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    if(cross) img.crossOrigin="anonymous";
+    img.onload=()=>res(img);
+    img.onerror=()=>rej(new Error("이미지 로드 실패: "+src));
+    img.src=src;
+  });
+}
+function drawThumb(canvas, imageMap, palette){
+  const H=imageMap.length, W=imageMap[0].length, cell=8;
+  canvas.width=W*cell; canvas.height=H*cell;
+  const ctx=canvas.getContext("2d");
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const v=imageMap[y][x];
+    ctx.fillStyle = v===0 ? "#FFFFFF" : (palette[String(v)]||"#FFFFFF");
+    ctx.fillRect(x*cell,y*cell,cell,cell);
+  }
+}
+
+function renderResults(){
+  const area=els("resultsArea");
+  els("resCount").textContent=`제작된 맵 ${results.length}개`;
+  if(results.length===0){
+    area.innerHTML='<div class="empty">아직 생성된 맵이 없습니다. 왼쪽에서 옵션을 설정하고 <strong>생성하기</strong>를 누르세요.</div>';
+    return;
+  }
+  const grid=document.createElement("div");
+  grid.className="grid";
+  results.forEach((item,i)=>{
+    const card=document.createElement("div");
+    card.className="card";
+    const swatches=Object.keys(item.palette).filter(k=>k!=="1")
+      .map(k=>`<i style="background:${item.palette[k]}"></i>`).join("");
+    card.innerHTML=`
+      <div class="canvas-wrap"><canvas></canvas></div>
+      <div class="meta">
+        <div class="pair">
+          <input class="seq" type="number" value="${item.seq}" title="시퀀스" aria-label="시퀀스">
+          <input class="id" type="text" value="${item.id}" title="id" aria-label="id">
+        </div>
+        <input class="ko" type="text" value="${item.ko}" title="표시 이름" aria-label="표시 이름">
+        <div class="hint">${item.W}×${item.H} · ${Object.keys(item.palette).length}색</div>
+        <div class="swatches">${swatches}</div>
+      </div>
+      <div class="actions">
+        <button class="btn dl">JSON</button>
+        <button class="btn ghost-danger del">삭제</button>
+      </div>`;
+    drawThumb(card.querySelector("canvas"), item.imageMap, item.palette);
+    card.querySelector(".seq").addEventListener("change",e=>item.seq=parseInt(e.target.value)||item.seq);
+    card.querySelector(".id").addEventListener("change",e=>item.id=e.target.value.trim()||item.id);
+    card.querySelector(".ko").addEventListener("change",e=>item.ko=e.target.value.trim()||item.ko);
+    card.querySelector(".dl").addEventListener("click",()=>downloadOne(item));
+    card.querySelector(".del").addEventListener("click",()=>{results.splice(i,1);renderResults();});
+    grid.appendChild(card);
+  });
+  area.innerHTML="";
+  area.appendChild(grid);
+}
+
+/* ---------- downloads ---------- */
+function downloadBlob(blob, name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function downloadOne(item){
+  const json=JSON.stringify(buildJSON(item),null,2);
+  downloadBlob(new Blob([json],{type:"application/json"}), `${item.seq}_${item.id}.json`);
+}
+async function exportAll(){
+  if(results.length===0){toast("내보낼 맵이 없습니다");return;}
+  if(typeof JSZip==="undefined"){ // fallback: download individually
+    results.forEach(downloadOne); return;
+  }
+  const zip=new JSZip();
+  results.forEach(item=>{
+    zip.file(`${item.seq}_${item.id}.json`, JSON.stringify(buildJSON(item),null,2));
+  });
+  const blob=await zip.generateAsync({type:"blob"});
+  downloadBlob(blob,"pixelart-stages.zip");
+  toast(`${results.length}개 내보내기 완료`);
+}
+
+/* ---------- generation ---------- */
+let uploadedFiles=[];
+
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function buildAutoList(count){
+  const cat=els("category").value;
+  const styleSel=els("emojiStyle").value;
+  const pool=CATALOG.filter(e=>cat==="all"||e[3]===cat);
+  const list=[];
+  let bag=shuffle(pool), bagIdx=0, cycle=0;
+  for(let i=0;i<count;i++){
+    if(bagIdx>=bag.length){ bag=shuffle(pool); bagIdx=0; cycle++; } // reshuffle each full pass
+    const e=bag[bagIdx++];
+    const style = styleSel==="mix" ? STYLE_KEYS[Math.floor(Math.random()*STYLE_KEYS.length)] : styleSel;
+    const suffix=cycle>0?`-${cycle+1}`:"";
+    list.push({src:EMOJI_STYLES[style].url(e[0]), cross:true, id:e[1]+suffix, ko:e[2]});
+  }
+  return list;
+}
+
+async function generate(){
+  const src=document.querySelector('input[name=src]:checked').value;
+  if(src==="llm"){toast("LLM 호출은 추후 구현 예정입니다");return;}
+  const count=clamp(parseInt(els("count").value)||1,1,100);
+  const [W,H]=els("frame").value.split("x").map(Number);
+  const startSeq=parseInt(els("startSeq").value)||1;
+
+  let sources=[];
+  if(src==="auto"){
+    sources=buildAutoList(count);
+  }else{ // upload
+    if(uploadedFiles.length===0){toast("PNG 파일을 먼저 업로드하세요");return;}
+    const files=uploadedFiles.slice(0,count);
+    sources=files.map(f=>({
+      src:URL.createObjectURL(f), cross:false,
+      id:f.name.replace(/\.[^.]+$/,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"stage",
+      ko:f.name.replace(/\.[^.]+$/,"")
+    }));
+  }
+
+  const btn=els("genBtn"); btn.disabled=true; btn.textContent="생성 중...";
+  const prog=els("progress"); prog.classList.add("on"); const bar=prog.querySelector("i");
+  let seq=startSeq, ok=0, fail=0;
+  for(let i=0;i<sources.length;i++){
+    const s=sources[i];
+    try{
+      const img=await loadImage(s.src, s.cross);
+      const conv=convert(preprocess(img),W,H);
+      results.push({seq:seq++, id:s.id, ko:s.ko, ...conv});
+      ok++;
+    }catch(err){ console.warn(err); fail++; }
+    bar.style.width=Math.round((i+1)/sources.length*100)+"%";
+    if(s.cross===false) URL.revokeObjectURL(s.src);
+  }
+  btn.disabled=false; btn.textContent="생성하기";
+  setTimeout(()=>{prog.classList.remove("on");bar.style.width="0";},400);
+  renderResults();
+  toast(`${ok}개 생성${fail?` · ${fail}개 실패`:""}`);
+}
+
+/* ---------- UI wiring ---------- */
+function toast(msg){
+  const t=els("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function updateFrameInfo(){
+  const [W,H]=els("frame").value.split("x").map(Number);
+  const d=frameDims(W,H);
+  els("frameInfo").textContent=`콘텐츠 영역 ${d.contentW}×${d.contentH} · 좌우 여백 ${d.hPad}칸`;
+}
+function updateCatalogInfo(){
+  const cat=els("category").value;
+  const n=CATALOG.filter(e=>cat==="all"||e[3]===cat).length;
+  els("catalogInfo").textContent=`사용 가능한 항목 ${n}개 (개수가 더 많으면 순환 사용)`;
+}
+function updateSourceUI(){
+  const src=document.querySelector('input[name=src]:checked').value;
+  els("autoOpts").style.display = src==="auto"?"block":"none";
+  els("uploadOpts").style.display = src==="upload"?"block":"none";
+}
+
+document.querySelectorAll('input[name=src]').forEach(r=>r.addEventListener("change",updateSourceUI));
+els("frame").addEventListener("change",updateFrameInfo);
+els("category").addEventListener("change",updateCatalogInfo);
+els("autoPalette").addEventListener("change",()=>{
+  const on=els("autoPalette").checked;
+  els("pmin").disabled=on; els("pmax").disabled=on;
+});
+els("mergeThreshold").addEventListener("input",()=>{ els("mergeOut").textContent=els("mergeThreshold").value; });
+els("contrastBoost").addEventListener("input",()=>{ els("contrastOut").textContent=els("contrastBoost").value; });
+els("genBtn").addEventListener("click",generate);
+els("exportBtn").addEventListener("click",exportAll);
+els("clearBtn").addEventListener("click",()=>{
+  if(results.length&&confirm("생성된 맵을 모두 삭제할까요?")){results=[];renderResults();}
+});
+
+// upload handlers
+const dz=els("dropzone"), fi=els("fileInput");
+dz.addEventListener("click",()=>fi.click());
+fi.addEventListener("change",()=>setFiles([...fi.files]));
+["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("hover");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("hover");}));
+dz.addEventListener("drop",e=>setFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/"))));
+function setFiles(files){
+  uploadedFiles=files;
+  els("fileList").textContent=files.length?`${files.length}개 파일: `+files.map(f=>f.name).join(", "):"";
+}
+
+updateSourceUI(); updateFrameInfo(); updateCatalogInfo();
+</script>
+</body>
+</html>

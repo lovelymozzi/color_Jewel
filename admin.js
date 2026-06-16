@@ -32,10 +32,50 @@ const pixelAdminMarkup = `
             <p class="pixel-admin-stage-create-eyebrow">NEW STAGE</p>
             <h3 class="pixel-admin-stage-create-title" id="pixelAdminCreateStageHeading">이미지로 새 배경 스테이지 만들기</h3>
         </div>
-        <label class="pixel-admin-field" for="pixelAdminCreateStageFile">
+        <div class="pixel-admin-stage-create-source" role="radiogroup" aria-label="생성 소스">
+            <label class="pixel-admin-source-card">
+                <input id="pixelAdminCreateStageSourceUpload" type="radio" name="pixelAdminCreateStageSource" value="upload" checked />
+                <span class="pixel-admin-source-copy">
+                    <strong>이미지 업로드</strong>
+                    <small>파일 선택, 드래그 앤 드롭, 클립보드 붙여넣기</small>
+                </span>
+            </label>
+            <label class="pixel-admin-source-card">
+                <input id="pixelAdminCreateStageSourceLlm" type="radio" name="pixelAdminCreateStageSource" value="llm" />
+                <span class="pixel-admin-source-copy">
+                    <strong>로컬 LLM</strong>
+                    <small>A1111 txt2img로 이미지를 만든 뒤 바로 스테이지화</small>
+                </span>
+            </label>
+        </div>
+        <div class="pixel-admin-field pixel-admin-stage-create-file">
             <span class="pixel-admin-field-label">이미지 파일</span>
-            <input class="pixel-admin-input pixel-admin-file-input" id="pixelAdminCreateStageFile" type="file" accept="image/*" />
-        </label>
+            <div class="pixel-admin-stage-create-file-box" id="pixelAdminCreateStageFileBox" role="button" tabindex="0" aria-controls="pixelAdminCreateStageFile" aria-label="이미지 파일 선택 또는 클립보드 이미지 붙여넣기">
+                <button class="pixel-admin-action pixel-admin-stage-create-file-button" id="pixelAdminCreateStageFileButton" type="button">파일 선택</button>
+                <span class="pixel-admin-stage-create-file-name" id="pixelAdminCreateStageFileName">선택된 파일 없음</span>
+                <input class="pixel-admin-file-input" id="pixelAdminCreateStageFile" type="file" accept="image/*" />
+            </div>
+        </div>
+        <div class="pixel-admin-stage-create-llm" id="pixelAdminCreateStageLlmPanel" hidden>
+            <div class="pixel-admin-stage-create-grid">
+                <label class="pixel-admin-field" for="pixelAdminCreateStageLlmEndpoint">
+                    <span class="pixel-admin-field-label">LLM Endpoint</span>
+                    <input class="pixel-admin-input" id="pixelAdminCreateStageLlmEndpoint" type="text" value="http://127.0.0.1:7860" />
+                </label>
+                <label class="pixel-admin-field" for="pixelAdminCreateStageLlmSteps">
+                    <span class="pixel-admin-field-label">LLM Steps</span>
+                    <input class="pixel-admin-input" id="pixelAdminCreateStageLlmSteps" type="number" min="5" max="60" inputmode="numeric" value="20" />
+                </label>
+                <label class="pixel-admin-field pixel-admin-field-wide" for="pixelAdminCreateStageLlmPrompt">
+                    <span class="pixel-admin-field-label">LLM Prompt</span>
+                    <textarea class="pixel-admin-textarea" id="pixelAdminCreateStageLlmPrompt" rows="3" placeholder="예: baby lion pixel art, centered, transparent background"></textarea>
+                </label>
+                <label class="pixel-admin-field pixel-admin-field-wide" for="pixelAdminCreateStageLlmNegativePrompt">
+                    <span class="pixel-admin-field-label">Negative Prompt</span>
+                    <textarea class="pixel-admin-textarea" id="pixelAdminCreateStageLlmNegativePrompt" rows="2" placeholder="예: text, watermark, frame, border, blurry"></textarea>
+                </label>
+            </div>
+        </div>
         <div class="pixel-admin-stage-create-grid">
             <label class="pixel-admin-field" for="pixelAdminCreateStageTitle">
                 <span class="pixel-admin-field-label">관리용 이름</span>
@@ -76,8 +116,12 @@ const pixelAdminMarkup = `
                 <input class="pixel-admin-input" id="pixelAdminCreateStageBgColor" type="text" maxlength="7" placeholder="#FFFFFF" />
             </label>
         </div>
-        <button class="pixel-admin-action pixel-admin-stage-create-button" id="pixelAdminCreateStage" type="button">새 스테이지 생성</button>
-        <p class="pixel-admin-stage-create-note" id="pixelAdminCreateStageNote">로컬 브리지가 켜져 있으면 이미지를 새 정식 스테이지로 저장합니다.</p>
+        <div class="pixel-admin-stage-create-actions">
+            <button class="pixel-admin-action pixel-admin-stage-create-button" id="pixelAdminCreateStage" type="button">미리보기 불러오기</button>
+            <button class="pixel-admin-action pixel-admin-stage-create-button" id="pixelAdminCommitStage" type="button">최종 맵 저장</button>
+            <button class="pixel-admin-action pixel-admin-stage-create-button" id="pixelAdminCancelStagePreview" type="button">미리보기 취소</button>
+        </div>
+        <p class="pixel-admin-stage-create-note" id="pixelAdminCreateStageNote">이미지 업로드나 로컬 LLM 생성 결과를 새 정식 스테이지로 저장할 수 있어요. LLM은 A1111 로컬 서버가 켜져 있어야 합니다.</p>
     </section>
 
     <p class="pixel-admin-help" id="pixelAdminHelp">최대 30x30 캔버스를 편집할 수 있습니다. 색을 골라 칠하고, 오른쪽 클릭으로 지울 수 있어요. \`#\`는 자동으로 붙습니다.</p>
@@ -551,6 +595,10 @@ function persistPixelAdminStageOverride(definition) {
                 return false;
             }
 
+            if (pixelAdminState.createStagePreview) {
+                return true;
+            }
+
             if (!pixelAdminState.isDirty && !pixelAdminState.exportIsDirty) {
                 return true;
             }
@@ -592,7 +640,7 @@ function persistPixelAdminStageOverride(definition) {
         function schedulePixelAdminAutoSave(delayMs = PIXEL_ADMIN_AUTO_SAVE_DELAY_MS) {
             clearPixelAdminAutoSaveTimer();
 
-            if (!pixelAdminState.currentMapId || !pixelAdminState.draftMap) {
+            if (pixelAdminState.createStagePreview || !pixelAdminState.currentMapId || !pixelAdminState.draftMap) {
                 return;
             }
 
@@ -600,6 +648,132 @@ function persistPixelAdminStageOverride(definition) {
                 pixelAdminAutoSaveTimer = null;
                 persistPixelAdminDraftState();
             }, delayMs);
+        }
+
+        function getPixelAdminCreateStageRequestDraft() {
+            const requestedSequence = Math.max(0, Number(pixelAdminCreateStageSequenceElement?.value) || 0);
+            const rawDisplayName = requestedSequence
+                ? String(pixelAdminCreateStageTitleElement?.value || "").replace(
+                      new RegExp(`^\\s*0*${requestedSequence}(?:\\s*[._-]\\s*|\\s+)`),
+                      ""
+                  )
+                : pixelAdminCreateStageTitleElement?.value || "";
+            const displayName = normalizeStageDisplayName(rawDisplayName || pixelAdminState.draftDisplayName || "");
+            const stageId = normalizePixelAdminGeneratedStageId(
+                pixelAdminCreateStageIdElement?.value,
+                displayName
+            );
+            return {
+                createSource: pixelAdminCreateStageSourceLlmElement?.checked ? "llm" : "upload",
+                imageFile: pixelAdminCreateStageFileElement?.files?.[0] || null,
+                requestedSequence,
+                displayName,
+                stageId,
+                backgroundHex: normalizeHexColor(pixelAdminCreateStageBgColorElement?.value || ""),
+                backgroundMode: String(pixelAdminCreateStageBgModeElement?.value || "auto"),
+            };
+        }
+
+        function loadPixelAdminCreateStagePreview(stageEntry, stagePayload, warningMessage = "") {
+            const previewMap = normalizeStoredPixelAdminMap(stagePayload?.imageMap);
+            if (!previewMap) {
+                throw new Error("미리보기 맵 데이터를 읽지 못했어요.");
+            }
+
+            const previewPalette = Object.fromEntries(
+                Object.entries(stagePayload?.palette || {})
+                    .map(([colorId, color]) => [
+                        Number(colorId),
+                        {
+                            color: normalizeHexColor(typeof color === "string" ? color : color?.color) || "#CCCCCC"
+                        }
+                    ])
+                    .filter(([colorId, colorMeta]) => Number.isFinite(colorId) && colorId > 0 && colorMeta.color)
+            );
+            const previewOrigin = pixelAdminState.createStagePreview?.origin || {
+                currentMapId: pixelAdminState.currentMapId,
+                draftMap: clonePixelMap(pixelAdminState.draftMap || []),
+                draftPalette: clonePaletteMeta(pixelAdminState.draftPalette || {}),
+                draftDisplayName: pixelAdminState.draftDisplayName || "",
+                selectedColorId: pixelAdminState.selectedColorId,
+                isDirty: pixelAdminState.isDirty,
+                exportIsDirty: pixelAdminState.exportIsDirty,
+                exportNeedsRefresh: pixelAdminState.exportNeedsRefresh
+            };
+
+            clearPixelAdminAutoSaveTimer();
+            pixelAdminState.createStagePreview = {
+                origin: previewOrigin,
+                stageEntry: { ...(stageEntry || {}) }
+            };
+            pixelAdminState.draftMap = clonePixelMap(previewMap);
+            pixelAdminState.draftPalette = clonePaletteMeta(previewPalette);
+            pixelAdminState.draftDisplayName = normalizeStageDisplayName(
+                stageEntry?.displayNameNumbered || stageEntry?.displayName || stagePayload?.displayName || ""
+            );
+            pixelAdminState.undoStack = [];
+            pixelAdminInteraction.strokeSnapshot = null;
+            pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
+                pixelAdminState.currentMapId,
+                0,
+                pixelAdminState.draftMap,
+                pixelAdminState.draftPalette
+            );
+            pixelAdminState.isDirty = false;
+            pixelAdminState.exportIsDirty = false;
+            pixelAdminState.exportNeedsRefresh = true;
+            if (pixelAdminState.createStagePreview && pixelAdminCreateStageTitleElement) {
+                pixelAdminCreateStageTitleElement.value = pixelAdminState.draftDisplayName;
+                if (pixelAdminCreateStageIdElement && !pixelAdminCreateStageIdElement.dataset.userEdited) {
+                    pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", pixelAdminState.draftDisplayName);
+                }
+            }
+            pixelAdminState.deferHeavyRender = true;
+            pixelAdminState.createStageStatus = warningMessage
+                ? `${stageEntry?.displayNameNumbered || stageEntry?.displayName || "새 맵"} 미리보기를 불러왔어요. ${warningMessage}`
+                : `${stageEntry?.displayNameNumbered || stageEntry?.displayName || "새 맵"} 미리보기를 불러왔어요. 하단 격자를 수정한 뒤 최종 맵 저장을 눌러 주세요.`;
+            pixelAdminState.message = "새 맵 미리보기입니다. 하단 격자를 수정한 뒤 최종 맵 저장을 눌러 주세요.";
+            if (pixelAdminCreateStageTitleElement) {
+                pixelAdminCreateStageTitleElement.value =
+                    stageEntry?.displayNameNumbered || stageEntry?.displayName || pixelAdminCreateStageTitleElement.value;
+            }
+            if (pixelAdminCreateStageIdElement) {
+                pixelAdminCreateStageIdElement.value = stageEntry?.id || pixelAdminCreateStageIdElement.value;
+            }
+            if (pixelAdminCreateStageSequenceElement && stageEntry?.sequence) {
+                pixelAdminCreateStageSequenceElement.value = String(stageEntry.sequence);
+            }
+            renderPixelAdmin();
+        }
+
+        function cancelPixelAdminCreateStagePreview() {
+            const previewSession = pixelAdminState.createStagePreview;
+            pixelAdminState.createStagePreview = null;
+            clearPixelAdminAutoSaveTimer();
+
+            if (!previewSession?.origin?.draftMap?.length) {
+                syncPixelAdminWithActiveMap(true, false);
+                pixelAdminState.deferHeavyRender = true;
+                pixelAdminState.createStageStatus = "새 맵 미리보기를 취소했어요.";
+                pixelAdminState.message = "현재 스테이지 편집으로 돌아왔어요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            pixelAdminState.currentMapId = previewSession.origin.currentMapId;
+            pixelAdminState.draftMap = clonePixelMap(previewSession.origin.draftMap);
+            pixelAdminState.draftPalette = clonePaletteMeta(previewSession.origin.draftPalette);
+            pixelAdminState.draftDisplayName = previewSession.origin.draftDisplayName || "";
+            pixelAdminState.selectedColorId = previewSession.origin.selectedColorId || 0;
+            pixelAdminState.isDirty = previewSession.origin.isDirty === true;
+            pixelAdminState.exportIsDirty = previewSession.origin.exportIsDirty === true;
+            pixelAdminState.exportNeedsRefresh = previewSession.origin.exportNeedsRefresh !== false;
+            pixelAdminState.undoStack = [];
+            pixelAdminInteraction.strokeSnapshot = null;
+            pixelAdminState.deferHeavyRender = true;
+            pixelAdminState.createStageStatus = "새 맵 미리보기를 취소했어요.";
+            pixelAdminState.message = "현재 스테이지 편집으로 돌아왔어요.";
+            renderPixelAdmin();
         }
 
 function getMapDisplayName(mapId) {
@@ -676,7 +850,17 @@ const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminCloseElement = document.getElementById("pixelAdminClose");
         const pixelAdminStageElement = document.getElementById("pixelAdminStage");
         const pixelAdminTitleInputElement = document.getElementById("pixelAdminTitleInput");
+        const pixelAdminCreateStageSourceUploadElement = document.getElementById("pixelAdminCreateStageSourceUpload");
+        const pixelAdminCreateStageSourceLlmElement = document.getElementById("pixelAdminCreateStageSourceLlm");
         const pixelAdminCreateStageFileElement = document.getElementById("pixelAdminCreateStageFile");
+        const pixelAdminCreateStageFileBoxElement = document.getElementById("pixelAdminCreateStageFileBox");
+        const pixelAdminCreateStageFileButtonElement = document.getElementById("pixelAdminCreateStageFileButton");
+        const pixelAdminCreateStageFileNameElement = document.getElementById("pixelAdminCreateStageFileName");
+        const pixelAdminCreateStageLlmPanelElement = document.getElementById("pixelAdminCreateStageLlmPanel");
+        const pixelAdminCreateStageLlmEndpointElement = document.getElementById("pixelAdminCreateStageLlmEndpoint");
+        const pixelAdminCreateStageLlmStepsElement = document.getElementById("pixelAdminCreateStageLlmSteps");
+        const pixelAdminCreateStageLlmPromptElement = document.getElementById("pixelAdminCreateStageLlmPrompt");
+        const pixelAdminCreateStageLlmNegativePromptElement = document.getElementById("pixelAdminCreateStageLlmNegativePrompt");
         const pixelAdminCreateStageTitleElement = document.getElementById("pixelAdminCreateStageTitle");
         const pixelAdminCreateStageIdElement = document.getElementById("pixelAdminCreateStageId");
         const pixelAdminCreateStageSequenceElement = document.getElementById("pixelAdminCreateStageSequence");
@@ -686,6 +870,8 @@ const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminCreateStageBgModeElement = document.getElementById("pixelAdminCreateStageBgMode");
         const pixelAdminCreateStageBgColorElement = document.getElementById("pixelAdminCreateStageBgColor");
         const pixelAdminCreateStageElement = document.getElementById("pixelAdminCreateStage");
+        const pixelAdminCommitStageElement = document.getElementById("pixelAdminCommitStage");
+        const pixelAdminCancelStagePreviewElement = document.getElementById("pixelAdminCancelStagePreview");
         const pixelAdminCreateStageNoteElement = document.getElementById("pixelAdminCreateStageNote");
         const pixelAdminCreateStagePanelElement = pixelAdminCreateStageNoteElement?.closest?.(".pixel-admin-stage-create") || null;
         const pixelAdminHelpElement = document.getElementById("pixelAdminHelp");
@@ -747,7 +933,9 @@ const pixelAdminState = {
             deferHeavyRender: false,
             deferredHeavyRenderTimer: null,
             createStageBusy: false,
-            createStageStatus: "로컬 브리지가 켜져 있으면 이미지를 새 정식 스테이지로 저장합니다.",
+            createStagePreview: null,
+            createStageStatus:
+                "이미지 업로드나 로컬 LLM 생성 결과를 새 정식 스테이지로 저장할 수 있어요. LLM은 A1111 로컬 서버가 켜져 있어야 합니다.",
             message: "분리된 어드민 창에서 스테이지를 편집할 수 있습니다."
         };
 window.__pixelAdminState = pixelAdminState;
@@ -1894,9 +2082,15 @@ function syncPixelAdminDraftFromExportInput() {
         }
 
         async function createPixelAdminStageFromImage() {
+            const createSource = pixelAdminCreateStageSourceLlmElement?.checked ? "llm" : "upload";
             const imageFile = pixelAdminCreateStageFileElement?.files?.[0] || null;
-            if (!imageFile) {
+            if (createSource !== "llm" && !imageFile) {
                 pixelAdminState.createStageStatus = "먼저 이미지 파일을 골라 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (createSource === "llm" && !String(pixelAdminCreateStageLlmPromptElement?.value || "").trim()) {
+                pixelAdminState.createStageStatus = "LLM 프롬프트를 입력해 주세요.";
                 renderPixelAdmin();
                 return;
             }
@@ -1935,32 +2129,223 @@ function syncPixelAdminDraftFromExportInput() {
             }
 
             pixelAdminState.createStageBusy = true;
-            pixelAdminState.createStageStatus = "이미지를 픽셀화하고 새 스테이지 파일을 만드는 중이에요.";
+            pixelAdminState.createStageStatus =
+                createSource === "llm"
+                    ? "로컬 LLM으로 이미지를 만들고 새 스테이지 파일을 만드는 중이에요."
+                    : "이미지를 픽셀화하고 새 스테이지 파일을 만드는 중이에요.";
             renderPixelAdmin();
 
             try {
-                const imageBase64 = await readPixelAdminFileAsBase64(imageFile);
+                const imageBase64 = createSource === "llm" ? "" : await readPixelAdminFileAsBase64(imageFile);
                 const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/create-stage-from-image`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        imageName: imageFile.name,
+                        sourceType: createSource,
+                        imageName: imageFile?.name || "",
                         imageBase64,
                         displayName,
                         stageId,
                         sequence: pixelAdminCreateStageSequenceElement?.value || "",
                         colors: pixelAdminCreateStageColorsElement?.value || 10,
-                        grid: pixelAdminCreateStageGridElement?.checked === true,
+                        grid: createSource === "llm" ? false : pixelAdminCreateStageGridElement?.checked === true,
                         dither: pixelAdminCreateStageDitherElement?.checked !== false,
                         bgMode: backgroundMode,
-                        bgColor: backgroundHex
+                        bgColor: backgroundHex,
+                        llmEndpoint: pixelAdminCreateStageLlmEndpointElement?.value || "",
+                        llmPrompt: pixelAdminCreateStageLlmPromptElement?.value || "",
+                        llmNegativePrompt: pixelAdminCreateStageLlmNegativePromptElement?.value || "",
+                        llmSteps: pixelAdminCreateStageLlmStepsElement?.value || 20
                     })
                 });
                 const responsePayload = await response.json();
                 if (!response.ok || !responsePayload?.ok) {
                     throw new Error(responsePayload?.error || `브리지 요청이 실패했어요. (${response.status})`);
+                }
+
+                const createdStageEntry = responsePayload.stageEntry;
+                const createdStagePayload = responsePayload.stagePayload;
+                const createdStageWarning =
+                    typeof responsePayload.warning === "string" && responsePayload.warning.trim()
+                        ? responsePayload.warning.trim()
+                        : "";
+                const createdStageIndex = upsertRuntimeStageDefinition(createdStageEntry, createdStagePayload);
+                if (createdStageIndex < 0) {
+                    throw new Error("새 스테이지를 런타임 목록에 추가하지 못했어요.");
+                }
+
+                window.localStorage.setItem(
+                    PIXEL_ADMIN_STAGE_CATALOG_REFRESH_KEY,
+                    JSON.stringify({
+                        at: Date.now(),
+                        stageEntry: createdStageEntry,
+                        stagePayload: createdStagePayload,
+                        activate: true
+                    })
+                );
+
+                pixelAdminState.createStageStatus = `${createdStageEntry.displayNameNumbered} 스테이지를 만들었어요. 바로 열어볼게요.`;
+                pixelAdminState.createStageStatus = createdStageWarning
+                    ? `${createdStageEntry.displayNameNumbered} 스테이지를 만들었어요. ${createdStageWarning}`
+                    : pixelAdminState.createStageStatus;
+                pixelAdminCreateStageFileElement.value = "";
+                if (pixelAdminCreateStageFileNameElement) {
+                    pixelAdminCreateStageFileNameElement.textContent = "선택된 파일 없음";
+                }
+                await goToMapIndexFromAdmin(createdStageIndex, {
+                    message: `${createdStageEntry.displayNameNumbered} 스테이지를 만들고 바로 열었어요.`
+                });
+            } catch (error) {
+                pixelAdminState.createStageStatus =
+                    error?.message ||
+                    "새 스테이지 생성에 실패했어요. 브리지가 켜져 있는지 확인해 주세요.";
+                renderPixelAdmin();
+            } finally {
+                pixelAdminState.createStageBusy = false;
+                renderPixelAdmin();
+            }
+        }
+
+        async function previewPixelAdminCreateStage() {
+            const createStageRequest = getPixelAdminCreateStageRequestDraft();
+            if (createStageRequest.createSource !== "llm" && !createStageRequest.imageFile) {
+                pixelAdminState.createStageStatus = "먼저 이미지 파일을 골라 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (
+                createStageRequest.createSource === "llm" &&
+                !String(pixelAdminCreateStageLlmPromptElement?.value || "").trim()
+            ) {
+                pixelAdminState.createStageStatus = "LLM 프롬프트를 입력해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (!createStageRequest.displayName) {
+                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (!createStageRequest.stageId) {
+                pixelAdminState.createStageStatus = "새 스테이지 ID는 영문/숫자로 만들어 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (createStageRequest.backgroundMode === "hex" && !createStageRequest.backgroundHex) {
+                pixelAdminState.createStageStatus = "HEX 배경 제거를 쓰려면 #RRGGBB 값을 넣어 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            pixelAdminState.createStageBusy = true;
+            pixelAdminState.createStageStatus =
+                createStageRequest.createSource === "llm"
+                    ? "로컬 LLM으로 이미지를 만들고 미리보기를 준비하는 중이에요."
+                    : "이미지를 픽셀화해서 미리보기를 준비하는 중이에요.";
+            renderPixelAdmin();
+
+            try {
+                const imageBase64 =
+                    createStageRequest.createSource === "llm"
+                        ? ""
+                        : await readPixelAdminFileAsBase64(createStageRequest.imageFile);
+                const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/preview-stage-from-image`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sourceType: createStageRequest.createSource,
+                        imageName: createStageRequest.imageFile?.name || "",
+                        imageBase64,
+                        displayName: createStageRequest.displayName,
+                        stageId: createStageRequest.stageId,
+                        sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                        colors: pixelAdminCreateStageColorsElement?.value || 10,
+                        grid:
+                            createStageRequest.createSource === "llm"
+                                ? false
+                                : pixelAdminCreateStageGridElement?.checked === true,
+                        dither: pixelAdminCreateStageDitherElement?.checked !== false,
+                        bgMode: createStageRequest.backgroundMode,
+                        bgColor: createStageRequest.backgroundHex,
+                        llmEndpoint: pixelAdminCreateStageLlmEndpointElement?.value || "",
+                        llmPrompt: pixelAdminCreateStageLlmPromptElement?.value || "",
+                        llmNegativePrompt: pixelAdminCreateStageLlmNegativePromptElement?.value || "",
+                        llmSteps: pixelAdminCreateStageLlmStepsElement?.value || 20
+                    })
+                });
+                const responsePayload = await response.json();
+                if (!response.ok || !responsePayload?.ok) {
+                    throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
+                }
+
+                loadPixelAdminCreateStagePreview(
+                    responsePayload.stageEntry,
+                    responsePayload.stagePayload,
+                    typeof responsePayload.warning === "string" ? responsePayload.warning.trim() : ""
+                );
+            } catch (error) {
+                pixelAdminState.createStageStatus =
+                    error?.message || "미리보기를 만들지 못했어요. 브리지가 켜져 있는지 확인해 주세요.";
+                renderPixelAdmin();
+            } finally {
+                pixelAdminState.createStageBusy = false;
+                renderPixelAdmin();
+            }
+        }
+
+        async function commitPixelAdminCreateStagePreview() {
+            if (!pixelAdminState.createStagePreview || !pixelAdminState.draftMap?.length) {
+                pixelAdminState.createStageStatus = "먼저 미리보기를 불러와 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const createStageRequest = getPixelAdminCreateStageRequestDraft();
+            if (!createStageRequest.displayName) {
+                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+            if (!createStageRequest.stageId) {
+                pixelAdminState.createStageStatus = "새 스테이지 ID는 영문/숫자로 만들어 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const draftPalettePayload = Object.fromEntries(
+                Object.entries(pixelAdminState.draftPalette || {})
+                    .map(([colorId, colorMeta]) => [
+                        String(colorId),
+                        normalizeHexColor(typeof colorMeta === "string" ? colorMeta : colorMeta?.color)
+                    ])
+                    .filter(([, color]) => color)
+            );
+
+            pixelAdminState.createStageBusy = true;
+            pixelAdminState.createStageStatus = "현재 미리보기를 새 맵으로 저장하는 중이에요.";
+            renderPixelAdmin();
+
+            try {
+                const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/create-stage-from-draft`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        displayName: createStageRequest.displayName,
+                        stageId: createStageRequest.stageId,
+                        sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                        imageMap: pixelAdminState.draftMap,
+                        palette: draftPalettePayload
+                    })
+                });
+                const responsePayload = await response.json();
+                if (!response.ok || !responsePayload?.ok) {
+                    throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
                 }
 
                 const createdStageEntry = responsePayload.stageEntry;
@@ -1980,15 +2365,21 @@ function syncPixelAdminDraftFromExportInput() {
                     })
                 );
 
-                pixelAdminState.createStageStatus = `${createdStageEntry.displayNameNumbered} 스테이지를 만들었어요. 바로 열어볼게요.`;
+                pixelAdminState.createStagePreview = null;
+                pixelAdminState.isDirty = false;
+                pixelAdminState.exportIsDirty = false;
+                pixelAdminState.exportNeedsRefresh = true;
+                pixelAdminState.createStageStatus = `${createdStageEntry.displayNameNumbered} 스테이지를 저장했어요. 바로 열어볼게요.`;
                 pixelAdminCreateStageFileElement.value = "";
+                if (pixelAdminCreateStageFileNameElement) {
+                    pixelAdminCreateStageFileNameElement.textContent = "선택된 파일 없음";
+                }
                 await goToMapIndexFromAdmin(createdStageIndex, {
-                    message: `${createdStageEntry.displayNameNumbered} 스테이지를 만들고 바로 열었어요.`
+                    message: `${createdStageEntry.displayNameNumbered} 스테이지를 저장하고 바로 열었어요.`
                 });
             } catch (error) {
                 pixelAdminState.createStageStatus =
-                    error?.message ||
-                    "새 스테이지 생성에 실패했어요. 브리지가 켜져 있는지 확인해 주세요.";
+                    error?.message || "새 스테이지 저장에 실패했어요. 브리지가 켜져 있는지 확인해 주세요.";
                 renderPixelAdmin();
             } finally {
                 pixelAdminState.createStageBusy = false;
@@ -2094,6 +2485,7 @@ function syncPixelAdminDraftFromExportInput() {
             const shouldDeferHeavyRender =
                 pixelAdminState.deferHeavyRender &&
                 (shouldRefreshExport || shouldRefreshPalette || shouldRefreshGrid);
+            const createStagePreviewActive = !!pixelAdminState.createStagePreview;
 
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
             pixelAdminHelpElement.textContent = shouldDeferHeavyRender
@@ -2129,14 +2521,48 @@ function syncPixelAdminDraftFromExportInput() {
             if (pixelAdminTitleInputElement) {
                 pixelAdminTitleInputElement.value = pixelAdminState.draftDisplayName || "";
             }
+            const createStageSource = pixelAdminCreateStageSourceLlmElement?.checked ? "llm" : "upload";
+            if (pixelAdminCreateStageFileBoxElement?.parentElement) {
+                pixelAdminCreateStageFileBoxElement.parentElement.hidden = createStageSource !== "upload";
+            }
+            if (pixelAdminCreateStageLlmPanelElement) {
+                pixelAdminCreateStageLlmPanelElement.hidden = createStageSource !== "llm";
+            }
             if (pixelAdminCreateStageNoteElement) {
                 pixelAdminCreateStageNoteElement.textContent = pixelAdminState.createStageStatus;
             }
             if (pixelAdminCreateStageElement) {
                 pixelAdminCreateStageElement.disabled = pixelAdminState.createStageBusy;
             }
+            if (pixelAdminCommitStageElement) {
+                pixelAdminCommitStageElement.disabled = pixelAdminState.createStageBusy || !createStagePreviewActive;
+            }
+            if (pixelAdminCancelStagePreviewElement) {
+                pixelAdminCancelStagePreviewElement.disabled = pixelAdminState.createStageBusy || !createStagePreviewActive;
+            }
+            if (pixelAdminCreateStageGridElement) {
+                pixelAdminCreateStageGridElement.disabled = createStageSource === "llm";
+            }
             if (pixelAdminCreateStageBgColorElement) {
                 pixelAdminCreateStageBgColorElement.disabled = pixelAdminCreateStageBgModeElement?.value !== "hex";
+            }
+            if (pixelAdminApplyElement) {
+                pixelAdminApplyElement.disabled = createStagePreviewActive;
+            }
+            if (pixelAdminReloadElement) {
+                pixelAdminReloadElement.disabled = createStagePreviewActive;
+            }
+            if (pixelAdminRestoreElement) {
+                pixelAdminRestoreElement.disabled = createStagePreviewActive;
+            }
+            if (pixelAdminStageClearElement) {
+                pixelAdminStageClearElement.disabled = createStagePreviewActive;
+            }
+            if (pixelAdminPreviousLevelElement) {
+                pixelAdminPreviousLevelElement.disabled = createStagePreviewActive;
+            }
+            if (pixelAdminNextLevelElement) {
+                pixelAdminNextLevelElement.disabled = createStagePreviewActive;
             }
             if (pixelAdminColorHexTextElement) {
                 pixelAdminColorHexTextElement.value = selectedColorMeta?.color?.replace(/^#/, "") || "";
@@ -2395,8 +2821,20 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
             updatePixelAdminStageTitleDraft(event.target.value);
         });
 
+        [pixelAdminCreateStageSourceUploadElement, pixelAdminCreateStageSourceLlmElement].forEach((sourceElement) => {
+            sourceElement?.addEventListener("change", () => {
+                if (pixelAdminCreateStageSourceLlmElement?.checked && pixelAdminCreateStageGridElement) {
+                    pixelAdminCreateStageGridElement.checked = false;
+                }
+                renderPixelAdmin();
+            });
+        });
+
         pixelAdminCreateStageFileElement?.addEventListener("change", () => {
             const selectedFile = pixelAdminCreateStageFileElement.files?.[0] || null;
+            if (pixelAdminCreateStageFileNameElement) {
+                pixelAdminCreateStageFileNameElement.textContent = selectedFile?.name || "선택된 파일 없음";
+            }
             if (!selectedFile) {
                 return;
             }
@@ -2419,6 +2857,88 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
             }
             pixelAdminState.createStageStatus = `${selectedFile.name} 이미지를 새 스테이지 재료로 골랐어요.`;
             renderPixelAdmin();
+        });
+
+        pixelAdminCreateStageFileButtonElement?.addEventListener("click", () => {
+            if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                return;
+            }
+            pixelAdminCreateStageFileElement?.click();
+        });
+
+        pixelAdminCreateStageFileBoxElement?.addEventListener("click", async (event) => {
+            if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                return;
+            }
+            if (event.target === pixelAdminCreateStageFileButtonElement || event.target?.closest?.("#pixelAdminCreateStageFileButton")) {
+                return;
+            }
+
+            event.preventDefault();
+            if (!navigator.clipboard?.read || typeof DataTransfer === "undefined" || typeof File === "undefined") {
+                pixelAdminState.createStageStatus =
+                    "이 브라우저에서는 클릭으로 클립보드 이미지를 붙여넣지 못해요. 파일 선택 버튼을 사용해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                let clipboardImageBlob = null;
+                let clipboardImageType = "";
+
+                clipboardItems.some((item) => {
+                    const imageType = item.types.find((type) => type.startsWith("image/")) || "";
+                    if (!imageType) {
+                        return false;
+                    }
+
+                    clipboardImageType = imageType;
+                    clipboardImageBlob = item.getType(imageType);
+                    return true;
+                });
+
+                const resolvedClipboardImageBlob = await clipboardImageBlob;
+                if (!resolvedClipboardImageBlob || !clipboardImageType) {
+                    pixelAdminState.createStageStatus =
+                        "클립보드에서 이미지를 찾지 못했어요. 이미지를 복사한 뒤 다시 클릭해 주세요.";
+                    renderPixelAdmin();
+                    return;
+                }
+
+                const fileExtension = clipboardImageType
+                    .replace(/^image\//, "")
+                    .replace(/[^a-z0-9]+/gi, "")
+                    .toLowerCase();
+                const clipboardFile = new File(
+                    [resolvedClipboardImageBlob],
+                    `clipboard-image.${fileExtension === "jpeg" ? "jpg" : fileExtension || "png"}`,
+                    { type: clipboardImageType }
+                );
+                const clipboardTransfer = new DataTransfer();
+                clipboardTransfer.items.add(clipboardFile);
+                pixelAdminCreateStageFileElement.files = clipboardTransfer.files;
+                pixelAdminCreateStageFileElement.dispatchEvent(new Event("change", { bubbles: true }));
+            } catch (error) {
+                console.error("[PixelAdmin] failed to read clipboard image", error);
+                pixelAdminState.createStageStatus =
+                    error?.name === "NotAllowedError"
+                        ? "브라우저에서 클립보드 읽기를 허용해 주세요."
+                        : error?.message || "클립보드 이미지를 붙여넣지 못했어요.";
+                renderPixelAdmin();
+            }
+        });
+
+        pixelAdminCreateStageFileBoxElement?.addEventListener("keydown", async (event) => {
+            if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                return;
+            }
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+
+            event.preventDefault();
+            pixelAdminCreateStageFileBoxElement.click();
         });
 
         pixelAdminCreateStageTitleElement?.addEventListener("input", (event) => {
@@ -2470,11 +2990,22 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
         });
 
         pixelAdminCreateStageElement?.addEventListener("click", () => {
-            void createPixelAdminStageFromImage();
+            void previewPixelAdminCreateStage();
+        });
+
+        pixelAdminCommitStageElement?.addEventListener("click", () => {
+            void commitPixelAdminCreateStagePreview();
+        });
+
+        pixelAdminCancelStagePreviewElement?.addEventListener("click", () => {
+            cancelPixelAdminCreateStagePreview();
         });
 
         ["dragenter", "dragover"].forEach((eventName) => {
             pixelAdminCreateStagePanelElement?.addEventListener(eventName, (event) => {
+                if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                    return;
+                }
                 event.preventDefault();
                 if (!event.dataTransfer) {
                     return;
@@ -2487,6 +3018,9 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
 
         ["dragleave", "dragend"].forEach((eventName) => {
             pixelAdminCreateStagePanelElement?.addEventListener(eventName, (event) => {
+                if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                    return;
+                }
                 if (
                     event.type === "dragleave" &&
                     pixelAdminCreateStagePanelElement?.contains(event.relatedTarget)
@@ -2499,6 +3033,9 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
         });
 
         pixelAdminCreateStagePanelElement?.addEventListener("drop", (event) => {
+            if (pixelAdminCreateStageSourceLlmElement?.checked) {
+                return;
+            }
             event.preventDefault();
             pixelAdminCreateStagePanelElement.classList.remove("drag-over");
 
