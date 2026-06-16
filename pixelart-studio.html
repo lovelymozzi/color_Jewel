@@ -89,6 +89,9 @@
           <option value="openmoji">OpenMoji (기본)</option>
           <option value="twemoji">Twemoji · 트위터</option>
           <option value="noto">Noto Emoji · 구글</option>
+          <option value="fluent-flat">Fluent Flat · MS (고퀄)</option>
+          <option value="fluent-3d">Fluent 3D · MS (입체)</option>
+          <option value="emojione">EmojiOne</option>
           <option value="mix">전체 랜덤 (스타일 섞기)</option>
         </select>
         <select id="category" style="margin-top:8px">
@@ -143,6 +146,13 @@
         <span id="contrastOut" style="width:28px;text-align:right;font-weight:500">0</span>
       </div>
       <div class="hint">채도와 명암 대비를 키워 색을 더 또렷하고 선명하게 만듭니다. (0 = 원본 색)</div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="hint" style="flex:none">잡티 제거</label>
+        <input type="range" id="despeckle" min="0" max="12" value="2" step="1" style="flex:1">
+        <span id="despeckleOut" style="width:28px;text-align:right;font-weight:500">2</span>
+      </div>
+      <div class="hint">이 칸 수 이하의 외톨이 색 덩어리 중 <strong>주변과 색이 비슷한 잡티만</strong> 흡수합니다. 눈동자처럼 대비가 큰 디테일은 보존됩니다. (0 = 끔)</div>
     </div>
 
     <!-- 3. Frame -->
@@ -200,35 +210,41 @@
    color PNG: https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/618x618/<HEX>.png
    ============================================================ */
 const EMOJI_STYLES = {
-  openmoji: { label:"OpenMoji", url:h=>`https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/618x618/${h}.png` },
-  twemoji:  { label:"Twemoji",  url:h=>`https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/${h.toLowerCase()}.png` },
-  noto:     { label:"Noto",     url:h=>`https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/emoji_u${h.toLowerCase()}.png` }
+  openmoji: { label:"OpenMoji", svg:false, url:e=>`https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/618x618/${e[0]}.png` },
+  twemoji:  { label:"Twemoji",  svg:false, url:e=>`https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/${e[0].toLowerCase()}.png` },
+  noto:     { label:"Noto",     svg:false, url:e=>`https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/emoji_u${e[0].toLowerCase()}.png` },
+  "fluent-flat": { label:"Fluent Flat", svg:true, url:e=>`https://api.iconify.design/fluent-emoji-flat/${e[4]}.svg` },
+  "fluent-3d":   { label:"Fluent 3D",   svg:true, url:e=>`https://api.iconify.design/fluent-emoji/${e[4]}.svg` },
+  emojione:      { label:"EmojiOne",    svg:true, url:e=>`https://api.iconify.design/emojione/${e[4]}.svg` }
 };
 const STYLE_KEYS = Object.keys(EMOJI_STYLES);
+// [ codepoint, id, koName, category, iconifyName ]  (iconifyName verified against fluent-emoji)
 const CATALOG = [
   // animals
-  ["1F415","dog","강아지","animal"],["1F408","cat","고양이","animal"],["1F98A","fox","여우","animal"],
-  ["1F43C","panda","팬더","animal"],["1F428","koala","코알라","animal"],["1F981","lion","사자","animal"],
-  ["1F42F","tiger","호랑이","animal"],["1F437","pig","돼지","animal"],["1F430","rabbit","토끼","animal"],
-  ["1F438","frog","개구리","animal"],["1F435","monkey","원숭이","animal"],["1F43B","bear","곰","animal"],
-  ["1F42E","cow","소","animal"],["1F414","chicken","닭","animal"],["1F427","penguin","펭귄","animal"],
-  ["1F98C","deer","사슴","animal"],["1F40E","horse","말","animal"],["1F411","sheep","양","animal"],
-  ["1F42D","mouse","쥐","animal"],["1F439","hamster","햄스터","animal"],["1F43A","wolf","늑대","animal"],
-  ["1F99D","raccoon","너구리","animal"],["1F987","bat","박쥐","animal"],["1F985","eagle","독수리","animal"],
-  ["1F986","duck","오리","animal"],["1F989","owl","부엉이","animal"],["1F424","chick","병아리","animal"],
-  ["1F426","bird","새","animal"],["1F43F","chipmunk","다람쥐","animal"],["1F992","giraffe","기린","animal"],
-  ["1F418","elephant","코끼리","animal"],["1F993","zebra","얼룩말","animal"],["1F98F","rhino","코뿔소","animal"],
-  ["1F99B","hippo","하마","animal"],["1F408","cat2","고양이2","animal"],
+  ["1F415","dog","강아지","animal","dog"],["1F408","cat","고양이","animal","cat"],["1F98A","fox","여우","animal","fox"],
+  ["1F43C","panda","팬더","animal","panda"],["1F428","koala","코알라","animal","koala"],["1F981","lion","사자","animal","lion"],
+  ["1F42F","tiger","호랑이","animal","tiger-face"],["1F437","pig","돼지","animal","pig-face"],["1F430","rabbit","토끼","animal","rabbit-face"],
+  ["1F438","frog","개구리","animal","frog"],["1F435","monkey","원숭이","animal","monkey-face"],["1F43B","bear","곰","animal","bear"],
+  ["1F42E","cow","소","animal","cow-face"],["1F414","chicken","닭","animal","chicken"],["1F427","penguin","펭귄","animal","penguin"],
+  ["1F98C","deer","사슴","animal","deer"],["1F40E","horse","말","animal","horse"],["1F411","sheep","양","animal","ewe"],
+  ["1F42D","mouse","쥐","animal","mouse-face"],["1F439","hamster","햄스터","animal","hamster"],["1F43A","wolf","늑대","animal","wolf"],
+  ["1F99D","raccoon","너구리","animal","raccoon"],["1F987","bat","박쥐","animal","bat"],["1F985","eagle","독수리","animal","eagle"],
+  ["1F986","duck","오리","animal","duck"],["1F989","owl","부엉이","animal","owl"],["1F424","chick","병아리","animal","baby-chick"],
+  ["1F426","bird","새","animal","bird"],["1F43F","chipmunk","다람쥐","animal","chipmunk"],["1F992","giraffe","기린","animal","giraffe"],
+  ["1F418","elephant","코끼리","animal","elephant"],["1F993","zebra","얼룩말","animal","zebra"],["1F98F","rhino","코뿔소","animal","rhinoceros"],
+  ["1F99B","hippo","하마","animal","hippopotamus"],["1F408","cat2","고양이2","animal","cat"],
   // plants
-  ["1F337","tulip","튤립","plant"],["1F339","rose","장미","plant"],["1F33B","sunflower","해바라기","plant"],
-  ["1F33C","blossom","꽃","plant"],["1F338","cherry-blossom","벚꽃","plant"],["1F340","clover","네잎클로버","plant"],
-  ["1F333","tree","나무","plant"],["1F332","evergreen","침엽수","plant"],["1F334","palm-tree","야자수","plant"],
-  ["1F335","cactus","선인장","plant"],["1F341","maple-leaf","단풍잎","plant"],["1F342","fallen-leaf","낙엽","plant"],
-  ["1F33F","herb","허브","plant"],["1F343","leaf","나뭇잎","plant"],["1F344","mushroom","버섯","plant"],
-  ["1F330","chestnut","밤","plant"],["1F490","bouquet","꽃다발","plant"]
+  ["1F337","tulip","튤립","plant","tulip"],["1F339","rose","장미","plant","rose"],["1F33B","sunflower","해바라기","plant","sunflower"],
+  ["1F33C","blossom","꽃","plant","blossom"],["1F338","cherry-blossom","벚꽃","plant","cherry-blossom"],["1F340","clover","네잎클로버","plant","four-leaf-clover"],
+  ["1F333","tree","나무","plant","deciduous-tree"],["1F332","evergreen","침엽수","plant","evergreen-tree"],["1F334","palm-tree","야자수","plant","palm-tree"],
+  ["1F335","cactus","선인장","plant","cactus"],["1F341","maple-leaf","단풍잎","plant","maple-leaf"],["1F342","fallen-leaf","낙엽","plant","fallen-leaf"],
+  ["1F33F","herb","허브","plant","herb"],["1F343","leaf","나뭇잎","plant","leaf-fluttering-in-wind"],["1F344","mushroom","버섯","plant","mushroom"],
+  ["1F330","chestnut","밤","plant","chestnut"],["1F490","bouquet","꽃다발","plant","bouquet"]
 ];
 
 const FRAME_COLOR = "#404050"; // palette index 1, same as 14_shiba.json
+const SPECK_COLOR_TOL = 72;    // despeckle: only absorb a tiny region into a neighbor this close in RGB
+                               // (so high-contrast detail like eyes/pupils is kept, only blend noise is removed)
 const els = id => document.getElementById(id);
 let results = []; // {seq,id,ko,W,H,imageMap,palette}
 
@@ -314,6 +330,16 @@ function chooseK(W,H){
   return clamp(auto, Math.min(pmin,pmax), Math.max(pmin,pmax));
 }
 
+/* ---------- rasterize an SVG <img> to a crisp raster canvas ---------- */
+function rasterizeSVG(img, size){
+  const iw=img.naturalWidth||img.width||size, ih=img.naturalHeight||img.height||size;
+  const c=document.createElement("canvas"); c.width=size; c.height=size;
+  const ctx=c.getContext("2d",{willReadFrequently:true});
+  const sc=Math.min(size/iw, size/ih), w=iw*sc, h=ih*sc;
+  ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h); // SVG re-rasterizes sharply at target size
+  return c;
+}
+
 /* ---------- preprocess: trim transparent margins so the subject fills the frame ---------- */
 function opaqueBBox(d,w,h){
   let nx0=w-1,ny0=h-1,nx1=0,ny1=0,found=false;
@@ -336,6 +362,58 @@ function preprocess(img){
   const out=document.createElement("canvas"); out.width=cw; out.height=ch;
   out.getContext("2d").drawImage(cv, box.x0,box.y0,cw,ch, 0,0,cw,ch);
   return out;
+}
+
+/* ---------- despeckle: absorb tiny color regions into dominant neighbor (for color-fill games)
+   grid holds palette numbers (0 = transparent). 4-connected regions of equal value whose
+   size <= maxSize are merged into their most common neighbor — but, when colorOf+colorTol are
+   given, ONLY into a neighbor whose color is within colorTol (RGB distance). A tiny region with
+   no similar-colored neighbor is high-contrast detail (e.g. a pupil), so it is kept, not noise.
+   Transparent holes (value 0) ignore the color gate and always fill into the dominant color.
+   Iterates until stable. ---------- */
+function despeckle(grid, w, h, maxSize, colorOf, colorTol){
+  if(maxSize<=0) return;
+  const gated = !!colorOf && colorTol!=null;
+  const cdist=(a,b)=> (a&&b) ? Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2) : Infinity;
+  const at=(x,y)=>grid[y][x];
+  for(let pass=0; pass<6; pass++){
+    const comp=Array.from({length:h},()=>new Array(w).fill(-1));
+    const members=[], cval=[]; let nc=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      if(comp[y][x]!==-1) continue;
+      const v=at(x,y), cells=[], stack=[[x,y]]; comp[y][x]=nc;
+      while(stack.length){
+        const [cx,cy]=stack.pop(); cells.push([cx,cy]);
+        for(const [nx,ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){
+          if(nx<0||ny<0||nx>=w||ny>=h) continue;
+          if(comp[ny][nx]===-1 && at(nx,ny)===v){ comp[ny][nx]=nc; stack.push([nx,ny]); }
+        }
+      }
+      members.push(cells); cval.push(v); nc++;
+    }
+    let changed=false;
+    for(let c=0;c<nc;c++){
+      if(members[c].length>maxSize) continue;
+      const v=cval[c], gateColor = gated && v!==0;   // value-0 holes skip the color gate
+      const tally=new Map();
+      for(const [cx,cy] of members[c])
+        for(const [nx,ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){
+          if(nx<0||ny<0||nx>=w||ny>=h) continue;
+          const nv=at(nx,ny); if(nv===v) continue;
+          if(gateColor){
+            if(nv===0) continue;                                   // don't merge detail into transparent
+            if(cdist(colorOf[v], colorOf[nv]) > colorTol) continue; // not similar -> not noise, keep
+          }
+          tally.set(nv,(tally.get(nv)||0)+1);
+        }
+      let bestV=null,bestN=-1;
+      for(const [nv,n] of tally) if(n>bestN||(n===bestN&&nv>bestV)){ bestN=n; bestV=nv; }
+      if(bestV===null) continue;                                   // no eligible neighbor -> keep region
+      for(const [cx,cy] of members[c]) grid[cy][cx]=bestV;
+      changed=true;
+    }
+    if(!changed) break;
+  }
 }
 
 /* ---------- core: image -> imageMap + palette ---------- */
@@ -401,16 +479,42 @@ function convert(img, W, H){
   const palette={};
   let base=1;
   if(drawFrame){ palette["1"]=FRAME_COLOR; base=2; }
-  const repToPal={};
-  groups.forEach((g,gi)=>{ const num=gi+base; palette[String(num)]=toHex(boostContrast(g.color,contrastK)); g.ids.forEach(id=>repToPal[id]=num); });
+  const repToPal={}, numColor={};
+  groups.forEach((g,gi)=>{
+    const num=gi+base, col=boostContrast(g.color,contrastK);
+    palette[String(num)]=toHex(col); numColor[num]=col;       // keep RGB for despeckle color gate
+    g.ids.forEach(id=>repToPal[id]=num);
+  });
+
+  // content palette grid (0 = transparent), then despeckle tiny regions for color-fill playability
+  const cval=[];
+  for(let cy=0;cy<contentH;cy++){
+    const row=new Array(contentW).fill(0);
+    for(let cx=0;cx<contentW;cx++){
+      const rep=cellRep[cy*contentW+cx];
+      if(rep>=0) row[cx]=repToPal[rep];
+    }
+    cval.push(row);
+  }
+  despeckle(cval, contentW, contentH, parseInt(els("despeckle").value)||0, numColor, SPECK_COLOR_TOL);
+
+  // prune colors no longer present + renumber contiguously (preserve frame=1)
+  const usedNums=new Set();
+  for(let cy=0;cy<contentH;cy++)for(let cx=0;cx<contentW;cx++) if(cval[cy][cx]>0) usedNums.add(cval[cy][cx]);
+  const finalPalette={}, remap={}; let pn=1;
+  if(drawFrame){ finalPalette["1"]=FRAME_COLOR; pn=2; }
+  Object.keys(palette).map(Number).sort((a,b)=>a-b).forEach(num=>{
+    if(num===1 && drawFrame) return;
+    if(!usedNums.has(num)) return;
+    remap[num]=pn; finalPalette[String(pn)]=palette[String(num)]; pn++;
+  });
 
   // build full imageMap (all 0)
   const map=[];
   for(let y=0;y<H;y++) map.push(new Array(W).fill(0));
-  // content
   for(let cy=0;cy<contentH;cy++)for(let cx=0;cx<contentW;cx++){
-    const rep=cellRep[cy*contentW+cx];
-    if(rep>=0) map[rowOffset+cy][colOffset+cx]=repToPal[rep];
+    const v=cval[cy][cx];
+    if(v>0) map[rowOffset+cy][colOffset+cx]=remap[v];
   }
   // frame border (value 1) — optional
   if(drawFrame){
@@ -419,7 +523,7 @@ function convert(img, W, H){
     for(let y=0;y<H;y++){ map[y][left]=1; map[y][right]=1; }
   }
 
-  return {imageMap:map, palette, W, H};
+  return {imageMap:map, palette:finalPalette, W, H};
 }
 
 /* ---------- export schema (identical shape to 14_shiba.json) ---------- */
@@ -553,8 +657,9 @@ function buildAutoList(count){
     if(bagIdx>=bag.length){ bag=shuffle(pool); bagIdx=0; cycle++; } // reshuffle each full pass
     const e=bag[bagIdx++];
     const style = styleSel==="mix" ? STYLE_KEYS[Math.floor(Math.random()*STYLE_KEYS.length)] : styleSel;
+    const st=EMOJI_STYLES[style];
     const suffix=cycle>0?`-${cycle+1}`:"";
-    list.push({src:EMOJI_STYLES[style].url(e[0]), cross:true, id:e[1]+suffix, ko:e[2]});
+    list.push({src:st.url(e), cross:true, svg:st.svg, id:e[1]+suffix, ko:e[2]});
   }
   return list;
 }
@@ -585,7 +690,8 @@ async function generate(){
   for(let i=0;i<sources.length;i++){
     const s=sources[i];
     try{
-      const img=await loadImage(s.src, s.cross);
+      let img=await loadImage(s.src, s.cross);
+      if(s.svg) img=rasterizeSVG(img,256);
       const conv=convert(preprocess(img),W,H);
       results.push({seq:seq++, id:s.id, ko:s.ko, ...conv});
       ok++;
@@ -629,6 +735,7 @@ els("autoPalette").addEventListener("change",()=>{
 });
 els("mergeThreshold").addEventListener("input",()=>{ els("mergeOut").textContent=els("mergeThreshold").value; });
 els("contrastBoost").addEventListener("input",()=>{ els("contrastOut").textContent=els("contrastBoost").value; });
+els("despeckle").addEventListener("input",()=>{ els("despeckleOut").textContent=els("despeckle").value; });
 els("genBtn").addEventListener("click",generate);
 els("exportBtn").addEventListener("click",exportAll);
 els("clearBtn").addEventListener("click",()=>{

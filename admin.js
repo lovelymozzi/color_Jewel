@@ -76,11 +76,9 @@ const pixelAdminMarkup = `
                 </label>
             </div>
         </div>
+        <input id="pixelAdminCreateStageSourceTitle" type="hidden" />
+        <input id="pixelAdminCreateStageTitle" type="hidden" />
         <div class="pixel-admin-stage-create-grid">
-            <label class="pixel-admin-field" for="pixelAdminCreateStageTitle">
-                <span class="pixel-admin-field-label">관리용 이름</span>
-                <input class="pixel-admin-input" id="pixelAdminCreateStageTitle" type="text" maxlength="24" placeholder="예: 14. Desert Fox" />
-            </label>
             <label class="pixel-admin-field" for="pixelAdminCreateStageId">
                 <span class="pixel-admin-field-label">새 스테이지 ID</span>
                 <input class="pixel-admin-input" id="pixelAdminCreateStageId" type="text" maxlength="32" placeholder="예: desert_fox" />
@@ -306,6 +304,54 @@ function buildStageCanvasMapFromBase(definition) {
                 .replace(/\s+/g, " ")
                 .trim()
                 .slice(0, 24);
+        }
+
+        function romanizePixelAdminStageTitle(value) {
+            const normalizedValue = normalizeStageDisplayName(value).normalize("NFC");
+            if (!normalizedValue) {
+                return "";
+            }
+
+            const exactTranslations = {
+                "무당벌레": "Ladybug",
+                "아기 사자": "Baby Lion",
+                "아기사자": "Baby Lion",
+                "시바견": "Shiba",
+                "바다거북": "Sea Turtle",
+                "보물상자": "Treasure Chest",
+                "마법모자": "Magic Hat"
+            };
+            const exactMatch = exactTranslations[normalizedValue.replace(/\s+/g, " ").trim()];
+            if (exactMatch) {
+                return normalizeStageDisplayName(exactMatch);
+            }
+
+            const leadRomanization = ["g", "kk", "n", "d", "tt", "r", "m", "b", "pp", "s", "ss", "", "j", "jj", "ch", "k", "t", "p", "h"];
+            const vowelRomanization = ["a", "ae", "ya", "yae", "eo", "e", "yeo", "ye", "o", "wa", "wae", "oe", "yo", "u", "wo", "we", "wi", "yu", "eu", "ui", "i"];
+            const tailRomanization = ["", "k", "k", "ks", "n", "nj", "nh", "t", "l", "lk", "lm", "lb", "ls", "lt", "lp", "lh", "m", "p", "ps", "t", "t", "ng", "t", "t", "k", "t", "p", "h"];
+
+            let romanized = "";
+            for (const character of normalizedValue) {
+                const codePoint = character.charCodeAt(0);
+                if (codePoint >= 0xac00 && codePoint <= 0xd7a3) {
+                    const syllableIndex = codePoint - 0xac00;
+                    const leadIndex = Math.floor(syllableIndex / 588);
+                    const vowelIndex = Math.floor((syllableIndex % 588) / 28);
+                    const tailIndex = syllableIndex % 28;
+                    romanized += `${leadRomanization[leadIndex]}${vowelRomanization[vowelIndex]}${tailRomanization[tailIndex]}`;
+                    continue;
+                }
+
+                romanized += /[a-z0-9]/i.test(character) ? character : " ";
+            }
+
+            return normalizeStageDisplayName(
+                romanized
+                    .replace(/[^a-z0-9]+/gi, " ")
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .replace(/\b[a-z]/g, (match) => match.toUpperCase())
+            );
         }
 
         function getStageOverrideVersion(definitionOrMapId) {
@@ -861,6 +907,7 @@ const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminCreateStageLlmStepsElement = document.getElementById("pixelAdminCreateStageLlmSteps");
         const pixelAdminCreateStageLlmPromptElement = document.getElementById("pixelAdminCreateStageLlmPrompt");
         const pixelAdminCreateStageLlmNegativePromptElement = document.getElementById("pixelAdminCreateStageLlmNegativePrompt");
+        const pixelAdminCreateStageSourceTitleElement = document.getElementById("pixelAdminCreateStageSourceTitle");
         const pixelAdminCreateStageTitleElement = document.getElementById("pixelAdminCreateStageTitle");
         const pixelAdminCreateStageIdElement = document.getElementById("pixelAdminCreateStageId");
         const pixelAdminCreateStageSequenceElement = document.getElementById("pixelAdminCreateStageSequence");
@@ -2105,7 +2152,7 @@ function syncPixelAdminDraftFromExportInput() {
                     : pixelAdminCreateStageTitleElement?.value || ""
             );
             if (!displayName) {
-                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                pixelAdminState.createStageStatus = "제목을 입력해 주세요.";
                 renderPixelAdmin();
                 return;
             }
@@ -2224,7 +2271,7 @@ function syncPixelAdminDraftFromExportInput() {
                 return;
             }
             if (!createStageRequest.displayName) {
-                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                pixelAdminState.createStageStatus = "제목을 입력해 주세요.";
                 renderPixelAdmin();
                 return;
             }
@@ -2306,7 +2353,7 @@ function syncPixelAdminDraftFromExportInput() {
 
             const createStageRequest = getPixelAdminCreateStageRequestDraft();
             if (!createStageRequest.displayName) {
-                pixelAdminState.createStageStatus = "관리용 이름을 입력해 주세요.";
+                pixelAdminState.createStageStatus = "제목을 입력해 주세요.";
                 renderPixelAdmin();
                 return;
             }
@@ -2819,6 +2866,33 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
 
         pixelAdminTitleInputElement?.addEventListener("input", (event) => {
             updatePixelAdminStageTitleDraft(event.target.value);
+            const normalizedSourceTitle = normalizeStageDisplayName(event.target.value);
+            const romanizedSourceTitle = romanizePixelAdminStageTitle(normalizedSourceTitle);
+            const requestedSequence = Math.max(0, Number(pixelAdminCreateStageSequenceElement?.value) || 0);
+            const autoDisplayName = romanizedSourceTitle
+                ? normalizeStageDisplayName(
+                      requestedSequence
+                          ? `${String(requestedSequence).padStart(2, "0")}. ${romanizedSourceTitle}`
+                          : romanizedSourceTitle
+                  )
+                : "";
+
+            if (pixelAdminCreateStageSourceTitleElement) {
+                pixelAdminCreateStageSourceTitleElement.value = normalizedSourceTitle;
+                pixelAdminCreateStageSourceTitleElement.dataset.userEdited = normalizedSourceTitle ? "true" : "";
+            }
+            if (
+                pixelAdminCreateStageTitleElement &&
+                (!pixelAdminCreateStageTitleElement.dataset.userEdited || !String(pixelAdminCreateStageTitleElement.value || "").trim())
+            ) {
+                pixelAdminCreateStageTitleElement.value = autoDisplayName;
+            }
+            if (
+                pixelAdminCreateStageIdElement &&
+                (!pixelAdminCreateStageIdElement.dataset.userEdited || !String(pixelAdminCreateStageIdElement.value || "").trim())
+            ) {
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", romanizedSourceTitle);
+            }
         });
 
         [pixelAdminCreateStageSourceUploadElement, pixelAdminCreateStageSourceLlmElement].forEach((sourceElement) => {
@@ -2841,19 +2915,37 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
 
             const suggestedTitle = getPixelAdminSuggestedStageTitleFromFileName(
                 selectedFile.name,
-                pixelAdminCreateStageSequenceElement?.value || ""
+                ""
             );
+            const romanizedSuggestedTitle = romanizePixelAdminStageTitle(suggestedTitle);
+            const requestedSequence = Math.max(0, Number(pixelAdminCreateStageSequenceElement?.value) || 0);
+            const autoDisplayName = romanizedSuggestedTitle
+                ? normalizeStageDisplayName(
+                      requestedSequence
+                          ? `${String(requestedSequence).padStart(2, "0")}. ${romanizedSuggestedTitle}`
+                          : romanizedSuggestedTitle
+                  )
+                : getPixelAdminSuggestedStageTitleFromFileName(
+                      selectedFile.name,
+                      pixelAdminCreateStageSequenceElement?.value || ""
+                  );
+            if (
+                pixelAdminCreateStageSourceTitleElement &&
+                !pixelAdminCreateStageSourceTitleElement.dataset.userEdited
+            ) {
+                pixelAdminCreateStageSourceTitleElement.value = suggestedTitle;
+            }
             if (
                 pixelAdminCreateStageTitleElement &&
                 !pixelAdminCreateStageTitleElement.dataset.userEdited
             ) {
-                pixelAdminCreateStageTitleElement.value = suggestedTitle;
+                pixelAdminCreateStageTitleElement.value = autoDisplayName;
             }
             if (
                 pixelAdminCreateStageIdElement &&
                 !pixelAdminCreateStageIdElement.dataset.userEdited
             ) {
-                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", suggestedTitle || selectedFile.name);
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", romanizedSuggestedTitle || suggestedTitle || selectedFile.name);
             }
             pixelAdminState.createStageStatus = `${selectedFile.name} 이미지를 새 스테이지 재료로 골랐어요.`;
             renderPixelAdmin();
@@ -2954,19 +3046,51 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
             }
         });
 
+        pixelAdminCreateStageSourceTitleElement?.addEventListener("input", (event) => {
+            const normalizedSourceTitle = normalizeStageDisplayName(event.target.value);
+            const romanizedSourceTitle = romanizePixelAdminStageTitle(normalizedSourceTitle);
+            const requestedSequence = Math.max(0, Number(pixelAdminCreateStageSequenceElement?.value) || 0);
+            const autoDisplayName = romanizedSourceTitle
+                ? normalizeStageDisplayName(
+                      requestedSequence
+                          ? `${String(requestedSequence).padStart(2, "0")}. ${romanizedSourceTitle}`
+                          : romanizedSourceTitle
+                  )
+                : "";
+
+            event.target.value = normalizedSourceTitle;
+            event.target.dataset.userEdited = normalizedSourceTitle ? "true" : "";
+
+            if (pixelAdminCreateStageTitleElement && !pixelAdminCreateStageTitleElement.dataset.userEdited) {
+                pixelAdminCreateStageTitleElement.value = autoDisplayName;
+            }
+            if (pixelAdminCreateStageIdElement && !pixelAdminCreateStageIdElement.dataset.userEdited) {
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", romanizedSourceTitle);
+            }
+        });
+
         pixelAdminCreateStageSequenceElement?.addEventListener("input", (event) => {
             if (!pixelAdminCreateStageTitleElement || pixelAdminCreateStageTitleElement.dataset.userEdited) {
                 return;
             }
 
+            const requestedSequence = Math.max(0, Number(event.target.value) || 0);
+            const sourceTitle = normalizeStageDisplayName(pixelAdminCreateStageSourceTitleElement?.value || "");
+            const romanizedSourceTitle = romanizePixelAdminStageTitle(sourceTitle);
             const selectedFile = pixelAdminCreateStageFileElement?.files?.[0] || null;
-            const suggestedTitle = getPixelAdminSuggestedStageTitleFromFileName(
-                selectedFile?.name || pixelAdminCreateStageTitleElement.value,
-                event.target.value
-            );
+            const suggestedTitle = romanizedSourceTitle
+                ? normalizeStageDisplayName(
+                      requestedSequence
+                          ? `${String(requestedSequence).padStart(2, "0")}. ${romanizedSourceTitle}`
+                          : romanizedSourceTitle
+                  )
+                : getPixelAdminSuggestedStageTitleFromFileName(
+                      selectedFile?.name || pixelAdminCreateStageTitleElement.value,
+                      event.target.value
+                  );
             pixelAdminCreateStageTitleElement.value = suggestedTitle;
             if (pixelAdminCreateStageIdElement && !pixelAdminCreateStageIdElement.dataset.userEdited) {
-                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", suggestedTitle);
+                pixelAdminCreateStageIdElement.value = normalizePixelAdminGeneratedStageId("", romanizedSourceTitle || suggestedTitle);
             }
         });
 

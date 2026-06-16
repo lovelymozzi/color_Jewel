@@ -2132,7 +2132,7 @@
             bgmOn: true,
             hapticsOn: true
         });
-        const SCENE_CONTRACT_VERSION = "20260611-1";
+        const SCENE_CONTRACT_VERSION = "20260616-2";
         const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
@@ -3169,6 +3169,11 @@
                 return null;
             }
 
+            const normalizedCharges = clampActionChargesSnapshot(levelInitialState.actionCharges);
+            if (isSpecialActionUnlocked(config) && (Number(normalizedCharges.magnet) || 0) <= 0) {
+                normalizedCharges.magnet = getDefaultActionCharges(config).magnet;
+            }
+
             return {
                 mapId: config.id,
                 rows: config.rows,
@@ -3176,7 +3181,7 @@
                 boardState: cloneBoardSnapshot(levelInitialState.boardState),
                 trayState: [...levelInitialState.trayState],
                 cleanedSocketCells: normalizeSnapshotCleanedSocketCells(levelInitialState.cleanedSocketCells, config),
-                actionCharges: clampActionChargesSnapshot(levelInitialState.actionCharges)
+                actionCharges: normalizedCharges
             };
         }
 
@@ -3502,6 +3507,9 @@
             resetBoardTransform();
             selected = null;
             moves = Math.max(0, Number(snapshot.moves || 0));
+            if (isSpecialActionUnlocked(config) && moves === 0 && (Number(actionCharges.magnet) || 0) <= 0) {
+                actionCharges.magnet = getDefaultActionCharges(config).magnet;
+            }
             solved = false;
             isAnimating = false;
             isStageTransitioning = false;
@@ -4133,11 +4141,16 @@
             clean: 2,
             magnet: 0
         });
+        function isSpecialActionUnlocked(map = null) {
+            const activeMap = map || ACTIVE_MAP || null;
+            const sequence = Number(activeMap?.sequence || 0);
+            return sequence >= 11 || activeMap?.id === "treasurechest";
+        }
         function getDefaultActionCharges(map = null) {
             const activeMap = map || ACTIVE_MAP || null;
             return {
                 ...BASE_ACTION_CHARGES,
-                magnet: activeMap?.id === "treasurechest" ? 2 : 0
+                magnet: isSpecialActionUnlocked(activeMap) ? 2 : 0
             };
         }
         const DEFAULT_ACTION_CHARGES = Object.freeze({ ...BASE_ACTION_CHARGES });
@@ -5195,6 +5208,8 @@
         }
 
         function updateActionButtonState() {
+            const specialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
+            const specialActionButton = specialActionUnlocked ? bottomActionButton3TreasureElement : bottomActionButton3Element;
             colorJewelSceneRenderer?.update({
                 item: {
                     wand: Math.max(0, actionCharges.magic),
@@ -5202,8 +5217,8 @@
                     magnet: Math.max(0, actionCharges.magnet)
                 }
             });
-            setSceneLayerDisplay("level-node-18", ACTIVE_MAP?.id !== "treasurechest");
-            setSceneLayerDisplay("level-node-170", ACTIVE_MAP?.id === "treasurechest");
+            setSceneLayerDisplay("level-node-18", !specialActionUnlocked);
+            setSceneLayerDisplay("level-node-170", specialActionUnlocked);
 
             const buttonStates = [
                 {
@@ -5219,9 +5234,9 @@
                     armed: false
                 },
                 {
-                    button: ACTIVE_MAP?.id === "treasurechest" ? bottomActionButton3TreasureElement : bottomActionButton3Element,
+                    button: specialActionButton,
                     count: Math.max(0, actionCharges.magnet),
-                    label: ACTIVE_MAP?.id === "treasurechest" ? "자석" : "특수 아이템",
+                    label: specialActionUnlocked ? "자석" : "특수 아이템",
                     armed: false
                 }
             ];
@@ -5243,7 +5258,11 @@
             syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169-wand-clone");
             syncActionButtonCounterBadge(bottomActionButton2Element, actionCharges.clean, "shape-ellipse-169-clean-clone");
             syncActionButtonCounterBadge(bottomActionButton3Element, 0, null);
-            syncActionButtonCounterBadge(bottomActionButton3TreasureElement, actionCharges.magnet, "shape-ellipse-169-magnet-clone");
+            syncActionButtonCounterBadge(
+                bottomActionButton3TreasureElement,
+                specialActionUnlocked ? actionCharges.magnet : 0,
+                "shape-ellipse-169-magnet-clone"
+            );
         }
 
         function setActionOverlay(nextOverlay) {
@@ -9770,7 +9789,13 @@
                 cancelMagicTargeting("매직 영역 선택을 취소했어요.");
             }
 
-            if (ACTIVE_MAP?.id !== "treasurechest") {
+            if (!isSpecialActionUnlocked(ACTIVE_MAP)) {
+                setStatus("보물상자 스테이지 이후에 자석 아이템이 열려요.");
+                return;
+            }
+
+            if ((Number(actionCharges.magnet) || 0) <= 0) {
+                setStatus("사용할 수 있는 자석 아이템이 없어요.");
                 return;
             }
 

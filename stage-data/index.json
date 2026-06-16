@@ -104,6 +104,20 @@
       "displayName": "baby_lion",
       "displayNameNumbered": "15. baby_lion",
       "file": "15_baby_lion.json"
+    },
+    {
+      "sequence": 16,
+      "id": "sikppang",
+      "displayName": "Sikppang",
+      "displayNameNumbered": "16. Sikppang",
+      "file": "16_sikppang.json"
+    },
+    {
+      "sequence": 17,
+      "id": "submarine",
+      "displayName": "Submarine",
+      "displayNameNumbered": "17. Submarine",
+      "file": "17_submarine.json"
     }
   ]
 }

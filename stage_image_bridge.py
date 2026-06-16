@@ -310,7 +310,11 @@ def build_preview_from_image_request(request_payload: dict) -> dict:
     try:
         if use_grid:
             try:
-                art, (width, height) = convert_grid(str(temp_path), colors=colors)
+                art, (width, height) = convert_grid(
+                    str(temp_path),
+                    colors=colors,
+                    expected_size=MAX_SIZE,
+                )
                 if width > MAX_SIZE or height > MAX_SIZE:
                     raise ValueError(f"격자 감지 결과가 {width}x{height}여서 최대 30x30을 넘어요.")
             except ValueError as error:
