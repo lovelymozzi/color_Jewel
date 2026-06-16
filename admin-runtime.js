@@ -1,8 +1,15 @@
 const MAX_GRID_ROWS = 30;
 const MAX_GRID_COLS = 30;
 const CURRENT_MAP_STORAGE_KEY = "color_jewel_current_map_v1";
+const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
+const SHARED_STAGE_STATE_BRIDGE_URL = "http://127.0.0.1:8765/api/save-shared-state";
+const CAN_WRITE_SHARED_STAGE_STATE =
+    window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
-const SCENE_CONTRACT_VERSION = "20260616-2";
+const SCENE_CONTRACT_VERSION = "20260616-6";
+const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
+    ? { "ngrok-skip-browser-warning": "true" }
+    : {};
 const MAX_COLOR_SATURATION = 65;
 const POCKET_SIZE = 24;
 const DEFAULT_ACTION_CHARGES = Object.freeze({
@@ -578,7 +585,9 @@ async function loadStagePayload(stageEntry) {
         throw new Error("Stage entry is missing its file path.");
     }
 
-    const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`);
+    const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`, {
+        headers: NGROK_BYPASS_HEADERS
+    });
     if (!stageResponse.ok) {
         throw new Error(`Stage data load failed (${stageEntry.file}): ${stageResponse.status}`);
     }
@@ -674,6 +683,43 @@ function persistCurrentMapId(mapId) {
 
     try {
         window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, mapId);
+        if (CAN_WRITE_SHARED_STAGE_STATE) {
+            let activeOverride = null;
+            try {
+                const rawOverrideStorage = window.localStorage.getItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
+                if (rawOverrideStorage) {
+                    const parsedOverrideStorage = JSON.parse(rawOverrideStorage);
+                    const candidateOverride = parsedOverrideStorage?.[mapId];
+                    if (
+                        candidateOverride &&
+                        typeof candidateOverride === "object" &&
+                        !Array.isArray(candidateOverride)
+                    ) {
+                        activeOverride = {
+                            overrideVersion: candidateOverride.overrideVersion,
+                            displayName: candidateOverride.displayName,
+                            map: candidateOverride.map,
+                            palette: candidateOverride.palette
+                        };
+                    }
+                }
+            } catch (error) {
+                activeOverride = null;
+            }
+            void fetch(SHARED_STAGE_STATE_BRIDGE_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    currentMapId: mapId,
+                    activeOverrideMapId: activeOverride ? mapId : null,
+                    activeOverride
+                })
+            }).catch((error) => {
+                console.error("[AdminRuntime] failed to sync shared current map", error);
+            });
+        }
         return true;
     } catch (error) {
         return false;
@@ -1131,7 +1177,9 @@ function triggerSolvedStageSequence() {
 }
 
 async function bootStandalonePixelAdmin() {
-    const stageIndexResponse = await fetch(`./stage-data/index.json?v=${SCENE_CONTRACT_VERSION}`);
+    const stageIndexResponse = await fetch(`./stage-data/index.json?v=${SCENE_CONTRACT_VERSION}`, {
+        headers: NGROK_BYPASS_HEADERS
+    });
     if (!stageIndexResponse.ok) {
         throw new Error(`Stage index load failed: ${stageIndexResponse.status}`);
     }

@@ -1,1 +1,6 @@
 .ui-editor/trash/
+.tmp/
+__pycache__/
+*.pyc
+stage-data/shared-state.json
+stage-data/bridge-sync.json

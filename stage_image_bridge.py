@@ -3,9 +3,12 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import re
 import sys
 import tempfile
+import threading
+import time
 import urllib.error
 import urllib.request
 from http import HTTPStatus
@@ -17,10 +20,14 @@ ROOT_DIR = Path(__file__).resolve().parent
 PIXEL_ART_ROOT = ROOT_DIR.parent / "pixel_art-main"
 STAGE_DIR = ROOT_DIR / "stage-data"
 INDEX_PATH = STAGE_DIR / "index.json"
+BRIDGE_SYNC_PATH = STAGE_DIR / "bridge-sync.json"
+SHARED_STATE_PATH = STAGE_DIR / "shared-state.json"
 DEFAULT_PORT = 8765
 START_MESSAGE = "{title} 스테이지예요. 색을 맞춰 그림을 완성해 보세요."
 MAX_COLORS = 12
 MAX_SIZE = 30
+STAGE_FILE_LOCK = threading.Lock()
+MISSING = object()
 
 
 if str(PIXEL_ART_ROOT) not in sys.path:
@@ -69,7 +76,150 @@ def read_stage_index() -> dict:
 
 def write_stage_index(payload: dict) -> None:
     STAGE_DIR.mkdir(parents=True, exist_ok=True)
-    INDEX_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    serialized = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    temp_path = None
+    with STAGE_FILE_LOCK:
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=STAGE_DIR, delete=False) as temp_file:
+                temp_file.write(serialized)
+                temp_path = Path(temp_file.name)
+            os.replace(temp_path, INDEX_PATH)
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
+
+
+def write_bridge_sync(*, stage_entry: dict, activate: bool) -> None:
+    STAGE_DIR.mkdir(parents=True, exist_ok=True)
+    serialized = json.dumps(
+        {
+            "at": int(time.time() * 1000),
+            "activate": activate,
+            "stageEntry": stage_entry,
+        },
+        ensure_ascii=False,
+        indent=2,
+    ) + "\n"
+    temp_path = None
+    with STAGE_FILE_LOCK:
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=STAGE_DIR, delete=False) as temp_file:
+                temp_file.write(serialized)
+                temp_path = Path(temp_file.name)
+            os.replace(temp_path, BRIDGE_SYNC_PATH)
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
+
+
+def read_shared_state() -> dict:
+    if not SHARED_STATE_PATH.exists():
+        return {"at": 0, "currentMapId": None, "activeOverrideMapId": None, "activeOverride": None}
+
+    try:
+        parsed = json.loads(SHARED_STATE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"at": 0, "currentMapId": None, "activeOverrideMapId": None, "activeOverride": None}
+    if not isinstance(parsed, dict):
+        return {"at": 0, "currentMapId": None, "activeOverrideMapId": None, "activeOverride": None}
+
+    current_map_id = parsed.get("currentMapId")
+    if current_map_id is not None:
+        current_map_id = str(current_map_id or "").strip() or None
+
+    active_override_map_id = parsed.get("activeOverrideMapId")
+    if active_override_map_id is not None:
+        active_override_map_id = str(active_override_map_id or "").strip() or None
+
+    active_override = parsed.get("activeOverride")
+    if not isinstance(active_override, dict):
+        active_override = None
+
+    legacy_overrides = parsed.get("overrides")
+    if (
+        not active_override and
+        isinstance(legacy_overrides, dict) and
+        current_map_id and
+        isinstance(legacy_overrides.get(current_map_id), dict)
+    ):
+        active_override_map_id = current_map_id
+        active_override = legacy_overrides[current_map_id]
+
+    return {
+        "at": int(parsed.get("at") or 0),
+        "currentMapId": current_map_id,
+        "activeOverrideMapId": active_override_map_id,
+        "activeOverride": active_override,
+    }
+
+
+def write_shared_state(
+    *,
+    current_map_id: str | None = None,
+    active_override_map_id: str | None = None,
+    active_override=MISSING,
+    overrides: dict | None = None,
+) -> dict:
+    STAGE_DIR.mkdir(parents=True, exist_ok=True)
+    with STAGE_FILE_LOCK:
+        payload = read_shared_state()
+        did_change = not SHARED_STATE_PATH.exists()
+
+        if current_map_id is not None:
+            normalized_current_map_id = str(current_map_id or "").strip() or None
+            if payload.get("currentMapId") != normalized_current_map_id:
+                payload["currentMapId"] = normalized_current_map_id
+                did_change = True
+
+        derived_active_override_map_id = (
+            str(active_override_map_id or "").strip() or None
+            if active_override_map_id is not None
+            else payload.get("activeOverrideMapId")
+        )
+        derived_active_override = active_override
+
+        if derived_active_override is MISSING and overrides is not None:
+            normalized_overrides = overrides if isinstance(overrides, dict) else {}
+            if (
+                derived_active_override_map_id and
+                isinstance(normalized_overrides.get(derived_active_override_map_id), dict)
+            ):
+                derived_active_override = normalized_overrides[derived_active_override_map_id]
+            else:
+                derived_active_override = None
+                derived_active_override_map_id = None
+
+        if derived_active_override is not MISSING:
+            normalized_active_override = derived_active_override if isinstance(derived_active_override, dict) else None
+            normalized_active_override_map_id = (
+                derived_active_override_map_id if normalized_active_override else None
+            )
+            if payload.get("activeOverrideMapId") != normalized_active_override_map_id:
+                payload["activeOverrideMapId"] = normalized_active_override_map_id
+                did_change = True
+            if payload.get("activeOverride") != normalized_active_override:
+                payload["activeOverride"] = normalized_active_override
+                did_change = True
+
+        if "overrides" in payload:
+            payload.pop("overrides", None)
+            did_change = True
+
+        if not did_change:
+            return payload
+
+        payload["at"] = int(time.time() * 1000)
+        serialized = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=STAGE_DIR, delete=False) as temp_file:
+                temp_file.write(serialized)
+                temp_path = Path(temp_file.name)
+            os.replace(temp_path, SHARED_STATE_PATH)
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
+        return payload
 
 
 def build_stage_entry(*, sequence: int, stage_id: str, display_name: str, file_name: str) -> dict:
@@ -423,8 +573,19 @@ def create_stage_from_draft_request(request_payload: dict) -> dict:
     stage_entries.sort(key=lambda entry: parse_positive_int(entry.get("sequence"), default=0, minimum=0))
 
     STAGE_DIR.mkdir(parents=True, exist_ok=True)
-    metadata["stage_path"].write_text(json.dumps(stage_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    serialized = json.dumps(stage_payload, ensure_ascii=False, indent=2) + "\n"
+    temp_path = None
+    with STAGE_FILE_LOCK:
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=STAGE_DIR, delete=False) as temp_file:
+                temp_file.write(serialized)
+                temp_path = Path(temp_file.name)
+            os.replace(temp_path, metadata["stage_path"])
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
     write_stage_index({"maps": stage_entries})
+    write_bridge_sync(stage_entry=stage_entry, activate=True)
 
     return {
         "stageEntry": stage_entry,
@@ -444,8 +605,19 @@ def create_stage_from_request(request_payload: dict) -> dict:
     stage_entries.sort(key=lambda entry: parse_positive_int(entry.get("sequence"), default=0, minimum=0))
 
     STAGE_DIR.mkdir(parents=True, exist_ok=True)
-    stage_path.write_text(json.dumps(stage_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    serialized = json.dumps(stage_payload, ensure_ascii=False, indent=2) + "\n"
+    temp_path = None
+    with STAGE_FILE_LOCK:
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=STAGE_DIR, delete=False) as temp_file:
+                temp_file.write(serialized)
+                temp_path = Path(temp_file.name)
+            os.replace(temp_path, stage_path)
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
     write_stage_index({"maps": stage_entries})
+    write_bridge_sync(stage_entry=stage_entry, activate=True)
 
     return {
         **preview_payload,
@@ -490,6 +662,7 @@ class StageImageBridgeHandler(BaseHTTPRequestHandler):
             "/api/create-stage-from-image",
             "/api/preview-stage-from-image",
             "/api/create-stage-from-draft",
+            "/api/save-shared-state",
         }:
             self._send_json({"ok": False, "error": "not found"}, status=HTTPStatus.NOT_FOUND)
             return
@@ -498,7 +671,17 @@ class StageImageBridgeHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers.get("Content-Length", "0"))
             raw_body = self.rfile.read(content_length)
             request_payload = json.loads(raw_body.decode("utf-8"))
-            if route == "/api/preview-stage-from-image":
+            if route == "/api/save-shared-state":
+                response_payload = {
+                    "sharedState": write_shared_state(
+                        current_map_id=request_payload.get("currentMapId"),
+                        active_override_map_id=request_payload.get("activeOverrideMapId"),
+                        active_override=request_payload.get("activeOverride", MISSING),
+                        overrides=request_payload.get("overrides"),
+                    )
+                }
+                response_status = HTTPStatus.OK
+            elif route == "/api/preview-stage-from-image":
                 response_payload = build_preview_from_image_request(request_payload)
                 response_status = HTTPStatus.OK
             elif route == "/api/create-stage-from-draft":

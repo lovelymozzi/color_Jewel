@@ -192,9 +192,51 @@ if (pixelAdminWindowMode) {
 
 const PIXEL_ADMIN_UNDO_LIMIT = 60;
 
-const PIXEL_ADMIN_STAGE_STORAGE_KEY = "color_jewel_pixel_admin_stage_overrides_v1";
-
 const PIXEL_ADMIN_AUTO_SAVE_DELAY_MS = 500;
+
+function getSharedStageStateSyncPayload(storagePayload = readPixelAdminStageStorage()) {
+            const activeMapId =
+                pixelAdminState.currentMapId ||
+                getCurrentMapDefinition()?.id ||
+                null;
+            const rawActiveOverride =
+                activeMapId &&
+                storagePayload?.[activeMapId] &&
+                typeof storagePayload[activeMapId] === "object" &&
+                !Array.isArray(storagePayload[activeMapId])
+                    ? storagePayload[activeMapId]
+                    : null;
+            const activeOverride = rawActiveOverride
+                ? {
+                    overrideVersion: rawActiveOverride.overrideVersion,
+                    displayName: rawActiveOverride.displayName,
+                    map: rawActiveOverride.map,
+                    palette: rawActiveOverride.palette
+                }
+                : null;
+
+            return {
+                currentMapId: activeMapId,
+                activeOverrideMapId: activeOverride ? activeMapId : null,
+                activeOverride
+            };
+        }
+
+        function syncSharedStageState(storagePayload = readPixelAdminStageStorage()) {
+            if (!CAN_WRITE_SHARED_STAGE_STATE) {
+                return;
+            }
+
+            void fetch(SHARED_STAGE_STATE_BRIDGE_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(getSharedStageStateSyncPayload(storagePayload))
+            }).catch((error) => {
+                console.error("[PixelAdmin] failed to sync shared stage state", error);
+            });
+        }
 
 function buildStageCanvasMapFromBase(definition) {
             const rawScaledMap = scaleMap(definition.baseImageMap, definition.scale ?? 1);
@@ -463,6 +505,7 @@ function readPixelAdminStageStorage() {
                 if (!storagePayload || !Object.keys(storagePayload).length) {
                     window.localStorage.removeItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
                     pixelAdminStageStorageCache = {};
+                    syncSharedStageState({});
                     return true;
                 }
 
@@ -471,6 +514,7 @@ function readPixelAdminStageStorage() {
                     JSON.stringify(storagePayload)
                 );
                 pixelAdminStageStorageCache = storagePayload;
+                syncSharedStageState(storagePayload);
                 return true;
             } catch (error) {
                 return false;
