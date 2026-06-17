@@ -1483,6 +1483,31 @@
             z-index: 30;
         }
 
+        .tutorial-gesture-guide {
+            position: absolute;
+            left: 50%;
+            top: 53%;
+            width: min(92px, 21vw);
+            transform: translateX(-50%);
+            transform-origin: 50% 50%;
+            filter: drop-shadow(0 8px 16px rgba(88, 58, 16, 0.18));
+            animation: tutorial-gesture-guide-enter 220ms ease-out both;
+        }
+
+        .tutorial-gesture-guide-image {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .tutorial-gesture-guide--tuto-pan .tutorial-gesture-guide-image {
+            animation: tutorial-gesture-pan-loop 1.1s ease-in-out infinite;
+        }
+
+        .tutorial-gesture-guide--pinch-ani .tutorial-gesture-guide-image {
+            animation: none;
+        }
+
         .tutorial-focus {
             position: absolute;
             border: 2px solid rgba(255, 196, 77, 0.96);
@@ -1611,6 +1636,28 @@
             }
         }
 
+        @keyframes tutorial-gesture-guide-enter {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-6px) scale(0.96);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+
+        @keyframes tutorial-gesture-pan-loop {
+            0%, 100% {
+                transform: translateX(-12px);
+            }
+
+            50% {
+                transform: translateX(12px);
+            }
+        }
+
         @keyframes magic-spark-pop {
             0% {
                 opacity: 0;
@@ -1709,6 +1756,10 @@
                 --tray-cell-size: 24px;
                 --tray-gap: 4px;
                 --pocket-shell-width: calc((12 * var(--tray-cell-size)) + (11 * var(--tray-gap)) + 28px);
+            }
+
+            .tutorial-gesture-guide {
+                width: min(84px, 23vw);
             }
 
             .cell {

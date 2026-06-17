@@ -545,6 +545,10 @@
         const STAGE_PREPARATION_IDLE_TIMEOUT_MS = 1200;
         const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
+        const TUTORIAL_GESTURE_GUIDE_STEPS = Object.freeze([
+            { id: "pinch_ani", assetPath: "./src/assets/pinch_ani.png" },
+            { id: "tuto_pan", assetPath: "./src/assets/tuto_pan.png" }
+        ]);
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
             "assets/title.png",
             "assets/animation (5).png",
@@ -2783,6 +2787,7 @@
             clearSolvedStageFailSafeTimer();
             clearStageClearTimers();
             resetBoardTransform();
+            resetTutorialGestureGuideState();
             selected = null;
             moves = Math.max(0, Number(snapshot.moves || 0));
             solved = false;
@@ -3460,6 +3465,8 @@
         const MAGNET_TARGET_PAIR_COUNT = 10;
         const TOUCH_TAP_GUARD_MS = 520;
         const BOARD_PAN_DRAG_THRESHOLD_PX = 8;
+        const TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD = 0.08;
+        const TUTORIAL_GESTURE_PAN_THRESHOLD_PX = 28;
         const BOARD_COMPACT_MIN_SCALE_VERTICAL_PAN_MULTIPLIER = 2.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE = 1.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE = 1.5;
@@ -3557,6 +3564,13 @@
         let stageClearSceneContractPromise = null;
         let sceneRendererCtorPromise = null;
         let tutorialOverlayFrame = null;
+        let tutorialGestureGuideState = {
+            stepId: null,
+            pinchPhase: "zoom_in",
+            pinchReferenceScale: 1,
+            panOriginX: 0,
+            panOriginY: 0
+        };
         let renderFrame = null;
         let areGemsHiddenByCheat = false;
         let gameSessionVersion = 0;
@@ -3598,6 +3612,80 @@
             isMagicDragging: false,
             magicLastCell: null
         };
+
+        function resetTutorialGestureGuideState() {
+            tutorialGestureGuideState = {
+                stepId: isTutorialMap() ? TUTORIAL_GESTURE_GUIDE_STEPS[0].id : null,
+                pinchPhase: "zoom_in",
+                pinchReferenceScale: boardInteraction.scale,
+                panOriginX: boardInteraction.panX,
+                panOriginY: boardInteraction.panY
+            };
+        }
+
+        function setTutorialGestureGuideStep(nextStepId) {
+            if (tutorialGestureGuideState.stepId === nextStepId) {
+                return;
+            }
+
+            tutorialGestureGuideState.stepId = nextStepId;
+            tutorialGestureGuideState.pinchPhase = nextStepId === "pinch_ani" ? "zoom_in" : tutorialGestureGuideState.pinchPhase;
+            tutorialGestureGuideState.pinchReferenceScale = boardInteraction.scale;
+            tutorialGestureGuideState.panOriginX = boardInteraction.panX;
+            tutorialGestureGuideState.panOriginY = boardInteraction.panY;
+            scheduleTutorialOverlayRender();
+        }
+
+        function isTutorialGestureGuideActive() {
+            return (
+                isTutorialMap() &&
+                !solved &&
+                !isAnimating &&
+                typeof tutorialGestureGuideState.stepId === "string" &&
+                tutorialGestureGuideState.stepId.length > 0
+            );
+        }
+
+        function advanceTutorialGestureGuideScale(previousScale, nextScale) {
+            if (!isTutorialGestureGuideActive()) {
+                return;
+            }
+
+            if (
+                tutorialGestureGuideState.stepId === "pinch_ani" &&
+                tutorialGestureGuideState.pinchPhase === "zoom_in" &&
+                nextScale > previousScale &&
+                nextScale - tutorialGestureGuideState.pinchReferenceScale >= TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD
+            ) {
+                tutorialGestureGuideState.pinchPhase = "zoom_out";
+                tutorialGestureGuideState.pinchReferenceScale = nextScale;
+                return;
+            }
+
+            if (
+                tutorialGestureGuideState.stepId === "pinch_ani" &&
+                tutorialGestureGuideState.pinchPhase === "zoom_out" &&
+                nextScale < previousScale &&
+                tutorialGestureGuideState.pinchReferenceScale - nextScale >= TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD
+            ) {
+                setTutorialGestureGuideStep("tuto_pan");
+            }
+        }
+
+        function advanceTutorialGestureGuidePan() {
+            if (tutorialGestureGuideState.stepId !== "tuto_pan") {
+                return;
+            }
+
+            if (
+                Math.hypot(
+                    boardInteraction.panX - tutorialGestureGuideState.panOriginX,
+                    boardInteraction.panY - tutorialGestureGuideState.panOriginY
+                ) >= TUTORIAL_GESTURE_PAN_THRESHOLD_PX
+            ) {
+                setTutorialGestureGuideStep(null);
+            }
+        }
 
         settingSceneMountElement?.addEventListener("click", (event) => {
             if (!isSettingSceneOpen || isSettingSceneClosing) {
@@ -7587,7 +7675,9 @@
             boardInteraction.panY = clampedPan.y;
 
             boardPanzoomElement.style.transform = `translate(${boardInteraction.panX}px, ${boardInteraction.panY}px) scale(${boardInteraction.scale})`;
-            scheduleTutorialOverlayRender();
+            if (!isTutorialGestureGuideActive()) {
+                scheduleTutorialOverlayRender();
+            }
         }
 
         function setBoardScale(nextScale, options = {}) {
@@ -7612,6 +7702,7 @@
 
             boardInteraction.scale = clampedScale;
             applyBoardTransform();
+            advanceTutorialGestureGuideScale(previousScale, boardInteraction.scale);
         }
 
         function zoomBoardByDelta(delta, zoomIntensity = 0.0018, options = {}) {
@@ -7774,6 +7865,7 @@
                 boardInteraction.panX = boardInteraction.basePanX + deltaX;
                 boardInteraction.panY = boardInteraction.basePanY + deltaY;
                 applyBoardTransform();
+                advanceTutorialGestureGuidePan();
                 boardInteraction.suppressClickUntil = Date.now() + 240;
                 event.preventDefault();
             });
@@ -7927,6 +8019,7 @@
                     boardInteraction.panX = boardInteraction.basePanX + (activeTouch.clientX - boardInteraction.panStartX);
                     boardInteraction.panY = boardInteraction.basePanY + (activeTouch.clientY - boardInteraction.panStartY);
                     applyBoardTransform();
+                    advanceTutorialGestureGuidePan();
                     boardInteraction.suppressClickUntil = Date.now() + 240;
                     if (event.cancelable) {
                         event.preventDefault();
@@ -8065,8 +8158,8 @@
                     )
                 )
             );
-            boardInteraction.minScale = compactLayout ? 0.82 : 1;
-            boardInteraction.maxScale = compactLayout ? 4.8 : 4.2;
+            boardInteraction.minScale = compactLayout || isTutorialMap() ? 0.82 : 1;
+            boardInteraction.maxScale = compactLayout || isTutorialMap() ? 4.8 : 4.2;
 
             root.style.setProperty("--app-shell-width", `${appShellWidth}px`);
             root.style.setProperty("--app-shell-height", `${appShellHeight}px`);
@@ -8325,6 +8418,47 @@
             tutorialLayerElement.innerHTML = "";
         }
 
+        function renderTutorialGestureGuideOverlay() {
+            if (!isTutorialGestureGuideActive()) {
+                return false;
+            }
+
+            const stepMeta = TUTORIAL_GESTURE_GUIDE_STEPS.find(
+                (entry) => entry.id === tutorialGestureGuideState.stepId
+            );
+            if (!stepMeta) {
+                return false;
+            }
+
+            const guide = document.createElement("div");
+            guide.className = `tutorial-gesture-guide tutorial-gesture-guide--${stepMeta.id.replaceAll("_", "-")}`;
+
+            const image = document.createElement("img");
+            image.className = "tutorial-gesture-guide-image";
+            image.src = `${stepMeta.assetPath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
+            image.alt = "";
+            image.setAttribute("aria-hidden", "true");
+
+            const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
+            const occupiedCellRects = TARGET_POSITIONS
+                .map((position) => boardElement.querySelector(`[data-row="${position.row}"][data-col="${position.col}"]`))
+                .filter(Boolean)
+                .map((cell) => cell.getBoundingClientRect())
+                .filter((rect) => rect.width > 0 && rect.height > 0);
+
+            if (stageRect && occupiedCellRects.length) {
+                const minLeft = Math.min(...occupiedCellRects.map((rect) => rect.left));
+                const maxRight = Math.max(...occupiedCellRects.map((rect) => rect.right));
+                const maxBottom = Math.max(...occupiedCellRects.map((rect) => rect.bottom));
+                guide.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left)}px`;
+                guide.style.top = `${Math.round(maxBottom - stageRect.top + 18)}px`;
+            }
+
+            guide.append(image);
+            tutorialLayerElement.append(guide);
+            return true;
+        }
+
         function findTutorialMisplacedBoardCells() {
             return TARGET_POSITIONS
                 .filter((position) => {
@@ -8469,6 +8603,10 @@
             tutorialLayerElement.innerHTML = "";
 
             if (renderActionOverlay()) {
+                return;
+            }
+
+            if (renderTutorialGestureGuideOverlay()) {
                 return;
             }
 
@@ -10063,6 +10201,7 @@
             clearSparkles();
             clearCelebrationTimers();
             resetBoardTransform();
+            resetTutorialGestureGuideState();
             selected = null;
             moves = 0;
             solved = false;
