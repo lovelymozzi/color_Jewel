@@ -9109,6 +9109,14 @@
             const targetCells = getMagicTargetCells(bounds, true)
                 .filter((cell) => !isCleanedSocketCell(cell.row, cell.col));
             const selectedKeySet = new Set(targetCells.map((cell) => toCellKey(cell.row, cell.col)));
+            const remainingIncompleteTargetKeys = new Set(
+                TARGET_POSITIONS
+                    .filter((position) => !isCompletedTargetCell(position.row, position.col))
+                    .map((position) => toCellKey(position.row, position.col))
+            );
+            const canFinishStageByMagic =
+                remainingIncompleteTargetKeys.size > 0 &&
+                [...remainingIncompleteTargetKeys].every((cellKey) => selectedKeySet.has(cellKey));
             const nextBoardState = boardState.map((row) => [...row]);
             const nextTrayState = [...trayState];
             const resolvedTargetKeys = new Set(
@@ -9134,7 +9142,14 @@
                     resolvedTargetKeys
                 );
                 if (!source) {
-                    return null;
+                    if (!canFinishStageByMagic) {
+                        return null;
+                    }
+
+                    // Let the magic wand complete the final unfinished region even when no spare source gem remains.
+                    nextBoardState[cell.row][cell.col] = cell.color;
+                    resolvedTargetKeys.add(cellKey);
+                    continue;
                 }
 
                 if (source.type === "tray") {
