@@ -531,7 +531,8 @@
             hapticsOn: true
         });
         const SCENE_CONTRACT_VERSION = "20260616-10";
-        const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
+        const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
+        const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
             : {};
         const TITLE_MINIMUM_VISIBLE_MS = 240;
@@ -1803,8 +1804,12 @@
         }
 
         function getInitialMapIndex() {
+            if (IS_NGROK_HOST) {
+                return getFirstPlayableMapIndex();
+            }
+
             const persistedMapId = readPersistedCurrentMapId();
-            const targetMapId = persistedMapId || "shiba";
+            const targetMapId = persistedMapId || "tutorial";
             const restoredIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === targetMapId);
             return restoredIndex >= 0 ? restoredIndex : 0;
         }
@@ -7773,7 +7778,7 @@
 
             const hintArrow = document.createElement("img");
             hintArrow.className = "tutorial-hint-arrow";
-            hintArrow.src = "./src/assets/tutorial_arr_down.png";
+            hintArrow.src = `./src/assets/tutorial_arr_down.png?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
             hintArrow.alt = "";
             hintArrow.setAttribute("aria-hidden", "true");
             hint.append(hintArrow);
@@ -9646,12 +9651,15 @@
                         cancelable: true
                     }));
                 });
-                const restoredRuntimeSnapshot = await restoreRuntimeSnapshot();
+                const restoredRuntimeSnapshot = IS_NGROK_HOST
+                    ? false
+                    : await restoreRuntimeSnapshot();
                 pushLifecycleDebugEntry("runtime-restore", {
                     restored: restoredRuntimeSnapshot
                 });
                 if (!restoredRuntimeSnapshot) {
                     clearPersistedGameProgress();
+                    clearRuntimeSnapshot();
                     resetGame({ regenerateLevelStart: true });
                 }
             } catch (error) {
