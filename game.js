@@ -536,10 +536,13 @@
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
             : {};
-        const TITLE_MINIMUM_VISIBLE_MS = 240;
-        const TITLE_READY_VISIBLE_MS = 1200;
-        const TITLE_FADE_OUT_MS = 240;
-        const RUNTIME_SNAPSHOT_SAVE_DELAY_MS = 140;
+        const TITLE_MINIMUM_VISIBLE_MS = 0;
+        const TITLE_READY_VISIBLE_MS = 0;
+        const TITLE_FADE_OUT_MS = 80;
+        const RUNTIME_SNAPSHOT_SAVE_DELAY_MS = 220;
+        const INITIAL_STAGE_PREPARATION_DELAY_MS = 180;
+        const FOLLOWUP_STAGE_PREPARATION_DELAY_MS = 220;
+        const STAGE_PREPARATION_IDLE_TIMEOUT_MS = 1200;
         const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
@@ -558,6 +561,8 @@
         let sharedCurrentMapId = null;
         let sharedPixelAdminStageStorageCache = null;
         let runtimeSnapshotSaveTimer = null;
+        let preparedNextMapIdleCallbackId = null;
+        let hasCompletedInitialBoot = false;
         window.__pixelAdminWindowMode = pixelAdminWindowRequested;
 
         function getMapDefinitionById(mapId) {
@@ -721,6 +726,11 @@
                 preparedNextMapTimer = null;
             }
 
+            if (preparedNextMapIdleCallbackId != null && typeof window.cancelIdleCallback === "function") {
+                window.cancelIdleCallback(preparedNextMapIdleCallbackId);
+                preparedNextMapIdleCallbackId = null;
+            }
+
             preparedNextMapIndex = -1;
             preparedNextMapVersion = 0;
             preparedNextMapConfig = null;
@@ -729,6 +739,8 @@
             preparedPreviousMapVersion = 0;
             preparedPreviousMapConfig = null;
             preparedPreviousLevelInitialState = null;
+            deferredUpcomingPreparationMapIndex = -1;
+            deferredUpcomingPreparationIncludePrevious = true;
         }
 
         function syncPixelAdminWithActiveMapIfReady(force = false, shouldRender = true) {
@@ -820,7 +832,8 @@
             return definition.__stageLoadPromise;
         }
 
-        async function prepareAdjacentStageDefinitions(activeMapIndex) {
+        async function prepareAdjacentStageDefinitions(activeMapIndex, options = {}) {
+            const { includePrevious = true } = options;
             if (!Array.isArray(MAP_DEFINITIONS) || !MAP_DEFINITIONS.length || isPixelAdminOpen()) {
                 return;
             }
@@ -828,9 +841,10 @@
             const upcomingMapIndex = (activeMapIndex + 1) % MAP_DEFINITIONS.length;
             const previousMapIndex =
                 ((activeMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
-            await Promise.all(
-                [...new Set([upcomingMapIndex, previousMapIndex])].map((mapIndex) => ensureStageDefinitionLoaded(mapIndex))
-            );
+            const stageIndexesToPrepare = includePrevious
+                ? [...new Set([upcomingMapIndex, previousMapIndex])]
+                : [upcomingMapIndex];
+            await Promise.all(stageIndexesToPrepare.map((mapIndex) => ensureStageDefinitionLoaded(mapIndex)));
 
             if (currentMapIndex !== activeMapIndex || isPixelAdminOpen()) {
                 return;
@@ -856,14 +870,16 @@
                     definition: upcomingDefinition,
                     overrideVersion: upcomingOverrideVersion,
                     storeAsPreparedNext: true
-                },
-                {
+                }
+            ];
+            if (includePrevious) {
+                adjacentDefinitions.push({
                     mapIndex: previousMapIndex,
                     definition: previousDefinition,
                     overrideVersion: getStageOverrideVersion(previousDefinition),
                     storeAsPreparedNext: false
-                }
-            ];
+                });
+            }
             let nextPreparedConfig = null;
             let nextPreparedInitialState = null;
             let previousPreparedConfig = null;
@@ -928,6 +944,80 @@
             INITIAL_LAYOUT_INDEX = preservedInitialLayoutIndex;
             TARGET_NEIGHBOR_PAIRS = preservedTargetNeighborPairs;
             TOTAL_TARGET_CELLS = preservedTotalTargetCells;
+        }
+
+        function scheduleUpcomingStagePreparation(activeMapIndex, options = {}) {
+            const {
+                includePrevious = true,
+                delayMs = FOLLOWUP_STAGE_PREPARATION_DELAY_MS,
+                useIdleCallback = false
+            } = options;
+
+            if (preparedNextMapTimer) {
+                window.clearTimeout(preparedNextMapTimer);
+                preparedNextMapTimer = null;
+            }
+
+            if (preparedNextMapIdleCallbackId != null && typeof window.cancelIdleCallback === "function") {
+                window.cancelIdleCallback(preparedNextMapIdleCallbackId);
+                preparedNextMapIdleCallbackId = null;
+            }
+
+            preparedNextMapTimer = window.setTimeout(() => {
+                preparedNextMapTimer = null;
+                const runPreparation = () => {
+                    preparedNextMapIdleCallbackId = null;
+                    void prepareAdjacentStageDefinitions(activeMapIndex, { includePrevious });
+                };
+
+                if (useIdleCallback && typeof window.requestIdleCallback === "function") {
+                    preparedNextMapIdleCallbackId = window.requestIdleCallback(runPreparation, {
+                        timeout: STAGE_PREPARATION_IDLE_TIMEOUT_MS
+                    });
+                    return;
+                }
+
+                runPreparation();
+            }, Math.max(0, delayMs));
+        }
+
+        function flushDeferredUpcomingPreparation() {
+            if (deferredUpcomingPreparationMapIndex < 0 || isPixelAdminOpen()) {
+                return;
+            }
+
+            const activeMapIndex = deferredUpcomingPreparationMapIndex;
+            const includePrevious = deferredUpcomingPreparationIncludePrevious;
+
+            if (preparedNextMapTimer) {
+                window.clearTimeout(preparedNextMapTimer);
+                preparedNextMapTimer = null;
+            }
+
+            if (preparedNextMapIdleCallbackId != null && typeof window.cancelIdleCallback === "function") {
+                window.cancelIdleCallback(preparedNextMapIdleCallbackId);
+                preparedNextMapIdleCallbackId = null;
+            }
+
+            preparedNextMapTimer = window.setTimeout(() => {
+                preparedNextMapTimer = null;
+                deferredUpcomingPreparationMapIndex = -1;
+                deferredUpcomingPreparationIncludePrevious = true;
+
+                const runPreparation = () => {
+                    preparedNextMapIdleCallbackId = null;
+                    void prepareAdjacentStageDefinitions(activeMapIndex, { includePrevious });
+                };
+
+                if (typeof window.requestIdleCallback === "function") {
+                    preparedNextMapIdleCallbackId = window.requestIdleCallback(runPreparation, {
+                        timeout: STAGE_PREPARATION_IDLE_TIMEOUT_MS
+                    });
+                    return;
+                }
+
+                runPreparation();
+            }, Math.max(420, FOLLOWUP_STAGE_PREPARATION_DELAY_MS));
         }
 
         async function activateMapIndex(nextMapIndex = 0, options = {}) {
@@ -2109,6 +2199,10 @@
 
         function collectStageClearItemRewards() {
             itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+            if (isTutorialMap()) {
+                syncActionChargesFromItemEconomy(ACTIVE_MAP);
+                return [];
+            }
             const rewardedItems = [];
 
             ["magic", "clean", "magnet"].forEach((itemType) => {
@@ -3446,6 +3540,8 @@
         let preparedPreviousMapConfig = null;
         let preparedPreviousLevelInitialState = null;
         let preparedNextMapTimer = null;
+        let deferredUpcomingPreparationMapIndex = -1;
+        let deferredUpcomingPreparationIncludePrevious = true;
         let titleSceneRenderer = null;
         let settingSceneRenderer = null;
         let settingSceneContract = null;
@@ -3467,6 +3563,7 @@
         let activeSceneViewportWidth = 390;
         let activeSceneViewportHeight = 844;
         let lastTouchActivationAt = 0;
+        let lastLifecycleHiddenAt = 0;
         let solvedStageFailSafeTimer = null;
         let lastCorrectPlacementHapticAt = 0;
         let pixelAdminStageStorageCache = null;
@@ -3544,7 +3641,7 @@
         const MATCH_SPARKLE_MS = 240;
         const COLOR_COMPLETE_STEP_MS = 20;
         const FULL_BOARD_CELEBRATION_MAX_MS = 120;
-        const STAGE_CLEAR_CONFETTI_MS = 1800;
+        const STAGE_CLEAR_CONFETTI_MS = 420;
         const STAGE_CLEAR_FADE_OUT_MS = 180;
         const STAGE_CLEAR_TOTAL_MS = STAGE_CLEAR_CONFETTI_MS + 140;
         const STAGE_CLEAR_FIREWORK_SEQUENCE = [
@@ -3561,6 +3658,8 @@
             0,
             STAGE_CLEAR_TOTAL_MS - STAGE_CLEAR_FADE_OUT_MS
         );
+        const STAGE_CLEAR_MIN_TRANSITION_DELAY_MS = Math.max(1400, STAGE_TRANSITION_DELAY_MS);
+        const STAGE_CLEAR_MAX_TRANSITION_DELAY_MS = Math.max(2200, STAGE_CLEAR_MIN_TRANSITION_DELAY_MS + 420);
         const DIAMOND_PARTICLE_PRESETS = [
             { dx: -18, dy: -16, size: 16, rotation: -24, delay: 0 },
             { dx: 20, dy: -14, size: 14, rotation: 18, delay: 30 },
@@ -3613,6 +3712,14 @@
                 preparedNextMapTimer = null;
             }
 
+            if (preparedNextMapIdleCallbackId != null && typeof window.cancelIdleCallback === "function") {
+                window.cancelIdleCallback(preparedNextMapIdleCallbackId);
+                preparedNextMapIdleCallbackId = null;
+            }
+
+            deferredUpcomingPreparationMapIndex = -1;
+            deferredUpcomingPreparationIncludePrevious = true;
+
             if (!prepareUpcomingMap || isPixelAdminOpen()) {
                 return;
             }
@@ -3628,10 +3735,15 @@
                 preparedNextLevelInitialState?.mapId === upcomingDefinition?.id;
 
             if (!isUpcomingPrepared) {
-                preparedNextMapTimer = window.setTimeout(() => {
-                    preparedNextMapTimer = null;
-                    void prepareAdjacentStageDefinitions(activeMapIndexForPreparation);
-                }, isPixelAdminOpen() ? 180 : 48);
+                const shouldLimitPreparationDuringBoot = !hasCompletedInitialBoot;
+                if (shouldLimitPreparationDuringBoot) {
+                    scheduleUpcomingStagePreparation(activeMapIndexForPreparation, {
+                        includePrevious: false,
+                        delayMs: INITIAL_STAGE_PREPARATION_DELAY_MS,
+                        useIdleCallback: true
+                    });
+                    return;
+                }
             }
         }
 
@@ -5756,7 +5868,8 @@
                     }
                     : (() => {
                         const nextLevelInitialState = buildCurrentLevelInitialState({
-                            persistState: false
+                            persistState: false,
+                            fastMode: true
                         });
                         return {
                             mapId: nextLevelInitialState.mapId,
@@ -5785,31 +5898,25 @@
             isStageTransitioning = true;
             selected = null;
 
-            if (stageClearOverlayElement) {
-                stageClearOverlayElement.classList.add("active");
-                stageClearOverlayElement.setAttribute("aria-hidden", "false");
-            }
+            const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
+            const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
+            const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
+            const isNextPrepared =
+                preparedNextMapIndex === nextMapIndex &&
+                preparedNextMapVersion === nextOverrideVersion &&
+                preparedNextMapConfig?.id === nextDefinition?.id &&
+                preparedNextLevelInitialState?.mapId === nextDefinition?.id;
+            let minimumDelayElapsed = false;
+            let preparationFinished = isNextPrepared || isPixelAdminOpen();
+            let advanceRequested = false;
+            let preparationStarted = false;
 
-            if (stageClearItemRewards.length) {
-                showStageClearItemRewards(stageClearItemRewards, sessionVersion);
-            }
-
-            void showStageClearScene(sessionVersion).then((didShow) => {
-                if (!didShow || !isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+            const requestStageAdvance = () => {
+                if (advanceRequested || !isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
                     return;
                 }
 
-                void playFireworkBurstSound(0, 3);
-            });
-
-            void playColorCompleteSound(30);
-            void playColorCompleteSound(520);
-
-            const fadeOutTimer = window.setTimeout(() => {
-                if (!isCurrentGameSession(sessionVersion)) {
-                    return;
-                }
-
+                advanceRequested = true;
                 const shouldFadeOverlay = stageClearOverlayElement?.classList.contains("active");
                 if (shouldFadeOverlay) {
                     stageClearOverlayElement.classList.remove("active");
@@ -5827,8 +5934,108 @@
                         stageClearTimers.push(stageClearCleanupTimer);
                     }
                 });
-            }, STAGE_TRANSITION_DELAY_MS);
-            stageClearTimers.push(fadeOutTimer);
+            };
+
+            const beginStageAdvancePreparation = () => {
+                if (preparationFinished || preparationStarted || !isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                    return;
+                }
+
+                preparationStarted = true;
+                if (preparedNextMapTimer) {
+                    window.clearTimeout(preparedNextMapTimer);
+                    preparedNextMapTimer = null;
+                }
+
+                if (preparedNextMapIdleCallbackId != null && typeof window.cancelIdleCallback === "function") {
+                    window.cancelIdleCallback(preparedNextMapIdleCallbackId);
+                    preparedNextMapIdleCallbackId = null;
+                }
+
+                prepareAdjacentStageDefinitions(currentMapIndex, {
+                    includePrevious: false
+                }).then(
+                    () => {
+                        preparationFinished = true;
+                        if (!minimumDelayElapsed) {
+                            return;
+                        }
+
+                        requestStageAdvance();
+                    },
+                    (error) => {
+                        console.error("[StageClear] Next stage preparation failed:", error);
+                        preparationFinished = true;
+                        if (!minimumDelayElapsed) {
+                            return;
+                        }
+
+                        requestStageAdvance();
+                    }
+                );
+            };
+
+            if (stageClearOverlayElement) {
+                stageClearOverlayElement.classList.add("active");
+                stageClearOverlayElement.setAttribute("aria-hidden", "false");
+            }
+
+            if (stageClearItemRewards.length) {
+                showStageClearItemRewards(stageClearItemRewards, sessionVersion);
+            }
+
+            void showStageClearScene(sessionVersion).then(async (didShow) => {
+                if (!isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                    return;
+                }
+
+                if (!didShow) {
+                    minimumDelayElapsed = true;
+                    beginStageAdvancePreparation();
+                    if (!preparationFinished) {
+                        return;
+                    }
+
+                    requestStageAdvance();
+                    return;
+                }
+
+                void playFireworkBurstSound(0, 3);
+                await waitForNextPaint(2);
+                if (!isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                    return;
+                }
+
+                beginStageAdvancePreparation();
+
+                const minimumDelayTimer = window.setTimeout(() => {
+                    if (!isCurrentGameSession(sessionVersion)) {
+                        return;
+                    }
+
+                    minimumDelayElapsed = true;
+                    if (!preparationFinished) {
+                        return;
+                    }
+
+                    requestStageAdvance();
+                }, STAGE_CLEAR_MIN_TRANSITION_DELAY_MS);
+                stageClearTimers.push(minimumDelayTimer);
+            });
+
+            void playColorCompleteSound(30);
+            void playColorCompleteSound(520);
+
+            const maximumDelayTimer = window.setTimeout(() => {
+                if (!isCurrentGameSession(sessionVersion) || advanceRequested || !isStageTransitioning) {
+                    return;
+                }
+
+                minimumDelayElapsed = true;
+                preparationFinished = true;
+                requestStageAdvance();
+            }, STAGE_CLEAR_MAX_TRANSITION_DELAY_MS);
+            stageClearTimers.push(maximumDelayTimer);
         }
 
         function triggerSolvedStageSequence(sessionVersion = gameSessionVersion) {
@@ -5848,7 +6055,7 @@
                 }
 
                 void advanceToNextStage(sessionVersion);
-            }, stageClearDelay + STAGE_TRANSITION_DELAY_MS + 480);
+            }, stageClearDelay + STAGE_CLEAR_MAX_TRANSITION_DELAY_MS + 480);
         }
 
 
@@ -7424,6 +7631,12 @@
         }
 
         function storeBoardTouches(touchList) {
+            const activeTouchIds = new Set(Array.from(touchList, (touch) => touch.identifier));
+            boardInteraction.touches.forEach((_, touchId) => {
+                if (!activeTouchIds.has(touchId)) {
+                    boardInteraction.touches.delete(touchId);
+                }
+            });
             Array.from(touchList).forEach((touch) => {
                 boardInteraction.touches.set(touch.identifier, {
                     clientX: touch.clientX,
@@ -7650,7 +7863,7 @@
                         boardInteraction.lastTapAt = 0;
                     }
 
-                    storeBoardTouches(event.changedTouches);
+                    storeBoardTouches(event.touches);
                     boardInteraction.isTouchGestureActive = true;
                     initializeBoardGestureState();
 
@@ -8017,6 +8230,7 @@
             pushLifecycleDebugEntry("pagehide", {
                 persisted: Boolean(event.persisted)
             });
+            lastLifecycleHiddenAt = Date.now();
             shouldResumeBgmOnForeground = appSettings.bgmOn;
             soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
             persistRuntimeSnapshot({ immediate: true });
@@ -8027,6 +8241,7 @@
                 pushLifecycleDebugEntry("visibilitychange", {
                     state: "hidden"
                 });
+                lastLifecycleHiddenAt = Date.now();
                 shouldResumeBgmOnForeground = appSettings.bgmOn;
                 soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
                 persistRuntimeSnapshot({ immediate: true });
@@ -8036,15 +8251,28 @@
             }
 
             if (document.visibilityState === "visible") {
+                const hiddenForMs = lastLifecycleHiddenAt > 0
+                    ? Math.max(0, Date.now() - lastLifecycleHiddenAt)
+                    : 0;
                 pushLifecycleDebugEntry("visibilitychange", {
-                    state: "visible"
+                    state: "visible",
+                    hiddenForMs
                 });
+                lastLifecycleHiddenAt = 0;
                 scheduleBridgeStageSyncPoll(800);
                 scheduleSharedStageStatePoll(800);
                 if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
                     queueAudioContextWarmup();
                     soundController?.setBgmEnabled?.(true, { resumePlayback: true });
                     shouldResumeBgmOnForeground = false;
+                }
+                if (solved && hiddenForMs >= STAGE_CLEAR_MIN_TRANSITION_DELAY_MS) {
+                    pushLifecycleDebugEntry("stage-clear-foreground-recovery", {
+                        hiddenForMs,
+                        transitioning: isStageTransitioning
+                    });
+                    clearCelebrationTimers();
+                    void advanceToNextStage(gameSessionVersion);
                 }
             }
         });
@@ -8055,6 +8283,7 @@
 
         document.addEventListener("freeze", () => {
             pushLifecycleDebugEntry("freeze");
+            lastLifecycleHiddenAt = Date.now();
             shouldResumeBgmOnForeground = appSettings.bgmOn;
             soundController?.setBgmEnabled?.(appSettings.bgmOn, { forceSuspend: true });
         });
@@ -10133,6 +10362,9 @@
                     renderPixelAdmin: false,
                     prepareUpcomingMap: !window.__pixelAdminWindowMode
                 });
+                if (!window.__pixelAdminWindowMode) {
+                    void getStageClearContract();
+                }
                 bridgeStageSyncSeenAt = Date.now();
                 scheduleBridgeStageSyncPoll(BRIDGE_STAGE_SYNC_POLL_MS);
                 scheduleSharedStageStatePoll(600);
@@ -10177,11 +10409,16 @@
                 if (!restoredRuntimeSnapshot) {
                     clearPersistedGameProgress();
                     clearRuntimeSnapshot();
-                    resetGame({ regenerateLevelStart: true });
+                    resetGame({
+                        regenerateLevelStart: true,
+                        fastLevelStart: true
+                    });
                 }
+                hasCompletedInitialBoot = true;
             } catch (error) {
                 console.error("[Boot] UI initialization failed:", error);
             } finally {
+                hasCompletedInitialBoot = true;
                 await titleMinimumVisiblePromise;
 
                 if (titleLoadingOverlayElement?.classList.contains("active")) {

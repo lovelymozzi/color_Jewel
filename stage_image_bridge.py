@@ -17,7 +17,9 @@ from pathlib import Path
 
 
 ROOT_DIR = Path(__file__).resolve().parent
-PIXEL_ART_ROOT = ROOT_DIR.parent / "pixel_art-main"
+LOCAL_PIXEL_ART_ROOT = ROOT_DIR / "pixel_art-main"
+LEGACY_PIXEL_ART_ROOT = ROOT_DIR.parent / "pixel_art-main"
+PIXEL_ART_ROOT = LOCAL_PIXEL_ART_ROOT if LOCAL_PIXEL_ART_ROOT.exists() else LEGACY_PIXEL_ART_ROOT
 STAGE_DIR = ROOT_DIR / "stage-data"
 INDEX_PATH = STAGE_DIR / "index.json"
 BRIDGE_SYNC_PATH = STAGE_DIR / "bridge-sync.json"
