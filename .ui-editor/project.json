@@ -6,5 +6,7 @@
   "globalViewport": {
     "width": 393,
     "height": 852
-  }
+  },
+  "assetRoot": "src",
+  "rendererPath": ""
 }

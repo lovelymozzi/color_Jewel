@@ -1076,6 +1076,26 @@ export class SceneRenderer {
             b.classList.toggle('active', b.dataset.navTab === tabId);
         });
 
+        // 전경 스코프 오브젝트: 다음 탭에 속한 것만 렌더해 콘텐츠와 함께 슬라이드.
+        if (this._navFgHostEl) {
+            const fgHost = this._navFgHostEl;
+            const prevFg = this._navFgInner;
+            const nextFg = document.createElement('div');
+            nextFg.className = 'sr-nav-fg-inner';
+            nextFg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;';
+            (this._navScopedLayers || []).forEach(l => {
+                if (l.visible === false) return;
+                if (!(l.tabIds || []).includes(tabId)) return;
+                const layerEl = this._buildLayerEl(l); // x,y 는 _buildLayerEl 에서 viewport 절대좌표로 설정됨
+                layerEl.style.pointerEvents = 'auto';
+                nextFg.appendChild(layerEl);
+            });
+            fgHost.appendChild(nextFg);
+            this._applyTabSlide(nextFg, prevFg, goRight, transitionType, dur);
+            setTimeout(() => { if (prevFg && prevFg.parentNode) prevFg.parentNode.removeChild(prevFg); }, dur + 50);
+            this._navFgInner = nextFg;
+        }
+
         // 매칭 씬 contract 를 가져와 host 안에 새 SceneRenderer 인스턴스로 마운트
         const mountMatched = (matchedContract) => {
             if (!this._navHostEl) return;
@@ -1104,29 +1124,8 @@ export class SceneRenderer {
                 nextInner.textContent = '(no matched scene: ' + (tab.sceneName || '') + ')';
             }
 
-            // 트랜지션 적용
-            if (transitionType === 'fade') {
-                nextInner.style.opacity = '0';
-                nextInner.style.transition = `opacity ${dur}ms ease`;
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    nextInner.style.opacity = '1';
-                    if (prevInner) {
-                        prevInner.style.transition = `opacity ${dur}ms ease`;
-                        prevInner.style.opacity = '0';
-                    }
-                }));
-            } else {
-                nextInner.style.transition = 'none';
-                nextInner.style.transform = goRight ? 'translateX(100%)' : 'translateX(-100%)';
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    nextInner.style.transition = `transform ${dur}ms ease`;
-                    nextInner.style.transform = 'translateX(0)';
-                    if (prevInner) {
-                        prevInner.style.transition = `transform ${dur}ms ease`;
-                        prevInner.style.transform = goRight ? 'translateX(-100%)' : 'translateX(100%)';
-                    }
-                }));
-            }
+            // 트랜지션 적용 (전경 슬라이드와 동일 헬퍼 — 동기화 보장)
+            this._applyTabSlide(nextInner, prevInner, goRight, transitionType, dur);
 
             // 트랜지션 종료 후 prev 제거
             setTimeout(() => {
@@ -1146,6 +1145,40 @@ export class SceneRenderer {
                 .catch(err => { console.error('[SceneRenderer] sceneFetch failed:', err); mountMatched(null); });
         } else {
             mountMatched(null);
+        }
+    }
+
+    /**
+     * 탭 전환 슬라이드/페이드 트랜지션을 적용. 콘텐츠 inner 와 전경 스코프 inner 가
+     * 동일하게 움직이도록 양쪽에서 공유하는 단일 헬퍼.
+     * @param {HTMLElement} nextEl 들어오는 inner
+     * @param {HTMLElement|null} prevEl 나가는 inner (없으면 최초 진입)
+     * @param {boolean} goRight 다음 탭이 오른쪽이면 true
+     * @param {string} type 'fade' | 'slide'
+     * @param {number} dur ms
+     */
+    _applyTabSlide(nextEl, prevEl, goRight, type, dur) {
+        if (type === 'fade') {
+            nextEl.style.opacity = '0';
+            nextEl.style.transition = `opacity ${dur}ms ease`;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                nextEl.style.opacity = '1';
+                if (prevEl) {
+                    prevEl.style.transition = `opacity ${dur}ms ease`;
+                    prevEl.style.opacity = '0';
+                }
+            }));
+        } else {
+            nextEl.style.transition = 'none';
+            nextEl.style.transform = goRight ? 'translateX(100%)' : 'translateX(-100%)';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                nextEl.style.transition = `transform ${dur}ms ease`;
+                nextEl.style.transform = 'translateX(0)';
+                if (prevEl) {
+                    prevEl.style.transition = `transform ${dur}ms ease`;
+                    prevEl.style.transform = goRight ? 'translateX(-100%)' : 'translateX(100%)';
+                }
+            }));
         }
     }
 
@@ -1566,14 +1599,29 @@ export class SceneRenderer {
             if ((preset?.phase || 'attention') === 'enter') this._timelineEnterTargets.add(item.targetStableId);
         });
 
+        // tabIds 가 없는 레이어(navbar 등 모든 탭 공통)는 navOverlay 에 고정 배치.
+        // tabIds 가 있는 레이어는 전경 슬라이드 호스트에서 탭별로 렌더(콘텐츠와 함께 슬라이드).
+        this._navScopedLayers = [];
         const sorted = [...(c.layers || [])].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
         sorted.forEach(l => {
+            const scope = Array.isArray(l.tabIds) ? l.tabIds : [];
+            if (scope.length) { this._navScopedLayers.push(l); return; }
             const layerEl = this._buildLayerEl(l);
             // viewport 절대 좌표 → nav overlay 내부 좌표
             layerEl.style.left = `${(l.x || 0) - navRect.x}px`;
             layerEl.style.top  = `${(l.y || 0) - navRect.y}px`;
             navOverlay.appendChild(layerEl);
         });
+
+        // 전경 슬라이드 호스트: 콘텐츠(host) 위, navbar(navOverlay) 아래.
+        // 스코프 오브젝트가 탭별 inner 로 마운트되어 콘텐츠와 동일하게 슬라이드한다.
+        const fgHost = document.createElement('div');
+        fgHost.className = 'sr-nav-fg-host';
+        fgHost.style.cssText = `position:absolute;inset:0;width:${vw}px;height:${vh}px;overflow:hidden;z-index:500;pointer-events:none;`;
+        root.appendChild(fgHost);
+        this._navFgHostEl = fgHost;
+        this._navFgInner = null;
+
         root.appendChild(navOverlay);
 
         this._rootEl = root;
@@ -2072,6 +2120,13 @@ export class SceneRenderer {
         if (!id) return;
         if (el.classList) el.classList.add('sr-bg-scroll');
         el.style.animation = `${id} ${duration}s linear infinite`;
+        // 리로드(편집기 play view 재생성) 간 스크롤 위상을 이어붙임 — DOM 이 재생성되면
+        // 무한 애니메이션이 0 부터 다시 시작해 "배경이 좌측부터 슬라이드"하는 깜박임이 생긴다.
+        // bg.scrollEpoch(최초 재생 시각, ms)가 주어지면 경과시간만큼 음수 delay 를 줘 위상을 연속시킨다.
+        // (런타임 단일 빌드처럼 epoch 가 없으면 무영향 → 기존 동작 유지.)
+        if (bg.scrollEpoch) {
+            el.style.animationDelay = `-${(Date.now() - bg.scrollEpoch) / 1000}s`;
+        }
     }
 
     _injectCSS(_scrollMode = false) {

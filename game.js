@@ -9258,6 +9258,18 @@
             clearMagicDragState();
             isAnimating = false;
             isStageTransitioning = false;
+            lastTouchActivationAt = 0;
+            boardInteraction.suppressClickUntil = 0;
+            boardInteraction.lastTapAt = 0;
+            boardInteraction.lastTapX = 0;
+            boardInteraction.lastTapY = 0;
+            boardInteraction.touches.clear();
+            boardInteraction.isTouchGestureActive = false;
+            boardInteraction.isTouchPanning = false;
+            boardInteraction.pinchStartDistance = 0;
+            boardInteraction.pointerId = null;
+            boardInteraction.isPointerDragging = false;
+            boardInteraction.isPointerPanActive = false;
 
             if (
                 regenerateLevelStart ||
