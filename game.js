@@ -517,6 +517,7 @@
         const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
         const LIFECYCLE_DEBUG_STORAGE_KEY = "color_jewel_lifecycle_debug_v1";
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
+        const ITEM_ECONOMY_STORAGE_KEY = "color_jewel_item_economy_v1";
         const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v3";
         const BRIDGE_STAGE_SYNC_PATH = "./stage-data/bridge-sync.json";
         const BRIDGE_STAGE_SYNC_POLL_MS = 4000;
@@ -1352,6 +1353,106 @@
             }
         }
 
+        function createDefaultItemEconomyState() {
+            return {
+                charges: {
+                    magic: 3,
+                    clean: 2,
+                    magnet: 0
+                },
+                adUses: {
+                    magic: 0,
+                    clean: 0,
+                    magnet: 0
+                },
+                refill: {
+                    magic: { active: false, clearCount: 0 },
+                    clean: { active: false, clearCount: 0 },
+                    magnet: { active: false, clearCount: 0 }
+                },
+                unlocks: {
+                    magnetGranted: false
+                }
+            };
+        }
+
+        function normalizeItemEconomyState(rawState) {
+            const defaultState = createDefaultItemEconomyState();
+            const rawCharges =
+                rawState?.charges && typeof rawState.charges === "object" && !Array.isArray(rawState.charges)
+                    ? rawState.charges
+                    : {};
+            const rawRefill =
+                rawState?.refill && typeof rawState.refill === "object" && !Array.isArray(rawState.refill)
+                    ? rawState.refill
+                    : {};
+            const rawAdUses =
+                rawState?.adUses && typeof rawState.adUses === "object" && !Array.isArray(rawState.adUses)
+                    ? rawState.adUses
+                    : {};
+
+            return {
+                charges: {
+                    magic: Math.max(0, Math.min(3, Number(rawCharges.magic ?? defaultState.charges.magic))),
+                    clean: Math.max(0, Math.min(2, Number(rawCharges.clean ?? defaultState.charges.clean))),
+                    magnet: Math.max(0, Math.min(2, Number(rawCharges.magnet ?? defaultState.charges.magnet)))
+                },
+                adUses: {
+                    magic: Math.max(0, Math.min(1, Number(rawAdUses.magic || 0))),
+                    clean: Math.max(0, Math.min(1, Number(rawAdUses.clean || 0))),
+                    magnet: Math.max(0, Math.min(1, Number(rawAdUses.magnet || 0)))
+                },
+                refill: {
+                    magic: {
+                        active: rawRefill?.magic?.active === true,
+                        clearCount: Math.max(0, Math.min(2, Number(rawRefill?.magic?.clearCount || 0)))
+                    },
+                    clean: {
+                        active: rawRefill?.clean?.active === true,
+                        clearCount: Math.max(0, Math.min(2, Number(rawRefill?.clean?.clearCount || 0)))
+                    },
+                    magnet: {
+                        active: rawRefill?.magnet?.active === true,
+                        clearCount: Math.max(0, Math.min(2, Number(rawRefill?.magnet?.clearCount || 0)))
+                    }
+                },
+                unlocks: {
+                    magnetGranted: rawState?.unlocks?.magnetGranted === true || Number(rawCharges.magnet || 0) > 0
+                }
+            };
+        }
+
+        function readPersistedItemEconomyState() {
+            try {
+                const rawValue = window.localStorage.getItem(ITEM_ECONOMY_STORAGE_KEY);
+                if (!rawValue) {
+                    return createDefaultItemEconomyState();
+                }
+
+                return normalizeItemEconomyState(JSON.parse(rawValue));
+            } catch (error) {
+                return createDefaultItemEconomyState();
+            }
+        }
+
+        function cloneItemEconomyState(sourceState = null) {
+            return normalizeItemEconomyState(sourceState || itemEconomyState || createDefaultItemEconomyState());
+        }
+
+        function persistItemEconomyState(nextState = null) {
+            try {
+                itemEconomyState = normalizeItemEconomyState(nextState || itemEconomyState);
+                window.localStorage.setItem(
+                    ITEM_ECONOMY_STORAGE_KEY,
+                    JSON.stringify(itemEconomyState)
+                );
+                return true;
+            } catch (error) {
+                itemEconomyState = normalizeItemEconomyState(nextState || itemEconomyState);
+                return false;
+            }
+        }
+
 
         function readPersistedCurrentMapId() {
             if (sharedCurrentMapId) {
@@ -1856,6 +1957,7 @@
 
             clearPersistedGameProgress();
             clearRuntimeSnapshot();
+            resetItemEconomyState();
             writeLevelInitialStateCacheStorage({});
             MAP_DEFINITIONS.forEach((definition) => {
                 definition.__cachedLevelInitialState = null;
@@ -1911,12 +2013,234 @@
         }
 
         function clampActionChargesSnapshot(charges = DEFAULT_ACTION_CHARGES) {
-            const defaults = getDefaultActionCharges();
             return {
-                magic: Math.max(0, Math.min(defaults.magic, Number(charges?.magic ?? defaults.magic))),
-                clean: Math.max(0, Math.min(defaults.clean, Number(charges?.clean ?? defaults.clean))),
-                magnet: Math.max(0, Math.min(defaults.magnet, Number(charges?.magnet ?? defaults.magnet)))
+                magic: Math.max(0, Math.min(MAX_ACTION_CHARGES.magic, Number(charges?.magic ?? DEFAULT_ACTION_CHARGES.magic))),
+                clean: Math.max(0, Math.min(MAX_ACTION_CHARGES.clean, Number(charges?.clean ?? DEFAULT_ACTION_CHARGES.clean))),
+                magnet: Math.max(0, Math.min(MAX_ACTION_CHARGES.magnet, Number(charges?.magnet ?? DEFAULT_ACTION_CHARGES.magnet)))
             };
+        }
+
+        function getItemEconomyChargesForMap(map = ACTIVE_MAP) {
+            const normalizedCharges = clampActionChargesSnapshot(itemEconomyState?.charges || DEFAULT_ACTION_CHARGES);
+            return {
+                magic: normalizedCharges.magic,
+                clean: normalizedCharges.clean,
+                magnet: isSpecialActionUnlocked(map) ? normalizedCharges.magnet : 0
+            };
+        }
+
+        function syncActionChargesFromItemEconomy(map = ACTIVE_MAP) {
+            actionCharges = getItemEconomyChargesForMap(map);
+            return actionCharges;
+        }
+
+        function ensureItemEconomyForMap(map = ACTIVE_MAP) {
+            if (!map) {
+                return false;
+            }
+
+            itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+            let didChange = false;
+
+            if (isSpecialActionUnlocked(map) && itemEconomyState.unlocks.magnetGranted !== true) {
+                itemEconomyState.unlocks.magnetGranted = true;
+                itemEconomyState.charges.magnet = Math.max(
+                    Number(itemEconomyState.charges.magnet || 0),
+                    MAX_ACTION_CHARGES.magnet
+                );
+                itemEconomyState.adUses.magnet = 0;
+                itemEconomyState.refill.magnet.active = false;
+                itemEconomyState.refill.magnet.clearCount = 0;
+                didChange = true;
+            }
+
+            if (didChange) {
+                persistItemEconomyState(itemEconomyState);
+            }
+
+            syncActionChargesFromItemEconomy(map);
+            return didChange;
+        }
+
+        function resetItemEconomyState() {
+            itemEconomyState = createDefaultItemEconomyState();
+            persistItemEconomyState(itemEconomyState);
+            syncActionChargesFromItemEconomy(ACTIVE_MAP);
+            return itemEconomyState;
+        }
+
+        function consumeItemCharge(itemType, amount = 1) {
+            if (!itemType || amount <= 0) {
+                return false;
+            }
+
+            itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+            const currentCharge = Math.max(0, Number(itemEconomyState.charges[itemType] || 0));
+            if (currentCharge < amount) {
+                const currentAdUse = Math.max(0, Number(itemEconomyState.adUses?.[itemType] || 0));
+                if (amount === 1 && currentCharge <= 0 && currentAdUse > 0) {
+                    itemEconomyState.adUses[itemType] = currentAdUse - 1;
+                    persistItemEconomyState(itemEconomyState);
+                    syncActionChargesFromItemEconomy(ACTIVE_MAP);
+                    return true;
+                }
+                syncActionChargesFromItemEconomy(ACTIVE_MAP);
+                return false;
+            }
+
+            const nextCharge = Math.max(0, currentCharge - amount);
+            const refillState = itemEconomyState.refill[itemType];
+            itemEconomyState.charges[itemType] = nextCharge;
+
+            if (nextCharge <= 0) {
+                const canTrackRefill = itemType !== "magnet" || itemEconomyState.unlocks.magnetGranted;
+                if (canTrackRefill && refillState.active !== true) {
+                    refillState.clearCount = 0;
+                }
+                refillState.active = canTrackRefill;
+            } else if (refillState.active !== true) {
+                refillState.clearCount = 0;
+            }
+
+            persistItemEconomyState(itemEconomyState);
+            syncActionChargesFromItemEconomy(ACTIVE_MAP);
+            return true;
+        }
+
+        function collectStageClearItemRewards() {
+            itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+            const rewardedItems = [];
+
+            ["magic", "clean", "magnet"].forEach((itemType) => {
+                if (itemType === "magnet" && itemEconomyState.unlocks.magnetGranted !== true) {
+                    return;
+                }
+
+                const refillState = itemEconomyState.refill[itemType];
+                const currentCharge = Math.max(0, Number(itemEconomyState.charges[itemType] || 0));
+                if (!refillState.active) {
+                    return;
+                }
+
+                refillState.clearCount = Math.max(0, Number(refillState.clearCount || 0)) + 1;
+                if (refillState.clearCount < ITEM_CLEAR_REWARD_TARGET) {
+                    return;
+                }
+
+                refillState.active = false;
+                refillState.clearCount = 0;
+
+                if (currentCharge >= MAX_ACTION_CHARGES[itemType]) {
+                    return;
+                }
+
+                itemEconomyState.charges[itemType] = Math.min(MAX_ACTION_CHARGES[itemType], currentCharge + 1);
+                itemEconomyState.adUses[itemType] = 0;
+                rewardedItems.push(itemType);
+            });
+
+            persistItemEconomyState(itemEconomyState);
+            syncActionChargesFromItemEconomy(ACTIVE_MAP);
+            return rewardedItems;
+        }
+
+        function grantAdRewardItem(itemType) {
+            const rewardMeta = ITEM_REWARD_META[itemType];
+            if (!rewardMeta) {
+                return false;
+            }
+
+            itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+            if (itemType === "magnet" && itemEconomyState.unlocks.magnetGranted !== true) {
+                return false;
+            }
+
+            const currentAdUse = Math.max(0, Number(itemEconomyState.adUses?.[itemType] || 0));
+            if (currentAdUse > 0) {
+                return true;
+            }
+
+            itemEconomyState.adUses[itemType] = 1;
+            persistItemEconomyState(itemEconomyState);
+            syncActionChargesFromItemEconomy(ACTIVE_MAP);
+            setStatus(`광고 보상으로 ${rewardMeta.label} 1회 사용 가능해요.`);
+            persistRuntimeSnapshot();
+            return true;
+        }
+
+        function clearItemRewardOverlay() {
+            if (!itemRewardOverlayElement) {
+                return;
+            }
+
+            itemRewardOverlayElement.replaceChildren();
+            itemRewardOverlayElement.classList.remove("active");
+            itemRewardOverlayElement.setAttribute("aria-hidden", "true");
+        }
+
+        function showStageClearItemRewards(rewardedItems = [], sessionVersion = gameSessionVersion) {
+            if (!itemRewardOverlayElement || !rewardedItems.length) {
+                clearItemRewardOverlay();
+                return;
+            }
+
+            clearItemRewardOverlay();
+            itemRewardOverlayElement.classList.add("active");
+            itemRewardOverlayElement.setAttribute("aria-hidden", "false");
+
+            rewardedItems.forEach((itemType, index) => {
+                const timerId = window.setTimeout(() => {
+                    if (!isCurrentGameSession(sessionVersion)) {
+                        return;
+                    }
+
+                    const rewardMeta = ITEM_REWARD_META[itemType];
+                    if (!rewardMeta) {
+                        return;
+                    }
+
+                    itemRewardOverlayElement.replaceChildren();
+
+                    const rewardCard = document.createElement("div");
+                    rewardCard.className = "item-reward-pop";
+
+                    const rewardBurst = document.createElement("div");
+                    rewardBurst.className = "item-reward-burst";
+                    rewardBurst.textContent = "쾅!";
+
+                    const rewardIconWrap = document.createElement("div");
+                    rewardIconWrap.className = "item-reward-icon-wrap";
+
+                    const rewardIcon = document.createElement("img");
+                    rewardIcon.className = "item-reward-icon";
+                    rewardIcon.src = `${rewardMeta.iconPath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
+                    rewardIcon.alt = "";
+                    rewardIcon.setAttribute("aria-hidden", "true");
+                    rewardIconWrap.appendChild(rewardIcon);
+
+                    const rewardAmount = document.createElement("div");
+                    rewardAmount.className = "item-reward-amount";
+                    rewardAmount.textContent = "+1";
+
+                    const rewardLabel = document.createElement("div");
+                    rewardLabel.className = "item-reward-label";
+                    rewardLabel.textContent = rewardMeta.label;
+
+                    rewardCard.append(rewardBurst, rewardIconWrap, rewardAmount, rewardLabel);
+                    itemRewardOverlayElement.appendChild(rewardCard);
+                }, ITEM_REWARD_POP_START_MS + (index * ITEM_REWARD_POP_DELAY_MS));
+
+                stageClearTimers.push(timerId);
+            });
+
+            const cleanupTimerId = window.setTimeout(() => {
+                if (!isCurrentGameSession(sessionVersion)) {
+                    return;
+                }
+                clearItemRewardOverlay();
+            }, ITEM_REWARD_POP_START_MS + (rewardedItems.length * ITEM_REWARD_POP_DELAY_MS) + ITEM_REWARD_POP_VISIBLE_MS);
+
+            stageClearTimers.push(cleanupTimerId);
         }
 
         function createLevelInitialStateSnapshot(boardSnapshot, traySnapshot, cleanedCells = [], charges = DEFAULT_ACTION_CHARGES) {
@@ -1980,6 +2304,7 @@
                     clean: Math.max(0, Number(actionCharges.clean || 0)),
                     magnet: Math.max(0, Number(actionCharges.magnet || 0))
                 },
+                itemEconomy: cloneItemEconomyState(),
                 moves: Math.max(0, Number(moves || 0)),
                 levelInitialState: currentLevelInitialState
                     ? createLevelInitialStateSnapshot(
@@ -2303,11 +2628,47 @@
                 renderPixelAdmin: false,
                 prepareUpcomingMap: true
             });
+            if (snapshot.itemEconomy) {
+                itemEconomyState = normalizeItemEconomyState(snapshot.itemEconomy);
+                persistItemEconomyState(itemEconomyState);
+            } else if (snapshot.actionCharges) {
+                itemEconomyState = normalizeItemEconomyState({
+                    ...itemEconomyState,
+                    charges: {
+                        ...(itemEconomyState?.charges || {}),
+                        ...snapshot.actionCharges
+                    },
+                    refill: {
+                        ...(itemEconomyState?.refill || {}),
+                        magic: {
+                            active: Math.max(0, Number(snapshot.actionCharges?.magic || 0)) <= 0,
+                            clearCount: 0
+                        },
+                        clean: {
+                            active: Math.max(0, Number(snapshot.actionCharges?.clean || 0)) <= 0,
+                            clearCount: 0
+                        },
+                        magnet: {
+                            active:
+                                isSpecialActionUnlocked(config) &&
+                                Math.max(0, Number(snapshot.actionCharges?.magnet || 0)) <= 0,
+                            clearCount: 0
+                        }
+                    },
+                    unlocks: {
+                        magnetGranted:
+                            itemEconomyState?.unlocks?.magnetGranted === true ||
+                            Math.max(0, Number(snapshot.actionCharges?.magnet || 0)) > 0
+                    }
+                });
+                persistItemEconomyState(itemEconomyState);
+            }
+            ensureItemEconomyForMap(config);
             currentLevelInitialState = normalizeLevelInitialStateSnapshot(snapshot.levelInitialState, config, allowedColorIds);
             boardState = cloneBoardSnapshot(snapshot.boardState);
             trayState = [...snapshot.trayState];
             cleanedSocketCells = new Set(normalizeSnapshotCleanedSocketCells(snapshot.cleanedSocketCells, config));
-            actionCharges = clampActionChargesSnapshot(snapshot.actionCharges);
+            syncActionChargesFromItemEconomy(config);
             actionOverlayState = null;
             clearSparkles();
             clearCelebrationTimers();
@@ -2316,9 +2677,6 @@
             resetBoardTransform();
             selected = null;
             moves = Math.max(0, Number(snapshot.moves || 0));
-            if (isSpecialActionUnlocked(config) && moves === 0 && (Number(actionCharges.magnet) || 0) <= 0) {
-                actionCharges.magnet = getDefaultActionCharges(config).magnet;
-            }
             solved = false;
             isAnimating = false;
             isStageTransitioning = false;
@@ -2947,10 +3305,33 @@
             ...ORTHOGONAL_DIRECTIONS,
             ...DIAGONAL_DIRECTIONS
         ]);
-        const BASE_ACTION_CHARGES = Object.freeze({
+        const MAX_ACTION_CHARGES = Object.freeze({
             magic: 3,
             clean: 2,
+            magnet: 2
+        });
+        const BASE_ACTION_CHARGES = Object.freeze({
+            magic: MAX_ACTION_CHARGES.magic,
+            clean: MAX_ACTION_CHARGES.clean,
             magnet: 0
+        });
+        const ITEM_CLEAR_REWARD_TARGET = 3;
+        const ITEM_REWARD_POP_START_MS = 90;
+        const ITEM_REWARD_POP_DELAY_MS = 520;
+        const ITEM_REWARD_POP_VISIBLE_MS = 480;
+        const ITEM_REWARD_META = Object.freeze({
+            magic: {
+                label: "마법봉",
+                iconPath: "./src/assets/magic.png"
+            },
+            clean: {
+                label: "빗자루",
+                iconPath: "./src/assets/clean.png"
+            },
+            magnet: {
+                label: "자석",
+                iconPath: "./src/assets/magnet.png"
+            }
         });
         function isSpecialActionUnlocked(map = null) {
             const activeMap = map || ACTIVE_MAP || null;
@@ -2999,6 +3380,7 @@
         const settingSceneMountElement = document.getElementById("settingSceneMount");
         const stageClearOverlayElement = document.getElementById("stageClearOverlay");
         const stageClearSceneMountElement = document.getElementById("stageClearSceneMount");
+        const itemRewardOverlayElement = document.getElementById("itemRewardOverlay");
 
         let currentMapIndex = 0;
         let ACTIVE_MAP = null;
@@ -3029,6 +3411,7 @@
         let actionOverlayState = null;
         let celebrationTimers = [];
         let stageClearTimers = [];
+        let pendingStageClearItemRewards = [];
         let lastResponsiveLayoutKey = "";
         let colorJewelSceneRenderer = null;
         let colorJewelSceneContract = null;
@@ -3073,6 +3456,7 @@
         let levelInitialStateStorageCache = null;
         let runtimePaletteSignature = "";
         let appSettings = readPersistedAppSettings();
+        let itemEconomyState = readPersistedItemEconomyState();
 
         const boardInteraction = {
             scale: 1,
@@ -5284,8 +5668,10 @@
         function clearStageClearTimers() {
             stageClearTimers.forEach((timerId) => window.clearTimeout(timerId));
             stageClearTimers = [];
+            pendingStageClearItemRewards = [];
 
             clearStageClearSceneEffects();
+            clearItemRewardOverlay();
 
             if (stageClearSceneRenderer) {
                 stageClearSceneRenderer.hide();
@@ -5318,20 +5704,26 @@
                 return false;
             }
 
+            const carriedActionCharges = clampActionChargesSnapshot(actionCharges);
+            const currentSpecialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
             const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
             const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
             const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
             clearPersistedGameProgress();
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
-            if (preserveStageClearOverlay) {
-                stageClearTimers.forEach((timerId) => window.clearTimeout(timerId));
-                stageClearTimers = [];
-            } else {
+            if (!preserveStageClearOverlay) {
                 clearStageClearTimers();
             }
             isStageTransitioning = false;
             await activateMapIndex(nextMapIndex);
+            if (
+                !currentSpecialActionUnlocked &&
+                isSpecialActionUnlocked(ACTIVE_MAP) &&
+                (Number(carriedActionCharges.magnet) || 0) <= 0
+            ) {
+                carriedActionCharges.magnet = getDefaultActionCharges(ACTIVE_MAP).magnet;
+            }
             currentLevelInitialState =
                 preparedNextMapIndex === nextMapIndex &&
                 preparedNextMapVersion === nextOverrideVersion &&
@@ -5343,11 +5735,24 @@
                         boardState: cloneBoardSnapshot(preparedNextLevelInitialState.boardState),
                         trayState: [...preparedNextLevelInitialState.trayState],
                         cleanedSocketCells: [...(preparedNextLevelInitialState.cleanedSocketCells || [])],
-                        actionCharges: clampActionChargesSnapshot(preparedNextLevelInitialState.actionCharges)
+                        actionCharges: clampActionChargesSnapshot(carriedActionCharges)
                     }
-                    : null;
+                    : (() => {
+                        const nextLevelInitialState = buildCurrentLevelInitialState({
+                            persistState: false
+                        });
+                        return {
+                            mapId: nextLevelInitialState.mapId,
+                            rows: nextLevelInitialState.rows,
+                            cols: nextLevelInitialState.cols,
+                            boardState: cloneBoardSnapshot(nextLevelInitialState.boardState),
+                            trayState: [...nextLevelInitialState.trayState],
+                            cleanedSocketCells: [...(nextLevelInitialState.cleanedSocketCells || [])],
+                            actionCharges: clampActionChargesSnapshot(carriedActionCharges)
+                        };
+                    })();
             resetGame({
-                regenerateLevelStart: !currentLevelInitialState,
+                regenerateLevelStart: false,
                 preserveStageClearOverlay
             });
             return true;
@@ -5358,12 +5763,18 @@
                 return;
             }
 
+            const stageClearItemRewards = [...pendingStageClearItemRewards];
+            pendingStageClearItemRewards = [];
             isStageTransitioning = true;
             selected = null;
 
             if (stageClearOverlayElement) {
                 stageClearOverlayElement.classList.add("active");
                 stageClearOverlayElement.setAttribute("aria-hidden", "false");
+            }
+
+            if (stageClearItemRewards.length) {
+                showStageClearItemRewards(stageClearItemRewards, sessionVersion);
             }
 
             void showStageClearScene(sessionVersion).then((didShow) => {
@@ -5408,6 +5819,7 @@
             clearSolvedStageFailSafeTimer();
             clearPersistedGameProgress();
             clearRuntimeSnapshot();
+            pendingStageClearItemRewards = collectStageClearItemRewards();
             const stageClearDelay = scheduleFullBoardCelebration();
             const stageClearTimer = window.setTimeout(() => {
                 startStageClearSequence(sessionVersion);
@@ -6556,6 +6968,26 @@
 
             let activePointerId = null;
             let shouldActivate = false;
+            let lastDirectActivationAt = 0;
+
+            const activate = (event = null) => {
+                const now = Date.now();
+                if (now - lastDirectActivationAt < TOUCH_TAP_GUARD_MS) {
+                    if (event) {
+                        event.preventDefault?.();
+                        event.stopPropagation?.();
+                    }
+                    return false;
+                }
+
+                lastDirectActivationAt = now;
+                if (event) {
+                    event.preventDefault?.();
+                    event.stopPropagation?.();
+                }
+                handler();
+                return true;
+            };
 
             element.addEventListener("pointerdown", (event) => {
                 if (event.pointerType === "mouse" && event.button !== 0) {
@@ -6594,9 +7026,31 @@
                 }
 
                 shouldActivate = false;
-                event.preventDefault();
-                event.stopPropagation();
-                handler();
+                activate(event);
+            });
+
+            element.addEventListener(
+                "touchend",
+                (event) => {
+                    if (event.touches?.length || (event.changedTouches && event.changedTouches.length !== 1)) {
+                        return;
+                    }
+
+                    activePointerId = null;
+                    shouldActivate = false;
+                    activate(event);
+                },
+                { passive: false }
+            );
+
+            element.addEventListener("click", (event) => {
+                if (Date.now() < boardInteraction.suppressClickUntil) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+
+                activate(event);
             });
         }
 
@@ -7457,6 +7911,8 @@
             if (event.shiftKey && event.code === "ArrowLeft") {
                 event.preventDefault();
 
+                const carriedActionCharges = clampActionChargesSnapshot(actionCharges);
+                const currentSpecialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
                 const previousMapIndex =
                     ((currentMapIndex - 1) % MAP_DEFINITIONS.length + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
                 const previousDefinition = MAP_DEFINITIONS[previousMapIndex];
@@ -7471,6 +7927,13 @@
                 selected = null;
 
                 void activateMapIndex(previousMapIndex).then(() => {
+                    if (
+                        !currentSpecialActionUnlocked &&
+                        isSpecialActionUnlocked(ACTIVE_MAP) &&
+                        (Number(carriedActionCharges.magnet) || 0) <= 0
+                    ) {
+                        carriedActionCharges.magnet = getDefaultActionCharges(ACTIVE_MAP).magnet;
+                    }
                     currentLevelInitialState =
                         preparedPreviousMapIndex === previousMapIndex &&
                         preparedPreviousMapVersion === previousOverrideVersion &&
@@ -7482,12 +7945,26 @@
                                 boardState: cloneBoardSnapshot(preparedPreviousLevelInitialState.boardState),
                                 trayState: [...preparedPreviousLevelInitialState.trayState],
                                 cleanedSocketCells: [...(preparedPreviousLevelInitialState.cleanedSocketCells || [])],
-                                actionCharges: clampActionChargesSnapshot(preparedPreviousLevelInitialState.actionCharges)
+                                actionCharges: clampActionChargesSnapshot(carriedActionCharges)
                             }
-                            : null;
+                            : (() => {
+                                const previousLevelInitialState = buildCurrentLevelInitialState({
+                                    persistState: false,
+                                    fastMode: true
+                                });
+                                return {
+                                    mapId: previousLevelInitialState.mapId,
+                                    rows: previousLevelInitialState.rows,
+                                    cols: previousLevelInitialState.cols,
+                                    boardState: cloneBoardSnapshot(previousLevelInitialState.boardState),
+                                    trayState: [...previousLevelInitialState.trayState],
+                                    cleanedSocketCells: [...(previousLevelInitialState.cleanedSocketCells || [])],
+                                    actionCharges: clampActionChargesSnapshot(carriedActionCharges)
+                                };
+                            })();
                     resetGame({
-                        regenerateLevelStart: !currentLevelInitialState,
-                        fastLevelStart: !currentLevelInitialState,
+                        regenerateLevelStart: false,
+                        fastLevelStart: false,
                         persistLevelStart: false
                     });
                 });
@@ -8514,7 +8991,12 @@
                 return;
             }
 
-            actionCharges.magic = Math.max(0, actionCharges.magic - 1);
+            if (!consumeItemCharge("magic")) {
+                setActionOverlay(null);
+                render();
+                setStatus("사용할 수 있는 마법봉이 없어요.");
+                return;
+            }
             await sleep(20);
             if (!isCurrentGameSession(sessionVersion)) {
                 return;
@@ -8636,6 +9118,14 @@
                 return;
             }
 
+            if ((Number(actionCharges.magic) || 0) <= 0) {
+                if (!grantAdRewardItem("magic")) {
+                    return;
+                }
+                startMagicTargeting();
+                return;
+            }
+
             startMagicTargeting();
         }
 
@@ -8666,7 +9156,14 @@
                 return;
             }
 
-            actionCharges.clean = Math.max(0, actionCharges.clean - 1);
+            if ((Number(actionCharges.clean) || 0) <= 0 && !grantAdRewardItem("clean")) {
+                return;
+            }
+
+            if (!consumeItemCharge("clean")) {
+                setStatus("사용할 수 있는 빗자루가 없어요.");
+                return;
+            }
             await animateBroomMoves(broomPlan.steps);
             boardState = broomPlan.nextBoardState;
             trayState = broomPlan.nextTrayState;
@@ -8687,11 +9184,6 @@
                 return;
             }
 
-            if ((Number(actionCharges.magnet) || 0) <= 0) {
-                setStatus("사용할 수 있는 자석 아이템이 없어요.");
-                return;
-            }
-
             const magnetPlan = buildMagnetMovePlan();
             const movedCount = magnetPlan.movedGemCount || 0;
             if (!movedCount) {
@@ -8699,7 +9191,14 @@
                 return;
             }
 
-            actionCharges.magnet = Math.max(0, actionCharges.magnet - 1);
+            if ((Number(actionCharges.magnet) || 0) <= 0 && !grantAdRewardItem("magnet")) {
+                return;
+            }
+
+            if (!consumeItemCharge("magnet")) {
+                setStatus("사용할 수 있는 자석 아이템이 없어요.");
+                return;
+            }
             await animateMagnetMoves(magnetPlan.steps);
             boardState = magnetPlan.nextBoardState;
             const [primaryColorId, secondaryColorId] = magnetPlan.selectedColors || [];
@@ -9294,10 +9793,11 @@
                 });
             }
 
+            ensureItemEconomyForMap(ACTIVE_MAP);
             boardState = cloneBoardSnapshot(currentLevelInitialState.boardState);
             trayState = [...currentLevelInitialState.trayState];
             cleanedSocketCells = new Set(currentLevelInitialState.cleanedSocketCells || []);
-            actionCharges = clampActionChargesSnapshot(currentLevelInitialState.actionCharges);
+            syncActionChargesFromItemEconomy(ACTIVE_MAP);
             actionOverlayState = null;
             clearSparkles();
             clearCelebrationTimers();

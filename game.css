@@ -788,6 +788,102 @@
             opacity: 1;
         }
 
+        .item-reward-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 54;
+            overflow: visible;
+        }
+
+        .item-reward-overlay.active {
+            opacity: 1;
+        }
+
+        .item-reward-pop {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transform: translate(-50%, -50%);
+            animation: item-reward-pop 0.48s cubic-bezier(0.16, 1.12, 0.24, 1) both;
+        }
+
+        .item-reward-burst {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            color: rgba(255, 244, 208, 0.98);
+            font: 900 36px/1 "Trebuchet MS", "Avenir Next", sans-serif;
+            letter-spacing: -0.04em;
+            transform: translate(-50%, -72px) rotate(-10deg);
+            text-shadow:
+                0 2px 0 rgba(148, 89, 15, 0.18),
+                0 10px 22px rgba(122, 74, 29, 0.22);
+            animation: item-reward-burst 0.48s cubic-bezier(0.12, 0.98, 0.24, 1) both;
+        }
+
+        .item-reward-icon-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 118px;
+            height: 118px;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.98), rgba(255, 247, 214, 0.94) 34%, rgba(244, 191, 107, 0.92) 72%, rgba(210, 141, 60, 0.92) 100%);
+            box-shadow:
+                inset 0 3px 0 rgba(255, 255, 255, 0.84),
+                inset 0 -4px 0 rgba(160, 96, 31, 0.22),
+                0 14px 30px rgba(106, 61, 19, 0.28);
+        }
+
+        .item-reward-icon-wrap::before {
+            content: "";
+            position: absolute;
+            inset: -10px;
+            border-radius: inherit;
+            border: 4px solid rgba(255, 244, 208, 0.92);
+            opacity: 0.88;
+        }
+
+        .item-reward-icon {
+            display: block;
+            width: 74px;
+            height: 74px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 14px rgba(92, 42, 14, 0.2));
+        }
+
+        .item-reward-amount {
+            min-width: 72px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.96);
+            color: #9A4F16;
+            font: 900 24px/1 "Trebuchet MS", "Avenir Next", sans-serif;
+            letter-spacing: -0.03em;
+            text-align: center;
+            box-shadow: 0 10px 18px rgba(122, 74, 29, 0.14);
+        }
+
+        .item-reward-label {
+            color: rgba(255, 249, 234, 0.98);
+            font: 900 18px/1 "Trebuchet MS", "Avenir Next", sans-serif;
+            text-shadow:
+                0 2px 0 rgba(129, 76, 20, 0.22),
+                0 10px 24px rgba(83, 50, 17, 0.24);
+            letter-spacing: -0.02em;
+        }
+
         .title-loading-overlay {
             position: absolute;
             inset: 0;
@@ -1522,6 +1618,40 @@
             100% {
                 opacity: 1;
                 transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes item-reward-pop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.16) rotate(-12deg);
+            }
+
+            58% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.18) rotate(4deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes item-reward-burst {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -56px) scale(0.52) rotate(-14deg);
+            }
+
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -78px) scale(1.08) rotate(-8deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -72px) scale(1) rotate(-10deg);
             }
         }
 
