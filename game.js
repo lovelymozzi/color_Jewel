@@ -2204,29 +2204,43 @@
                     const rewardCard = document.createElement("div");
                     rewardCard.className = "item-reward-pop";
 
-                    const rewardBurst = document.createElement("div");
-                    rewardBurst.className = "item-reward-burst";
-                    rewardBurst.textContent = "쾅!";
-
                     const rewardIconWrap = document.createElement("div");
                     rewardIconWrap.className = "item-reward-icon-wrap";
 
-                    const rewardIcon = document.createElement("img");
-                    rewardIcon.className = "item-reward-icon";
-                    rewardIcon.src = `${rewardMeta.iconPath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
-                    rewardIcon.alt = "";
-                    rewardIcon.setAttribute("aria-hidden", "true");
-                    rewardIconWrap.appendChild(rewardIcon);
+                    const rewardSceneIconSource = rewardMeta.sceneStableId
+                        ? colorJewelSceneRenderer?.getElement?.(rewardMeta.sceneStableId)
+                        : null;
 
-                    const rewardAmount = document.createElement("div");
-                    rewardAmount.className = "item-reward-amount";
-                    rewardAmount.textContent = "+1";
+                    if (rewardSceneIconSource) {
+                        const rewardSceneIcon = rewardSceneIconSource.cloneNode(true);
+                        rewardSceneIcon.classList.add("item-reward-scene-icon");
+                        rewardSceneIcon.removeAttribute("data-stable-id");
+                        rewardSceneIcon.style.display = "";
+                        rewardSceneIcon.style.opacity = "1";
+                        rewardSceneIcon.style.visibility = "visible";
+                        rewardSceneIcon.querySelectorAll("[data-fallback-stable-id]").forEach((element) => element.remove());
+                        rewardSceneIcon.querySelectorAll(".text-0").forEach((element) => element.remove());
+                        rewardSceneIcon.querySelectorAll("img").forEach((image) => {
+                            const imageSource = `${image.currentSrc || ""} ${image.src || ""}`.toLowerCase();
+                            if (
+                                imageSource.includes("circle1.png") ||
+                                imageSource.includes("pictoicon_player_play") ||
+                                imageSource.includes("player_play")
+                            ) {
+                                image.remove();
+                            }
+                        });
+                        rewardIconWrap.appendChild(rewardSceneIcon);
+                    } else {
+                        const rewardIcon = document.createElement("img");
+                        rewardIcon.className = "item-reward-icon";
+                        rewardIcon.src = `${rewardMeta.iconPath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
+                        rewardIcon.alt = "";
+                        rewardIcon.setAttribute("aria-hidden", "true");
+                        rewardIconWrap.appendChild(rewardIcon);
+                    }
 
-                    const rewardLabel = document.createElement("div");
-                    rewardLabel.className = "item-reward-label";
-                    rewardLabel.textContent = rewardMeta.label;
-
-                    rewardCard.append(rewardBurst, rewardIconWrap, rewardAmount, rewardLabel);
+                    rewardCard.append(rewardIconWrap);
                     itemRewardOverlayElement.appendChild(rewardCard);
                 }, ITEM_REWARD_POP_START_MS + (index * ITEM_REWARD_POP_DELAY_MS));
 
@@ -3322,15 +3336,18 @@
         const ITEM_REWARD_META = Object.freeze({
             magic: {
                 label: "마법봉",
-                iconPath: "./src/assets/magic.png"
+                iconPath: "./src/assets/magic.png",
+                sceneStableId: "level-node-4"
             },
             clean: {
                 label: "빗자루",
-                iconPath: "./src/assets/clean.png"
+                iconPath: "./src/assets/clean.png",
+                sceneStableId: "level-node-57"
             },
             magnet: {
                 label: "자석",
-                iconPath: "./src/assets/magnet.png"
+                iconPath: "./src/assets/magnet.png",
+                sceneStableId: "level-node-170"
             }
         });
         function isSpecialActionUnlocked(map = null) {
