@@ -1474,8 +1474,11 @@
             animation: tutorial-hint-float 1.08s ease-in-out infinite;
         }
 
-        .tutorial-hint.below {
-            flex-direction: column-reverse;
+        .tutorial-hint-arrow {
+            display: block;
+            width: 28px;
+            height: auto;
+            filter: drop-shadow(0 6px 10px rgba(122, 74, 29, 0.22));
         }
 
 

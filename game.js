@@ -7758,7 +7758,6 @@
             const targetRect = targetElement.getBoundingClientRect();
             const relativeLeft = targetRect.left - stageRect.left;
             const relativeTop = targetRect.top - stageRect.top;
-            const placeBelow = relativeTop < 88;
 
             const focus = document.createElement("div");
             focus.className = "tutorial-focus";
@@ -7768,10 +7767,18 @@
             focus.style.height = `${targetRect.height + 10}px`;
 
             const hint = document.createElement("div");
-            hint.className = `tutorial-hint${placeBelow ? " below" : ""}`;
+            hint.className = "tutorial-hint";
             hint.style.left = `${relativeLeft + targetRect.width / 2}px`;
-            hint.style.top = `${placeBelow ? relativeTop + targetRect.height + 2 : relativeTop - 28}px`;
-            tutorialLayerElement.append(focus);
+            hint.style.top = `${Math.max(6, relativeTop - 34)}px`;
+
+            const hintArrow = document.createElement("img");
+            hintArrow.className = "tutorial-hint-arrow";
+            hintArrow.src = "./src/assets/tutorial_arr_down.png";
+            hintArrow.alt = "";
+            hintArrow.setAttribute("aria-hidden", "true");
+            hint.append(hintArrow);
+
+            tutorialLayerElement.append(focus, hint);
         }
 
         function scheduleTutorialOverlayRender() {
