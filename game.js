@@ -3652,11 +3652,17 @@
                 revealedCharacterCount: 0,
                 completed: tutorialGestureGuideState.stepId === null
             };
+            if (tutorialGestureGuideState.stepId === TUTORIAL_GESTURE_GUIDE_STEPS[0].id) {
+                soundController?.playComplete?.(0, "tutorial");
+            }
         }
 
         function setTutorialGestureGuideStep(nextStepId) {
             if (tutorialGestureGuideState.stepId === nextStepId) {
                 return;
+            }
+            if (tutorialGestureGuideState.stepId && nextStepId === null) {
+                soundController?.playComplete?.(0, "tutorial");
             }
 
             tutorialGestureGuideState.stepId = nextStepId;
@@ -7951,6 +7957,7 @@
             );
 
             boardWrapElement.addEventListener("pointerdown", (event) => {
+                queueAudioContextWarmup();
                 if (isMagicTargetingMode()) {
                     return;
                 }
@@ -8046,6 +8053,7 @@
             boardWrapElement.addEventListener(
                 "touchstart",
                 (event) => {
+                    queueAudioContextWarmup();
                     if (isMagicTargetingMode()) {
                         if (event.cancelable) {
                             event.preventDefault();
@@ -10927,6 +10935,8 @@
                     titleLoadingOverlayElement.setAttribute("aria-hidden", "false");
                     titleSceneMountElement.replaceChildren();
                     titleSceneMountElement.setAttribute("aria-hidden", "false");
+                    soundController?.warmup?.();
+                    soundController?.playComplete?.(0, "tutorial");
 
                     titleMinimumVisiblePromise = Promise.all([
                         (async () => {
@@ -10945,6 +10955,15 @@
                                 ]);
 
                                 patchContractAssetPaths(titleContract);
+                                if (Array.isArray(titleContract?.layers)) {
+                                    titleContract.layers = titleContract.layers.filter((layer) => {
+                                        const exportPath =
+                                            typeof layer?.visual?.exportPath === "string"
+                                                ? layer.visual.exportPath.toLowerCase()
+                                                : "";
+                                        return !exportPath.includes("circle1.png");
+                                    });
+                                }
 
                                 const designWidth = titleContract?.viewport?.width || titleContract?.canvas?.width || 393;
                                 const designHeight = titleContract?.viewport?.height || titleContract?.canvas?.height || 852;
