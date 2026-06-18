@@ -15,6 +15,8 @@
         let bgmOutputContext = null;
         let bgmOutputGain = null;
         let bgmSuspended = false;
+        const buttonSoundAssetSrc = "./src/assets/sounds/UIClick-Soft_Pop.mp3";
+        const buttonSoundTemplate = typeof Audio === "function" ? new Audio(buttonSoundAssetSrc) : null;
 
         const BGM_PHRASE_MS = 3600;
         const BGM_OUTPUT_LEVEL = 1.18;
@@ -219,12 +221,21 @@
                 return;
             }
 
+            if (context.state === "interrupted" && document.visibilityState === "visible") {
+                context = recreateAudioContext() || context;
+            }
+
             let played = false;
             let fallbackTimer = null;
 
             const runFallback = () => {
                 if (played) {
                     return;
+                }
+                played = true;
+                if (fallbackTimer) {
+                    window.clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
                 }
                 fallback?.();
             };
@@ -234,7 +245,7 @@
             }
 
             const runPlayback = (activeContext) => {
-                if (!activeContext || activeContext.state !== "running") {
+                if (played || !activeContext || activeContext.state !== "running") {
                     return;
                 }
 
@@ -277,16 +288,53 @@
                                 return;
                             }
 
-                            retryResume?.then(() => {
-                                runPlayback(context);
-                            }).catch(() => {
-                                runFallback();
-                            });
+                            if (retryResume && typeof retryResume.then === "function") {
+                                retryResume.then(() => {
+                                    if (context.state === "running") {
+                                        runPlayback(context);
+                                        return;
+                                    }
+                                    runFallback();
+                                }).catch(() => {
+                                    runFallback();
+                                });
+                                return;
+                            }
+
+                            runFallback();
                         })
                         .catch(() => {
                             runFallback();
                         });
+                    return;
                 }
+
+                context = recreateAudioContext();
+                if (!context) {
+                    runFallback();
+                    return;
+                }
+
+                const retryResume = context.resume?.();
+                if (context.state === "running") {
+                    runPlayback(context);
+                    return;
+                }
+
+                if (retryResume && typeof retryResume.then === "function") {
+                    retryResume.then(() => {
+                        if (context.state === "running") {
+                            runPlayback(context);
+                            return;
+                        }
+                        runFallback();
+                    }).catch(() => {
+                        runFallback();
+                    });
+                    return;
+                }
+
+                runFallback();
             } catch (error) {
                 runFallback();
             }
@@ -588,6 +636,20 @@
 
         function playButton() {
             if (!sfxEnabled) {
+                return;
+            }
+            if (buttonSoundTemplate) {
+                const audio = buttonSoundTemplate.cloneNode();
+                audio.volume = Math.max(0, Math.min(1, 0.84 * volumeMultiplier));
+                const playbackResult = audio.play();
+                playbackResult?.catch?.((error) => {
+                    console.error("Failed to play UIClick-Soft_Pop.", error);
+                    requestAudioPlayback((context) => {
+                        playButtonPressNow(context);
+                    }, () => {
+                        playFallbackEffect("button");
+                    });
+                });
                 return;
             }
             requestAudioPlayback((context) => {

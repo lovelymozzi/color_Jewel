@@ -529,7 +529,8 @@
         const DEFAULT_APP_SETTINGS = Object.freeze({
             soundEffectsOn: true,
             bgmOn: true,
-            hapticsOn: true
+            hapticsOn: true,
+            tutorialTapHintShown: false
         });
         const SCENE_CONTRACT_VERSION = "20260616-10";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
@@ -1418,7 +1419,8 @@
             return {
                 soundEffectsOn: rawSettings?.soundEffectsOn !== false,
                 bgmOn: rawSettings?.bgmOn !== false,
-                hapticsOn: rawSettings?.hapticsOn !== false
+                hapticsOn: rawSettings?.hapticsOn !== false,
+                tutorialTapHintShown: rawSettings?.tutorialTapHintShown === true
             };
         }
 
@@ -1429,7 +1431,10 @@
                     return { ...DEFAULT_APP_SETTINGS };
                 }
 
-                return normalizeAppSettings(JSON.parse(rawValue));
+                return {
+                    ...normalizeAppSettings(JSON.parse(rawValue)),
+                    tutorialTapHintShown: false
+                };
             } catch (error) {
                 return { ...DEFAULT_APP_SETTINGS };
             }
@@ -1439,7 +1444,11 @@
             try {
                 window.localStorage.setItem(
                     APP_SETTINGS_STORAGE_KEY,
-                    JSON.stringify(normalizeAppSettings(nextSettings))
+                    JSON.stringify({
+                        soundEffectsOn: nextSettings?.soundEffectsOn !== false,
+                        bgmOn: nextSettings?.bgmOn !== false,
+                        hapticsOn: nextSettings?.hapticsOn !== false
+                    })
                 );
                 return true;
             } catch (error) {
@@ -3467,6 +3476,7 @@
         const BOARD_PAN_DRAG_THRESHOLD_PX = 8;
         const TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD = 0.08;
         const TUTORIAL_GESTURE_PAN_THRESHOLD_PX = 28;
+        const TUTORIAL_BOARD_INITIAL_OFFSET_Y = 20;
         const BOARD_COMPACT_MIN_SCALE_VERTICAL_PAN_MULTIPLIER = 2.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE = 1.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE = 1.5;
@@ -3574,6 +3584,13 @@
             panOriginX: 0,
             panOriginY: 0
         };
+        let tutorialGestureTypingState = {
+            stepId: null,
+            message: "",
+            startedAt: 0,
+            revealedCharacterCount: 0,
+            completed: true
+        };
         let renderFrame = null;
         let areGemsHiddenByCheat = false;
         let gameSessionVersion = 0;
@@ -3618,12 +3635,22 @@
         };
 
         function resetTutorialGestureGuideState() {
+            if (isTutorialMap() && appSettings.tutorialTapHintShown) {
+                updateAppSettings({ tutorialTapHintShown: false }, { persist: false });
+            }
             tutorialGestureGuideState = {
                 stepId: isTutorialMap() ? TUTORIAL_GESTURE_GUIDE_STEPS[0].id : null,
                 pinchPhase: "zoom_in",
                 pinchReferenceScale: boardInteraction.scale,
                 panOriginX: boardInteraction.panX,
                 panOriginY: boardInteraction.panY
+            };
+            tutorialGestureTypingState = {
+                stepId: null,
+                message: "",
+                startedAt: 0,
+                revealedCharacterCount: 0,
+                completed: tutorialGestureGuideState.stepId === null
             };
         }
 
@@ -3637,6 +3664,13 @@
             tutorialGestureGuideState.pinchReferenceScale = boardInteraction.scale;
             tutorialGestureGuideState.panOriginX = boardInteraction.panX;
             tutorialGestureGuideState.panOriginY = boardInteraction.panY;
+            tutorialGestureTypingState = {
+                stepId: null,
+                message: "",
+                startedAt: 0,
+                revealedCharacterCount: 0,
+                completed: nextStepId === null
+            };
             scheduleTutorialOverlayRender();
         }
 
@@ -7800,7 +7834,7 @@
         function resetBoardTransform() {
             boardInteraction.scale = 1;
             boardInteraction.panX = 0;
-            boardInteraction.panY = 0;
+            boardInteraction.panY = isTutorialMap() ? TUTORIAL_BOARD_INITIAL_OFFSET_Y : 0;
             applyBoardTransform();
         }
 
@@ -8399,8 +8433,8 @@
                 navType: getNavigationDebugEntry()?.type || "unknown",
                 wasDiscarded: Boolean(document.wasDiscarded)
             });
+            queueAudioContextWarmup();
             if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
-                queueAudioContextWarmup();
                 soundController?.setBgmEnabled?.(true, { resumePlayback: true });
                 shouldResumeBgmOnForeground = false;
             }
@@ -8441,8 +8475,8 @@
                 lastLifecycleHiddenAt = 0;
                 scheduleBridgeStageSyncPoll(800);
                 scheduleSharedStageStatePoll(800);
+                queueAudioContextWarmup();
                 if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
-                    queueAudioContextWarmup();
                     soundController?.setBgmEnabled?.(true, { resumePlayback: true });
                     shouldResumeBgmOnForeground = false;
                 }
@@ -8470,8 +8504,8 @@
 
         document.addEventListener("resume", () => {
             pushLifecycleDebugEntry("resume");
+            queueAudioContextWarmup();
             if (shouldResumeBgmOnForeground && appSettings.bgmOn) {
-                queueAudioContextWarmup();
                 soundController?.setBgmEnabled?.(true, { resumePlayback: true });
                 shouldResumeBgmOnForeground = false;
             }
@@ -8509,6 +8543,13 @@
                 buttonElement.style.visibility = "";
             });
             delete tutorialLayerElement.dataset.tutorialGestureTypedStep;
+            tutorialGestureTypingState = {
+                stepId: null,
+                message: "",
+                startedAt: 0,
+                revealedCharacterCount: 0,
+                completed: true
+            };
             tutorialLayerElement.style.pointerEvents = "none";
             tutorialLayerElement.innerHTML = "";
         }
@@ -8547,12 +8588,47 @@
             const tutorialGuideMessage = stepMeta.id === "pinch_ani"
                 ? (isMobileTutorialDevice ? "화면을 확대/축소해 보세요." : "마우스 휠로 확대/축소해 보세요.")
                 : "보드를 드래그해서 원하는 위치로 움직여보세요.";
-            toastCopy.textContent = tutorialGuideMessage;
-            if (tutorialLayerElement.dataset.tutorialGestureTypedStep !== stepMeta.id) {
-                toastCopy.classList.add("tutorial-gesture-toast-copy--typing");
-                toastCopy.style.setProperty("--tutorial-typing-characters", String([...tutorialGuideMessage].length));
-                toastCopy.style.setProperty("--tutorial-typing-duration-ms", `${Math.min(1200, Math.max(420, [...tutorialGuideMessage].length * 52))}ms`);
+            const tutorialGuideCharacters = [...tutorialGuideMessage];
+            const tutorialTypingDurationMs = Math.min(1200, Math.max(420, tutorialGuideCharacters.length * 52));
+            if (
+                tutorialGestureTypingState.stepId !== stepMeta.id ||
+                tutorialGestureTypingState.message !== tutorialGuideMessage
+            ) {
+                tutorialGestureTypingState = {
+                    stepId: stepMeta.id,
+                    message: tutorialGuideMessage,
+                    startedAt: Date.now(),
+                    revealedCharacterCount: 0,
+                    completed: false
+                };
+            }
+
+            if (tutorialGestureTypingState.completed) {
+                toastCopy.textContent = tutorialGuideMessage;
                 tutorialLayerElement.dataset.tutorialGestureTypedStep = stepMeta.id;
+            } else {
+                const elapsedMs = Math.max(0, Date.now() - tutorialGestureTypingState.startedAt);
+                const revealedCharacterCount = Math.min(
+                    tutorialGuideCharacters.length,
+                    Math.max(1, Math.ceil((elapsedMs / tutorialTypingDurationMs) * tutorialGuideCharacters.length))
+                );
+                if (revealedCharacterCount > tutorialGestureTypingState.revealedCharacterCount) {
+                    const newlyRevealedCharacterCount = revealedCharacterCount - tutorialGestureTypingState.revealedCharacterCount;
+                    for (let soundIndex = 0; soundIndex < newlyRevealedCharacterCount; soundIndex += 1) {
+                        window.setTimeout(() => {
+                            triggerButtonPressSound();
+                        }, Math.min(48, soundIndex * 18));
+                    }
+                    tutorialGestureTypingState.revealedCharacterCount = revealedCharacterCount;
+                }
+                toastCopy.textContent = tutorialGuideCharacters.slice(0, revealedCharacterCount).join("");
+                if (revealedCharacterCount >= tutorialGuideCharacters.length) {
+                    tutorialGestureTypingState.completed = true;
+                    tutorialLayerElement.dataset.tutorialGestureTypedStep = stepMeta.id;
+                } else {
+                    delete tutorialLayerElement.dataset.tutorialGestureTypedStep;
+                    scheduleTutorialOverlayRender();
+                }
             }
             toast.append(toastCopy);
             toast.style.left = "50%";
@@ -8946,7 +9022,9 @@
             const hint = document.createElement("div");
             hint.className = "tutorial-hint";
             hint.style.left = `${relativeLeft + targetRect.width / 2}px`;
-            hint.style.top = `${Math.max(6, relativeTop - 34)}px`;
+            hint.style.top = hintState.type === "tray"
+                ? `${Math.max(6, relativeTop - 34)}px`
+                : `${Math.max(6, Math.round(relativeTop - 34))}px`;
 
             const hintArrow = document.createElement("img");
             hintArrow.className = "tutorial-hint-arrow";
@@ -8955,7 +9033,63 @@
             hintArrow.setAttribute("aria-hidden", "true");
             hint.append(hintArrow);
 
+            const toast = document.createElement("div");
+            toast.className = "tutorial-gesture-toast";
+            toast.style.left = `${Math.round(stageRect.width / 2)}px`;
+            toast.style.top = hintState.type === "tray"
+                ? `${Math.max(16, Math.round(relativeTop - 74))}px`
+                : `${Math.round(relativeTop + targetRect.height + 50)}px`;
+
+            if (!appSettings.tutorialTapHintShown) {
+                const toastCopy = document.createElement("div");
+                toastCopy.className = "tutorial-gesture-toast-copy";
+                const tutorialTapHintMessage = "화살표가 가리키는 보석을 클릭해보세요.";
+                const tutorialTapHintCharacters = [...tutorialTapHintMessage];
+                const tutorialTapHintTypingDurationMs = Math.min(1200, Math.max(420, tutorialTapHintCharacters.length * 52));
+                if (
+                    tutorialGestureTypingState.stepId !== "tap_hint" ||
+                    tutorialGestureTypingState.message !== tutorialTapHintMessage
+                ) {
+                    tutorialGestureTypingState = {
+                        stepId: "tap_hint",
+                        message: tutorialTapHintMessage,
+                        startedAt: Date.now(),
+                        revealedCharacterCount: 0,
+                        completed: false
+                    };
+                }
+
+                if (tutorialGestureTypingState.completed) {
+                    toastCopy.textContent = tutorialTapHintMessage;
+                } else {
+                    const elapsedMs = Math.max(0, Date.now() - tutorialGestureTypingState.startedAt);
+                    const revealedCharacterCount = Math.min(
+                        tutorialTapHintCharacters.length,
+                        Math.max(1, Math.ceil((elapsedMs / tutorialTapHintTypingDurationMs) * tutorialTapHintCharacters.length))
+                    );
+                    if (revealedCharacterCount > tutorialGestureTypingState.revealedCharacterCount) {
+                        const newlyRevealedCharacterCount = revealedCharacterCount - tutorialGestureTypingState.revealedCharacterCount;
+                        for (let soundIndex = 0; soundIndex < newlyRevealedCharacterCount; soundIndex += 1) {
+                            window.setTimeout(() => {
+                                triggerButtonPressSound();
+                            }, Math.min(48, soundIndex * 18));
+                        }
+                        tutorialGestureTypingState.revealedCharacterCount = revealedCharacterCount;
+                    }
+                    toastCopy.textContent = tutorialTapHintCharacters.slice(0, revealedCharacterCount).join("");
+                    if (revealedCharacterCount >= tutorialTapHintCharacters.length) {
+                        tutorialGestureTypingState.completed = true;
+                    } else {
+                        scheduleTutorialOverlayRender();
+                    }
+                }
+                toast.append(toastCopy);
+            }
+
             tutorialLayerElement.append(focus, hint);
+            if (!appSettings.tutorialTapHintShown) {
+                tutorialLayerElement.append(toast);
+            }
         }
 
         function scheduleTutorialOverlayRender() {
@@ -9999,6 +10133,9 @@
 
         function selectBoardCluster(row, col, gem) {
             const cluster = getConnectedGemCluster(row, col);
+            if (isTutorialMap() && !appSettings.tutorialTapHintShown) {
+                updateAppSettings({ tutorialTapHintShown: true }, { persist: false });
+            }
             selected = { source: "board", cells: cluster, color: gem, anchor: { row, col } };
             setStatus(
                 cluster.length > 1
@@ -10011,6 +10148,9 @@
 
         function selectTrayCluster(index, gem) {
             const cluster = getConnectedTrayCluster(index);
+            if (isTutorialMap() && !appSettings.tutorialTapHintShown) {
+                updateAppSettings({ tutorialTapHintShown: true }, { persist: false });
+            }
             selected = { source: "tray", indices: cluster, color: gem, anchor: index };
             setStatus(
                 cluster.length > 1

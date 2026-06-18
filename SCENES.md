@@ -12,6 +12,11 @@
 - **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.magnet`, `item.wand`
 <!-- SCENE:Color_Jewel END -->
 
+<!-- SCENE:New Scene BEGIN -->
+#### `New Scene`  ·  contract: `./New Scene.contract.json`
+- 이벤트: 없음
+<!-- SCENE:New Scene END -->
+
 <!-- SCENE:Stage_Clear BEGIN -->
 #### `Stage_Clear`  ·  contract: `./Stage_Clear.contract.json`
 - 이벤트: 없음
