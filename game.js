@@ -8508,6 +8508,7 @@
                 }
                 buttonElement.style.visibility = "";
             });
+            delete tutorialLayerElement.dataset.tutorialGestureTypedStep;
             tutorialLayerElement.style.pointerEvents = "none";
             tutorialLayerElement.innerHTML = "";
         }
@@ -8543,9 +8544,16 @@
                 window.matchMedia("(any-pointer: coarse)").matches
             );
             const isMobileTutorialDevice = isCoarsePointerDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
-            toastCopy.textContent = stepMeta.id === "pinch_ani"
+            const tutorialGuideMessage = stepMeta.id === "pinch_ani"
                 ? (isMobileTutorialDevice ? "화면을 확대/축소해 보세요." : "마우스 휠로 확대/축소해 보세요.")
                 : "보드를 드래그해서 원하는 위치로 움직여보세요.";
+            toastCopy.textContent = tutorialGuideMessage;
+            if (tutorialLayerElement.dataset.tutorialGestureTypedStep !== stepMeta.id) {
+                toastCopy.classList.add("tutorial-gesture-toast-copy--typing");
+                toastCopy.style.setProperty("--tutorial-typing-characters", String([...tutorialGuideMessage].length));
+                toastCopy.style.setProperty("--tutorial-typing-duration-ms", `${Math.min(1200, Math.max(420, [...tutorialGuideMessage].length * 52))}ms`);
+                tutorialLayerElement.dataset.tutorialGestureTypedStep = stepMeta.id;
+            }
             toast.append(toastCopy);
             toast.style.left = "50%";
             toast.style.top = "calc(53% + 82px)";
@@ -8837,6 +8845,9 @@
                     badgeShell.style.top = `${Math.round(badgeRect.top - buttonRect.top)}px`;
                     badgeShell.style.width = `${Math.round(badgeRect.width)}px`;
                     badgeShell.style.height = `${Math.round(badgeRect.height)}px`;
+                    const badgeValue = String(countBadgeText.textContent || "").trim();
+                    const shouldAnimateBadgeText = badgeShell.dataset.tutorialItemCount !== badgeValue;
+                    badgeShell.dataset.tutorialItemCount = badgeValue;
                     badgeShell.replaceChildren();
 
                     if (countBadgeImage instanceof HTMLImageElement) {
@@ -8854,9 +8865,34 @@
                         badgeShell.append(badgeImageClone);
                     }
 
+                    if (shouldAnimateBadgeText) {
+                        const particleLayer = document.createElement("div");
+                        particleLayer.className = "tutorial-item-intro-badge-particles";
+                        [
+                            { x: -14, y: -16, size: 7, delay: 0 },
+                            { x: 15, y: -14, size: 8, delay: 18 },
+                            { x: 18, y: 4, size: 6, delay: 36 },
+                            { x: 10, y: 16, size: 7, delay: 8 },
+                            { x: -12, y: 15, size: 6, delay: 28 },
+                            { x: -18, y: 2, size: 8, delay: 14 }
+                        ].forEach(({ x, y, size, delay }) => {
+                            const particle = document.createElement("span");
+                            particle.className = "tutorial-item-intro-badge-particle";
+                            particle.style.setProperty("--tutorial-particle-x", `${x}px`);
+                            particle.style.setProperty("--tutorial-particle-y", `${y}px`);
+                            particle.style.setProperty("--tutorial-particle-size", `${size}px`);
+                            particle.style.setProperty("--tutorial-particle-delay", `${delay}ms`);
+                            particleLayer.append(particle);
+                        });
+                        badgeShell.append(particleLayer);
+                    }
+
                     const badgeTextClone = countBadgeText.cloneNode(true);
                     if (badgeTextClone instanceof HTMLElement) {
                         badgeTextClone.setAttribute("aria-hidden", "true");
+                        if (shouldAnimateBadgeText) {
+                            badgeTextClone.classList.add("tutorial-item-intro-badge-pop");
+                        }
                         badgeTextClone.style.position = "absolute";
                         badgeTextClone.style.inset = "0";
                         badgeTextClone.style.left = "0";
@@ -10566,6 +10602,7 @@
                         return;
                     }
 
+                    void playColorCompleteSound(0);
                     tutorialItemIntroState = null;
                     render();
                 })();
