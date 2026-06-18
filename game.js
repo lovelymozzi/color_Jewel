@@ -3471,6 +3471,9 @@
         const BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE = 1.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE = 1.5;
         const SOUND_VOLUME_MULTIPLIER = 5.4;
+        const TUTORIAL_ITEM_INTRO_START_DELAY_MS = 260;
+        const TUTORIAL_ITEM_INTRO_STEP_DELAY_MS = 240;
+        const TUTORIAL_ITEM_INTRO_END_DELAY_MS = 320;
         const appElement = document.querySelector(".app");
         const boardStageElement = document.querySelector(".board-stage");
         const sceneBottomUiMountElement = document.getElementById("sceneBottomUiMount");
@@ -3585,6 +3588,7 @@
         let runtimePaletteSignature = "";
         let appSettings = readPersistedAppSettings();
         let itemEconomyState = readPersistedItemEconomyState();
+        let tutorialItemIntroState = null;
 
         const boardInteraction = {
             scale: 1,
@@ -4629,6 +4633,14 @@
             const specialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
             const specialActionButton = specialActionUnlocked ? bottomActionButton3TreasureElement : bottomActionButton3Element;
             const tutorialActionLockEnabled = isTutorialMap();
+            const tutorialItemIntroActive =
+                tutorialItemIntroState?.active === true && tutorialItemIntroState.mapId === ACTIVE_MAP?.id;
+            const displayedMagicCharge = tutorialItemIntroActive
+                ? Math.max(0, Number(tutorialItemIntroState.displayCharges?.magic || 0))
+                : actionCharges.magic;
+            const displayedCleanCharge = tutorialItemIntroActive
+                ? Math.max(0, Number(tutorialItemIntroState.displayCharges?.clean || 0))
+                : actionCharges.clean;
             const referenceLockSurface =
                 bottomActionButton3Element?.firstElementChild instanceof HTMLElement
                     ? bottomActionButton3Element.firstElementChild
@@ -4639,8 +4651,8 @@
             );
             colorJewelSceneRenderer?.update({
                 item: {
-                    wand: Math.max(0, actionCharges.magic),
-                    clean: Math.max(0, actionCharges.clean),
+                    wand: displayedMagicCharge,
+                    clean: displayedCleanCharge,
                     magnet: Math.max(0, actionCharges.magnet)
                 }
             });
@@ -4650,14 +4662,14 @@
             const buttonStates = [
                 {
                     button: bottomActionButton1Element,
-                    count: actionCharges.magic,
+                    count: displayedMagicCharge,
                     label: "마법봉",
                     armed: actionOverlayState?.type === "magic-targeting",
                     tutorialLocked: tutorialActionLockEnabled
                 },
                 {
                     button: bottomActionButton2Element,
-                    count: actionCharges.clean,
+                    count: displayedCleanCharge,
                     label: "빗자루",
                     armed: false,
                     tutorialLocked: tutorialActionLockEnabled
@@ -4724,7 +4736,7 @@
                     if (tutorialLockOverlay instanceof HTMLElement) {
                         tutorialLockOverlay.style.display = "none";
                     }
-                    button.style.pointerEvents = "auto";
+                    button.style.pointerEvents = tutorialItemIntroActive ? "none" : "auto";
                     if (pressSurface) {
                         pressSurface.style.opacity = "";
                     }
@@ -4734,8 +4746,8 @@
             setSceneLayerDisplay("shape-ellipse-169", false);
             setActionButtonFallbackIconState("pictoicon-tv-png-163", false);
             setActionButtonFallbackIconState("pictoicon-tv-png-164", false);
-            syncActionButtonCounterBadge(bottomActionButton1Element, actionCharges.magic, "shape-ellipse-169-wand-clone");
-            syncActionButtonCounterBadge(bottomActionButton2Element, actionCharges.clean, "shape-ellipse-169-clean-clone");
+            syncActionButtonCounterBadge(bottomActionButton1Element, displayedMagicCharge, "shape-ellipse-169-wand-clone");
+            syncActionButtonCounterBadge(bottomActionButton2Element, displayedCleanCharge, "shape-ellipse-169-clean-clone");
             syncActionButtonCounterBadge(bottomActionButton3Element, 0, null);
             syncActionButtonCounterBadge(
                 bottomActionButton3TreasureElement,
@@ -5990,6 +6002,17 @@
             const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
             const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
             const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
+            tutorialItemIntroState =
+                ACTIVE_MAP?.id === "tutorial" && nextDefinition?.id === "bear"
+                    ? {
+                        mapId: "bear",
+                        active: false,
+                        displayCharges: {
+                            magic: 0,
+                            clean: 0
+                        }
+                    }
+                    : null;
             clearPersistedGameProgress();
             clearRuntimeSnapshot();
             clearSolvedStageFailSafeTimer();
@@ -8479,6 +8502,13 @@
                 tutorialOverlayFrame = null;
             }
 
+            [bottomActionButton1Element, bottomActionButton2Element].forEach((buttonElement) => {
+                if (!(buttonElement instanceof HTMLElement)) {
+                    return;
+                }
+                buttonElement.style.visibility = "";
+            });
+            tutorialLayerElement.style.pointerEvents = "none";
             tutorialLayerElement.innerHTML = "";
         }
 
@@ -8683,6 +8713,168 @@
         }
 
         function renderTutorialOverlay() {
+            const tutorialItemIntroActive =
+                tutorialItemIntroState?.active === true && tutorialItemIntroState.mapId === ACTIVE_MAP?.id;
+            tutorialLayerElement.style.pointerEvents = tutorialItemIntroActive ? "auto" : "none";
+            [bottomActionButton1Element, bottomActionButton2Element].forEach((buttonElement) => {
+                if (!(buttonElement instanceof HTMLElement)) {
+                    return;
+                }
+                buttonElement.style.visibility = tutorialItemIntroActive ? "hidden" : "";
+            });
+
+            if (tutorialItemIntroActive) {
+                const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
+                if (!stageRect) {
+                    return;
+                }
+
+                let introRoot = tutorialLayerElement.querySelector('[data-tutorial-item-intro="true"]');
+                if (!(introRoot instanceof HTMLElement)) {
+                    tutorialLayerElement.innerHTML = "";
+                    introRoot = document.createElement("div");
+                    introRoot.dataset.tutorialItemIntro = "true";
+                    introRoot.style.position = "absolute";
+                    introRoot.style.inset = "0";
+                    introRoot.style.pointerEvents = "none";
+
+                    const dimLayer = document.createElement("div");
+                    dimLayer.className = "tutorial-item-intro-dim";
+                    introRoot.append(dimLayer);
+                    tutorialLayerElement.append(introRoot);
+                }
+
+                [bottomActionButton1Element, bottomActionButton2Element].forEach((buttonElement, index) => {
+                    if (!(buttonElement instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const buttonRect = buttonElement.getBoundingClientRect();
+                    if (buttonRect.width <= 0 || buttonRect.height <= 0) {
+                        return;
+                    }
+
+                    let highlightShell = introRoot.querySelector(`[data-tutorial-item-highlight="${index}"]`);
+                    if (!(highlightShell instanceof HTMLElement)) {
+                        highlightShell = document.createElement("div");
+                        highlightShell.className = "tutorial-item-intro-highlight";
+                        highlightShell.dataset.tutorialItemHighlight = String(index);
+                        highlightShell.style.pointerEvents = "none";
+                        highlightShell.style.setProperty("--tutorial-item-intro-delay-ms", `${index * 90}ms`);
+
+                        const introVisual = document.createElement("div");
+                        introVisual.dataset.tutorialItemVisual = "true";
+                        introVisual.style.position = "absolute";
+                        introVisual.style.inset = "0";
+                        introVisual.style.borderRadius = "28px";
+                        introVisual.style.background = "linear-gradient(180deg, #fff7cf 0%, #fee48c 100%)";
+                        introVisual.style.border = "2px solid rgba(255, 248, 220, 0.96)";
+                        introVisual.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.82), 0 8px 22px rgba(255, 215, 120, 0.22)";
+
+                        const iconImage = [...buttonElement.querySelectorAll("img")]
+                            .find((image) => {
+                                const imageSource = `${image.currentSrc || ""} ${image.src || ""}`.toLowerCase();
+                                return (
+                                    !imageSource.includes("circle1.png") &&
+                                    !imageSource.includes("pictoicon_player_play") &&
+                                    !imageSource.includes("player_play") &&
+                                    !imageSource.includes("rock.png")
+                                );
+                            });
+                        if (iconImage instanceof HTMLImageElement) {
+                            const iconClone = iconImage.cloneNode(true);
+                            iconClone.setAttribute("aria-hidden", "true");
+                            iconClone.style.position = "absolute";
+                            iconClone.style.left = "50%";
+                            iconClone.style.top = "50%";
+                            iconClone.style.width = "74%";
+                            iconClone.style.height = "74%";
+                            iconClone.style.objectFit = "contain";
+                            iconClone.style.transform = "translate(-50%, -50%)";
+                            iconClone.style.pointerEvents = "none";
+                            introVisual.append(iconClone);
+                        }
+
+                        highlightShell.append(introVisual);
+
+                        introRoot.append(highlightShell);
+                    }
+
+                    highlightShell.style.left = `${Math.round(buttonRect.left - stageRect.left)}px`;
+                    highlightShell.style.top = `${Math.round(buttonRect.top - stageRect.top)}px`;
+                    highlightShell.style.width = `${Math.round(buttonRect.width)}px`;
+                    highlightShell.style.height = `${Math.round(buttonRect.height)}px`;
+
+                    const countBadgeImage = [...buttonElement.querySelectorAll("img")]
+                        .find((image) => image.currentSrc?.includes("circle1.png") || image.src?.includes("circle1.png"));
+                    const countBadgeText = buttonElement.querySelector(".text-0");
+                    let badgeShell = highlightShell.querySelector('[data-tutorial-item-badge="true"]');
+                    if (!(badgeShell instanceof HTMLElement)) {
+                        badgeShell = document.createElement("div");
+                        badgeShell.dataset.tutorialItemBadge = "true";
+                        badgeShell.style.position = "absolute";
+                        badgeShell.style.pointerEvents = "none";
+                        badgeShell.style.zIndex = "180";
+                        highlightShell.append(badgeShell);
+                    }
+
+                    const badgeRect = countBadgeImage?.getBoundingClientRect?.() || countBadgeText?.getBoundingClientRect?.() || null;
+                    const shouldShowBadge =
+                        !!badgeRect &&
+                        badgeRect.width > 0 &&
+                        badgeRect.height > 0 &&
+                        !!countBadgeText &&
+                        countBadgeText.style.display !== "none" &&
+                        String(countBadgeText.textContent || "").trim().length > 0;
+
+                    if (!shouldShowBadge || !countBadgeText || !badgeRect) {
+                        badgeShell.style.display = "none";
+                        return;
+                    }
+
+                    badgeShell.style.display = "";
+                    badgeShell.style.left = `${Math.round(badgeRect.left - buttonRect.left)}px`;
+                    badgeShell.style.top = `${Math.round(badgeRect.top - buttonRect.top)}px`;
+                    badgeShell.style.width = `${Math.round(badgeRect.width)}px`;
+                    badgeShell.style.height = `${Math.round(badgeRect.height)}px`;
+                    badgeShell.replaceChildren();
+
+                    if (countBadgeImage instanceof HTMLImageElement) {
+                        const badgeImageClone = countBadgeImage.cloneNode(true);
+                        badgeImageClone.setAttribute("aria-hidden", "true");
+                        badgeImageClone.style.position = "absolute";
+                        badgeImageClone.style.inset = "0";
+                        badgeImageClone.style.left = "0";
+                        badgeImageClone.style.top = "0";
+                        badgeImageClone.style.width = "100%";
+                        badgeImageClone.style.height = "100%";
+                        badgeImageClone.style.margin = "0";
+                        badgeImageClone.style.transform = "";
+                        badgeImageClone.style.pointerEvents = "none";
+                        badgeShell.append(badgeImageClone);
+                    }
+
+                    const badgeTextClone = countBadgeText.cloneNode(true);
+                    if (badgeTextClone instanceof HTMLElement) {
+                        badgeTextClone.setAttribute("aria-hidden", "true");
+                        badgeTextClone.style.position = "absolute";
+                        badgeTextClone.style.inset = "0";
+                        badgeTextClone.style.left = "0";
+                        badgeTextClone.style.top = "0";
+                        badgeTextClone.style.width = "100%";
+                        badgeTextClone.style.height = "100%";
+                        badgeTextClone.style.margin = "0";
+                        badgeTextClone.style.display = "flex";
+                        badgeTextClone.style.alignItems = "center";
+                        badgeTextClone.style.justifyContent = "center";
+                        badgeTextClone.style.transform = "";
+                        badgeTextClone.style.pointerEvents = "none";
+                        badgeShell.append(badgeTextClone);
+                    }
+                });
+                return;
+            }
+
             tutorialLayerElement.innerHTML = "";
 
             if (renderActionOverlay()) {
@@ -8731,7 +8923,7 @@
         }
 
         function scheduleTutorialOverlayRender() {
-            if (!isTutorialMap() && !actionOverlayState) {
+            if (!isTutorialMap() && !actionOverlayState && tutorialItemIntroState?.active !== true) {
                 clearTutorialOverlay();
                 return;
             }
@@ -10299,9 +10491,84 @@
             moves = 0;
             solved = false;
             completedColorIds = getCompletedColorIds();
+            const shouldStartTutorialItemIntro =
+                tutorialItemIntroState?.mapId === ACTIVE_MAP?.id &&
+                ACTIVE_MAP?.id === "bear" &&
+                !isTutorialMap() &&
+                !skipRender;
+            const introSessionVersion = shouldStartTutorialItemIntro ? gameSessionVersion : 0;
+            const introState = shouldStartTutorialItemIntro ? tutorialItemIntroState : null;
+            if (introState) {
+                introState.active = true;
+                introState.displayCharges = {
+                    magic: 0,
+                    clean: 0
+                };
+            } else {
+                tutorialItemIntroState = null;
+            }
             setStatus(ACTIVE_MAP.startMessage || "배경색을 보면서 보석을 제자리로 정리해 보세요.");
             if (!skipRender) {
                 render();
+            }
+            if (introState) {
+                void (async () => {
+                    await waitForNextPaint(2);
+                    if (
+                        tutorialItemIntroState !== introState ||
+                        !isCurrentGameSession(introSessionVersion) ||
+                        ACTIVE_MAP?.id !== "bear"
+                    ) {
+                        return;
+                    }
+
+                    await sleep(TUTORIAL_ITEM_INTRO_START_DELAY_MS);
+                    const introSteps = [
+                        ["magic", 1],
+                        ["clean", 1],
+                        ["magic", 2],
+                        ["clean", 2],
+                        ["magic", 3]
+                    ];
+
+                    for (const [itemType, nextCount] of introSteps) {
+                        if (
+                            tutorialItemIntroState !== introState ||
+                            !isCurrentGameSession(introSessionVersion) ||
+                            ACTIVE_MAP?.id !== "bear"
+                        ) {
+                            return;
+                        }
+
+                        introState.displayCharges = {
+                            ...introState.displayCharges,
+                            [itemType]: nextCount
+                        };
+                        render();
+                        playPickupSound(nextCount);
+                        await sleep(TUTORIAL_ITEM_INTRO_STEP_DELAY_MS);
+                    }
+
+                    if (
+                        tutorialItemIntroState !== introState ||
+                        !isCurrentGameSession(introSessionVersion) ||
+                        ACTIVE_MAP?.id !== "bear"
+                    ) {
+                        return;
+                    }
+
+                    await sleep(TUTORIAL_ITEM_INTRO_END_DELAY_MS);
+                    if (
+                        tutorialItemIntroState !== introState ||
+                        !isCurrentGameSession(introSessionVersion) ||
+                        ACTIVE_MAP?.id !== "bear"
+                    ) {
+                        return;
+                    }
+
+                    tutorialItemIntroState = null;
+                    render();
+                })();
             }
             persistRuntimeSnapshot();
         }

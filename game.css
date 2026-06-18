@@ -1483,6 +1483,29 @@
             z-index: 30;
         }
 
+        .tutorial-item-intro-dim {
+            position: absolute;
+            inset: 0;
+            background: rgba(16, 12, 24, 0.7);
+        }
+
+        .tutorial-item-intro-highlight {
+            position: absolute;
+            border-radius: 28px;
+            overflow: visible;
+            animation: tutorial-item-intro-pop 280ms cubic-bezier(0.2, 1.1, 0.32, 1) both;
+            animation-delay: var(--tutorial-item-intro-delay-ms, 0ms);
+        }
+
+        .tutorial-item-intro-highlight::before {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 34px;
+            background:
+                radial-gradient(circle at center, rgba(255, 233, 149, 0.32) 0%, rgba(255, 233, 149, 0.1) 55%, rgba(255, 233, 149, 0) 82%);
+        }
+
         .tutorial-gesture-guide {
             position: absolute;
             left: 50%;
@@ -1694,6 +1717,18 @@
             100% {
                 opacity: 1;
                 transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes tutorial-item-intro-pop {
+            0% {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
