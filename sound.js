@@ -17,33 +17,38 @@
         let bgmOutputGain = null;
         let bgmSuspended = false;
         let buttonSoundPrimed = false;
-        let tutorialCompleteSoundPrimed = false;
-        let tutorialCompleteAutoplayAttempted = false;
-        const buttonSoundAssetSrc = "./src/assets/sounds/UIClick-Soft_Pop.mp3";
-        const tutorialCompleteSoundAssetSrc = "./src/assets/sounds/ui_tuto.wav";
+        let stageClearCompleteSoundPrimed = false;
+        let stageClearDimSoundPrimed = false;
+        let stageClearParticleSoundPrimed = false;
+        let activeStageClearCompleteAudio = null;
+        const buttonSoundAssetSrc = "./src/assets/sounds/click1.wav";
+        const stageClearCompleteSoundAssetSrc = "./src/assets/sounds/stage_clear1.wav";
+        const stageClearDimSoundAssetSrc = "./src/assets/sounds/stage_clear_dim.wav";
+        const stageClearParticleSoundAssetSrc = "./src/assets/sounds/stage_clear_particle.wav";
+        const buttonSoundVolume = 0.04;
+        const stageClearCompleteSoundVolume = 0.18;
+        const stageClearDimSoundVolume = 0.22;
+        const stageClearParticleSoundVolume = 0.09;
         const buttonSoundTemplate = typeof Audio === "function" ? new Audio(buttonSoundAssetSrc) : null;
-        const tutorialCompleteSoundTemplate = typeof Audio === "function" ? new Audio(tutorialCompleteSoundAssetSrc) : null;
+        const stageClearCompleteSoundTemplate = typeof Audio === "function" ? new Audio(stageClearCompleteSoundAssetSrc) : null;
+        const stageClearDimSoundTemplate = typeof Audio === "function" ? new Audio(stageClearDimSoundAssetSrc) : null;
+        const stageClearParticleSoundTemplate = typeof Audio === "function" ? new Audio(stageClearParticleSoundAssetSrc) : null;
         if (buttonSoundTemplate) {
             buttonSoundTemplate.preload = "auto";
             buttonSoundTemplate.playsInline = true;
         }
-        if (tutorialCompleteSoundTemplate) {
-            tutorialCompleteSoundTemplate.preload = "auto";
-            tutorialCompleteSoundTemplate.playsInline = true;
-            tutorialCompleteSoundTemplate.autoplay = true;
+        if (stageClearCompleteSoundTemplate) {
+            stageClearCompleteSoundTemplate.preload = "auto";
+            stageClearCompleteSoundTemplate.playsInline = true;
         }
-        if (tutorialCompleteSoundTemplate && sfxEnabled && !tutorialCompleteAutoplayAttempted) {
-            tutorialCompleteAutoplayAttempted = true;
-            window.setTimeout(() => {
-                tutorialCompleteSoundTemplate.pause();
-                tutorialCompleteSoundTemplate.currentTime = 0;
-                tutorialCompleteSoundTemplate.volume = Math.max(0, Math.min(1, 0.9 * volumeMultiplier));
-                tutorialCompleteSoundTemplate.play().catch((error) => {
-                    console.warn("Initial tutorial autoplay attempt failed.", error);
-                });
-            }, 0);
+        if (stageClearDimSoundTemplate) {
+            stageClearDimSoundTemplate.preload = "auto";
+            stageClearDimSoundTemplate.playsInline = true;
         }
-
+        if (stageClearParticleSoundTemplate) {
+            stageClearParticleSoundTemplate.preload = "auto";
+            stageClearParticleSoundTemplate.playsInline = true;
+        }
         const BGM_PHRASE_MS = 3600;
         const BGM_OUTPUT_LEVEL = 1.18;
         const MAX_PENDING_PLAYBACK_REQUESTS = 8;
@@ -217,12 +222,12 @@
             }
 
             if (effectName === "pickup") {
-                playFallbackTone({ frequency: 860 + intensity * 36, durationMs: 90, volume: 0.38, type: "triangle" });
+                playFallbackTone({ frequency: 860 + intensity * 36, durationMs: 90, volume: 0.48, type: "triangle" });
                 return;
             }
 
             if (effectName === "place") {
-                playFallbackTone({ frequency: 620 + intensity * 20, durationMs: 110, volume: 0.42, type: "triangle" });
+                playFallbackTone({ frequency: 620 + intensity * 20, durationMs: 110, volume: 0.54, type: "triangle" });
                 return;
             }
 
@@ -566,19 +571,49 @@
                     console.warn("Failed to warm button audio.", error);
                 });
             }
-            if (tutorialCompleteSoundTemplate && !tutorialCompleteSoundPrimed) {
-                tutorialCompleteSoundTemplate.muted = true;
-                const tutorialWarmupResult = tutorialCompleteSoundTemplate.play();
-                tutorialWarmupResult?.then?.(() => {
-                    tutorialCompleteSoundTemplate.pause();
-                    tutorialCompleteSoundTemplate.currentTime = 0;
-                    tutorialCompleteSoundTemplate.muted = false;
-                    tutorialCompleteSoundPrimed = true;
+            if (stageClearCompleteSoundTemplate && !stageClearCompleteSoundPrimed) {
+                stageClearCompleteSoundTemplate.muted = true;
+                const stageClearCompleteWarmupResult = stageClearCompleteSoundTemplate.play();
+                stageClearCompleteWarmupResult?.then?.(() => {
+                    stageClearCompleteSoundTemplate.pause();
+                    stageClearCompleteSoundTemplate.currentTime = 0;
+                    stageClearCompleteSoundTemplate.muted = false;
+                    stageClearCompleteSoundPrimed = true;
                 }).catch((error) => {
-                    tutorialCompleteSoundTemplate.pause();
-                    tutorialCompleteSoundTemplate.currentTime = 0;
-                    tutorialCompleteSoundTemplate.muted = false;
-                    console.warn("Failed to warm tutorial complete audio.", error);
+                    stageClearCompleteSoundTemplate.pause();
+                    stageClearCompleteSoundTemplate.currentTime = 0;
+                    stageClearCompleteSoundTemplate.muted = false;
+                    console.warn("Failed to warm stage clear complete audio.", error);
+                });
+            }
+            if (stageClearDimSoundTemplate && !stageClearDimSoundPrimed) {
+                stageClearDimSoundTemplate.muted = true;
+                const stageClearDimWarmupResult = stageClearDimSoundTemplate.play();
+                stageClearDimWarmupResult?.then?.(() => {
+                    stageClearDimSoundTemplate.pause();
+                    stageClearDimSoundTemplate.currentTime = 0;
+                    stageClearDimSoundTemplate.muted = false;
+                    stageClearDimSoundPrimed = true;
+                }).catch((error) => {
+                    stageClearDimSoundTemplate.pause();
+                    stageClearDimSoundTemplate.currentTime = 0;
+                    stageClearDimSoundTemplate.muted = false;
+                    console.warn("Failed to warm stage clear dim audio.", error);
+                });
+            }
+            if (stageClearParticleSoundTemplate && !stageClearParticleSoundPrimed) {
+                stageClearParticleSoundTemplate.muted = true;
+                const stageClearParticleWarmupResult = stageClearParticleSoundTemplate.play();
+                stageClearParticleWarmupResult?.then?.(() => {
+                    stageClearParticleSoundTemplate.pause();
+                    stageClearParticleSoundTemplate.currentTime = 0;
+                    stageClearParticleSoundTemplate.muted = false;
+                    stageClearParticleSoundPrimed = true;
+                }).catch((error) => {
+                    stageClearParticleSoundTemplate.pause();
+                    stageClearParticleSoundTemplate.currentTime = 0;
+                    stageClearParticleSoundTemplate.muted = false;
+                    console.warn("Failed to warm stage clear particle audio.", error);
                 });
             }
             requestAudioPlayback((context) => {
@@ -614,7 +649,7 @@
                     startFrequency: 760 + accent * 24,
                     endFrequency: 1180 + accent * 30,
                     duration: 0.11,
-                    volume: 0.028 + accent * 0.002,
+                    volume: 0.04 + accent * 0.003,
                     filterFrequency: 2400,
                     filterQ: 0.8
                 });
@@ -624,7 +659,7 @@
                     startFrequency: 1440 + accent * 28,
                     endFrequency: 1760 + accent * 36,
                     duration: 0.08,
-                    volume: 0.011 + accent * 0.001,
+                    volume: 0.016 + accent * 0.0012,
                     filterFrequency: 3200,
                     filterQ: 0.6
                 });
@@ -644,7 +679,7 @@
                 playNoiseBurst(context, {
                     startTime: now,
                     duration: 0.045,
-                    volume: 0.011 + accent * 0.001,
+                    volume: 0.015 + accent * 0.0012,
                     filterFrequency: 1600,
                     filterQ: 1.4
                 });
@@ -654,7 +689,7 @@
                     startFrequency: 640 + accent * 18,
                     endFrequency: 430 + accent * 10,
                     duration: 0.1,
-                    volume: 0.026 + accent * 0.002,
+                    volume: 0.036 + accent * 0.0025,
                     filterFrequency: 1700,
                     filterQ: 1.1
                 });
@@ -664,7 +699,7 @@
                     startFrequency: 520 + accent * 12,
                     endFrequency: 610 + accent * 16,
                     duration: 0.09,
-                    volume: 0.009 + accent * 0.001,
+                    volume: 0.013 + accent * 0.0012,
                     filterFrequency: 2200,
                     filterQ: 0.7
                 });
@@ -722,10 +757,10 @@
             }
             if (buttonSoundTemplate) {
                 const audio = buttonSoundTemplate.cloneNode();
-                audio.volume = Math.max(0, Math.min(1, 0.84 * volumeMultiplier));
+                audio.volume = Math.max(0, Math.min(1, buttonSoundVolume * volumeMultiplier));
                 const playbackResult = audio.play();
                 playbackResult?.catch?.((error) => {
-                    console.error("Failed to play UIClick-Soft_Pop.", error);
+                    console.error("Failed to play click1.wav.", error);
                     requestAudioPlayback((context) => {
                         playButtonPressNow(context);
                     }, () => {
@@ -745,19 +780,48 @@
             if (!sfxEnabled) {
                 return;
             }
-            if (variant === "tutorial" && tutorialCompleteSoundTemplate) {
+            const completionSoundTemplate =
+                variant === "stage_clear"
+                        ? stageClearCompleteSoundTemplate
+                        : variant === "stage_clear_dim"
+                            ? stageClearDimSoundTemplate
+                        : null;
+            const completionSoundLabel =
+                variant === "stage_clear"
+                        ? "stage_clear1.wav"
+                        : variant === "stage_clear_dim"
+                            ? "stage_clear_dim.wav"
+                        : "";
+            const completionSoundVolume =
+                variant === "stage_clear"
+                        ? Math.max(0, Math.min(1, stageClearCompleteSoundVolume * volumeMultiplier))
+                        : Math.max(0, Math.min(1, stageClearDimSoundVolume * volumeMultiplier));
+            if (completionSoundTemplate) {
                 if (startDelayMs > 0) {
                     window.setTimeout(() => {
                         if (!sfxEnabled) {
                             return;
                         }
 
-                        tutorialCompleteSoundTemplate.pause();
-                        tutorialCompleteSoundTemplate.currentTime = 0;
-                        tutorialCompleteSoundTemplate.volume = Math.max(0, Math.min(1, 0.9 * volumeMultiplier));
-                        const playbackResult = tutorialCompleteSoundTemplate.play();
+                        const audio = completionSoundTemplate.cloneNode();
+                        if (variant === "stage_clear_dim" && activeStageClearCompleteAudio) {
+                            activeStageClearCompleteAudio.volume = Math.min(
+                                activeStageClearCompleteAudio.volume,
+                                Math.max(0, Math.min(1, 0.05 * volumeMultiplier))
+                            );
+                        }
+                        audio.volume = completionSoundVolume;
+                        if (variant === "stage_clear") {
+                            activeStageClearCompleteAudio = audio;
+                            audio.addEventListener("ended", () => {
+                                if (activeStageClearCompleteAudio === audio) {
+                                    activeStageClearCompleteAudio = null;
+                                }
+                            }, { once: true });
+                        }
+                        const playbackResult = audio.play();
                         playbackResult?.catch?.((error) => {
-                            console.error("Failed to play ui_tuto.", error);
+                            console.error(`Failed to play ${completionSoundLabel}`, error);
                             requestAudioPlayback((context) => {
                                 const startTime = context.currentTime;
                                 const notes = [880, 1174, 1568, 2093];
@@ -799,12 +863,25 @@
                         });
                     }, startDelayMs);
                 } else {
-                    tutorialCompleteSoundTemplate.pause();
-                    tutorialCompleteSoundTemplate.currentTime = 0;
-                    tutorialCompleteSoundTemplate.volume = Math.max(0, Math.min(1, 0.9 * volumeMultiplier));
-                    const playbackResult = tutorialCompleteSoundTemplate.play();
+                    const audio = completionSoundTemplate.cloneNode();
+                    if (variant === "stage_clear_dim" && activeStageClearCompleteAudio) {
+                        activeStageClearCompleteAudio.volume = Math.min(
+                            activeStageClearCompleteAudio.volume,
+                            Math.max(0, Math.min(1, 0.05 * volumeMultiplier))
+                        );
+                    }
+                    audio.volume = completionSoundVolume;
+                    if (variant === "stage_clear") {
+                        activeStageClearCompleteAudio = audio;
+                        audio.addEventListener("ended", () => {
+                            if (activeStageClearCompleteAudio === audio) {
+                                activeStageClearCompleteAudio = null;
+                            }
+                        }, { once: true });
+                    }
+                    const playbackResult = audio.play();
                     playbackResult?.catch?.((error) => {
-                        console.error("Failed to play ui_tuto.", error);
+                        console.error(`Failed to play ${completionSoundLabel}`, error);
                         requestAudioPlayback((context) => {
                             const startTime = context.currentTime;
                             const notes = [880, 1174, 1568, 2093];
@@ -889,6 +966,138 @@
 
         function playFirework(startDelayMs = 0, accent = 0) {
             if (!sfxEnabled) {
+                return;
+            }
+            if (stageClearParticleSoundTemplate) {
+                const playStageClearParticle = () => {
+                    if (!sfxEnabled) {
+                        return;
+                    }
+
+                    const audio = stageClearParticleSoundTemplate.cloneNode();
+                    audio.volume = Math.max(0, Math.min(1, stageClearParticleSoundVolume * volumeMultiplier));
+                    const playbackResult = audio.play();
+                    playbackResult?.catch?.((error) => {
+                        console.error("Failed to play stage_clear_particle.wav.", error);
+                        requestAudioPlayback((context) => {
+                            const startTime = context.currentTime;
+                            const liftPitch = 210 + accent * 18;
+                            const boomPitch = 92 + accent * 6;
+                            const crackPitch = 1240 + accent * 58;
+
+                            playNoiseBurst(context, {
+                                startTime,
+                                duration: 0.11,
+                                volume: 0.006,
+                                filterType: "highpass",
+                                filterFrequency: 1400 + accent * 80,
+                                filterQ: 0.8
+                            });
+                            playTone(context, {
+                                startTime,
+                                type: "triangle",
+                                startFrequency: liftPitch,
+                                endFrequency: liftPitch * 2.8,
+                                duration: 0.14,
+                                volume: 0.008,
+                                filterFrequency: 2200,
+                                filterQ: 0.9
+                            });
+
+                            playNoiseBurst(context, {
+                                startTime: startTime + 0.13,
+                                duration: 0.16,
+                                volume: 0.017 + accent * 0.0016,
+                                filterType: "bandpass",
+                                filterFrequency: 1700 + accent * 120,
+                                filterQ: 0.7
+                            });
+
+                            playTone(context, {
+                                startTime: startTime + 0.128,
+                                type: "sine",
+                                startFrequency: boomPitch,
+                                endFrequency: Math.max(44, boomPitch * 0.48),
+                                duration: 0.34,
+                                volume: 0.03 + accent * 0.002,
+                                filterType: "lowpass",
+                                filterFrequency: 320,
+                                filterQ: 0.5
+                            });
+
+                            playTone(context, {
+                                startTime: startTime + 0.138,
+                                type: "triangle",
+                                startFrequency: boomPitch * 1.9,
+                                endFrequency: boomPitch * 0.92,
+                                duration: 0.22,
+                                volume: 0.016 + accent * 0.001,
+                                filterType: "lowpass",
+                                filterFrequency: 780,
+                                filterQ: 0.7
+                            });
+
+                            playNoiseBurst(context, {
+                                startTime: startTime + 0.17,
+                                duration: 0.08,
+                                volume: 0.014 + accent * 0.0012,
+                                filterType: "highpass",
+                                filterFrequency: 3000 + accent * 160,
+                                filterQ: 0.8
+                            });
+
+                            playNoiseBurst(context, {
+                                startTime: startTime + 0.24,
+                                duration: 0.06,
+                                volume: 0.010 + accent * 0.0008,
+                                filterType: "bandpass",
+                                filterFrequency: 2200 + accent * 120,
+                                filterQ: 1.1
+                            });
+
+                            playNoiseBurst(context, {
+                                startTime: startTime + 0.31,
+                                duration: 0.05,
+                                volume: 0.008 + accent * 0.0007,
+                                filterType: "bandpass",
+                                filterFrequency: 2800 + accent * 140,
+                                filterQ: 1.2
+                            });
+
+                            playTone(context, {
+                                startTime: startTime + 0.155,
+                                type: "sawtooth",
+                                startFrequency: crackPitch,
+                                endFrequency: crackPitch * 0.54,
+                                duration: 0.18,
+                                volume: 0.012 + accent * 0.0013,
+                                filterType: "highpass",
+                                filterFrequency: 2400,
+                                filterQ: 0.8
+                            });
+
+                            playTone(context, {
+                                startTime: startTime + 0.205,
+                                type: "square",
+                                startFrequency: crackPitch * 1.26,
+                                endFrequency: crackPitch * 0.74,
+                                duration: 0.12,
+                                volume: 0.0048 + accent * 0.0007,
+                                filterType: "highpass",
+                                filterFrequency: 3200,
+                                filterQ: 0.5
+                            });
+                        }, () => {
+                            playFallbackEffect("firework", { startDelayMs: 0, accent });
+                        });
+                    });
+                };
+
+                if (startDelayMs > 0) {
+                    window.setTimeout(playStageClearParticle, startDelayMs);
+                } else {
+                    playStageClearParticle();
+                }
                 return;
             }
             requestAudioPlayback((context) => {

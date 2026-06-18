@@ -33,6 +33,7 @@
       "x": 25,
       "y": 100,
       "zIndex": 1,
+      "visible": false,
       "visual": {
         "width": 320,
         "height": 240,
@@ -165,6 +166,7 @@
       "x": -354,
       "y": -277,
       "zIndex": 3,
+      "visible": false,
       "visual": {
         "model": {
           "shape": {
@@ -248,6 +250,7 @@
       "x": 69,
       "y": 31,
       "zIndex": 24,
+      "visible": false,
       "visual": {
         "model": {
           "shape": {

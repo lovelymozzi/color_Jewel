@@ -3652,19 +3652,12 @@
                 revealedCharacterCount: 0,
                 completed: tutorialGestureGuideState.stepId === null
             };
-            if (tutorialGestureGuideState.stepId === TUTORIAL_GESTURE_GUIDE_STEPS[0].id) {
-                soundController?.playComplete?.(0, "tutorial");
-            }
         }
 
         function setTutorialGestureGuideStep(nextStepId) {
             if (tutorialGestureGuideState.stepId === nextStepId) {
                 return;
             }
-            if (tutorialGestureGuideState.stepId && nextStepId === null) {
-                soundController?.playComplete?.(0, "tutorial");
-            }
-
             tutorialGestureGuideState.stepId = nextStepId;
             tutorialGestureGuideState.pinchPhase = nextStepId === "pinch_ani" ? "zoom_in" : tutorialGestureGuideState.pinchPhase;
             tutorialGestureGuideState.pinchReferenceScale = boardInteraction.scale;
@@ -5842,8 +5835,14 @@
                 }
 
                 settingSceneUnsubscribers = [
-                    settingSceneRenderer.on("re play", () => clearSettingScene()),
-                    settingSceneRenderer.on("re-start-115:click", restartGameFromSettingScene)
+                    settingSceneRenderer.on("re play", () => {
+                        triggerButtonPressSound();
+                        clearSettingScene();
+                    }),
+                    settingSceneRenderer.on("re-start-115:click", () => {
+                        triggerButtonPressSound();
+                        restartGameFromSettingScene();
+                    })
                 ];
 
                 registerSettingSceneToggleHandler("sfx_on", () => setSoundEffectsEnabled(false));
@@ -6112,6 +6111,7 @@
             pendingStageClearItemRewards = [];
             isStageTransitioning = true;
             selected = null;
+            soundController?.playComplete?.(0, "stage_clear");
 
             const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
             const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
@@ -6135,20 +6135,29 @@
                 const shouldFadeOverlay = stageClearOverlayElement?.classList.contains("active");
                 if (shouldFadeOverlay) {
                     stageClearOverlayElement.classList.remove("active");
+                    soundController?.playComplete?.(0, "stage_clear_dim");
                 }
 
-                void advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay }).then((didAdvance) => {
-                    if (!didAdvance) {
-                        return;
-                    }
+                if (shouldFadeOverlay) {
+                    requestAnimationFrame(() => {
+                        void advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay }).then((didAdvance) => {
+                            if (!didAdvance) {
+                                return;
+                            }
 
-                    if (shouldFadeOverlay) {
-                        const stageClearCleanupTimer = window.setTimeout(() => {
-                            clearStageClearTimers();
-                        }, STAGE_CLEAR_FADE_OUT_MS + 34);
-                        stageClearTimers.push(stageClearCleanupTimer);
-                    }
-                });
+                            const stageClearCleanupTimer = window.setTimeout(() => {
+                                clearStageClearTimers();
+                            }, STAGE_CLEAR_FADE_OUT_MS + 34);
+                            stageClearTimers.push(stageClearCleanupTimer);
+                        });
+                    });
+                } else {
+                    void advanceToNextStage(sessionVersion, { preserveStageClearOverlay: shouldFadeOverlay }).then((didAdvance) => {
+                        if (!didAdvance) {
+                            return;
+                        }
+                    });
+                }
             };
 
             const beginStageAdvancePreparation = () => {
@@ -6215,7 +6224,13 @@
                     return;
                 }
 
-                void playFireworkBurstSound(0, 3);
+                requestAnimationFrame(() => {
+                    if (!isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
+                        return;
+                    }
+
+                    void playFireworkBurstSound(0, 3);
+                });
                 await waitForNextPaint(2);
                 if (!isCurrentGameSession(sessionVersion) || !isStageTransitioning) {
                     return;
@@ -10936,8 +10951,6 @@
                     titleSceneMountElement.replaceChildren();
                     titleSceneMountElement.setAttribute("aria-hidden", "false");
                     soundController?.warmup?.();
-                    soundController?.playComplete?.(0, "tutorial");
-
                     titleMinimumVisiblePromise = Promise.all([
                         (async () => {
                             await waitForNextPaint();
