@@ -1487,7 +1487,7 @@
             position: absolute;
             left: 50%;
             top: 53%;
-            width: min(92px, 21vw);
+            width: min(61px, 14vw);
             transform: translateX(-50%);
             transform-origin: 50% 50%;
             filter: drop-shadow(0 8px 16px rgba(88, 58, 16, 0.18));
@@ -1506,6 +1506,28 @@
 
         .tutorial-gesture-guide--pinch-ani .tutorial-gesture-guide-image {
             animation: none;
+        }
+
+        .tutorial-gesture-toast {
+            position: absolute;
+            left: 50%;
+            width: min(258px, calc(100vw - 52px));
+            padding: 10px 14px 11px;
+            border: 1px solid rgba(223, 175, 92, 0.42);
+            border-radius: 16px;
+            background:
+                linear-gradient(180deg, rgba(255, 252, 243, 0.96), rgba(255, 246, 224, 0.93));
+            box-shadow:
+                0 12px 26px rgba(153, 100, 28, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .tutorial-gesture-toast-copy {
+            color: #7e5922;
+            font: 700 11px/1.45 "Trebuchet MS", "Avenir Next", sans-serif;
+            word-break: keep-all;
         }
 
         .tutorial-focus {
@@ -1759,7 +1781,16 @@
             }
 
             .tutorial-gesture-guide {
-                width: min(84px, 23vw);
+                width: min(56px, 15vw);
+            }
+
+            .tutorial-gesture-toast {
+                width: min(226px, calc(100vw - 44px));
+                padding: 9px 12px 10px;
+            }
+
+            .tutorial-gesture-toast-copy {
+                font-size: 10px;
             }
 
             .cell {

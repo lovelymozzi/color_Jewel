@@ -3657,6 +3657,7 @@
                 nextScale > previousScale &&
                 nextScale - tutorialGestureGuideState.pinchReferenceScale >= TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD
             ) {
+                void playPickupSound(1);
                 tutorialGestureGuideState.pinchPhase = "zoom_out";
                 tutorialGestureGuideState.pinchReferenceScale = nextScale;
                 return;
@@ -3668,6 +3669,7 @@
                 nextScale < previousScale &&
                 tutorialGestureGuideState.pinchReferenceScale - nextScale >= TUTORIAL_GESTURE_SCALE_DELTA_THRESHOLD
             ) {
+                void playPickupSound(1);
                 setTutorialGestureGuideStep("tuto_pan");
             }
         }
@@ -3683,6 +3685,7 @@
                     boardInteraction.panY - tutorialGestureGuideState.panOriginY
                 ) >= TUTORIAL_GESTURE_PAN_THRESHOLD_PX
             ) {
+                void playPickupSound(1);
                 setTutorialGestureGuideStep(null);
             }
         }
@@ -4625,6 +4628,15 @@
         function updateActionButtonState() {
             const specialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
             const specialActionButton = specialActionUnlocked ? bottomActionButton3TreasureElement : bottomActionButton3Element;
+            const tutorialActionLockEnabled = isTutorialMap();
+            const referenceLockSurface =
+                bottomActionButton3Element?.firstElementChild instanceof HTMLElement
+                    ? bottomActionButton3Element.firstElementChild
+                    : null;
+            const referenceLockStableId = bottomActionButton3Element?.dataset?.stableId || "level-node-18";
+            const referenceLockLayer = colorJewelSceneContract?.layers?.find(
+                (entry) => entry?.stableId === referenceLockStableId
+            );
             colorJewelSceneRenderer?.update({
                 item: {
                     wand: Math.max(0, actionCharges.magic),
@@ -4640,31 +4652,83 @@
                     button: bottomActionButton1Element,
                     count: actionCharges.magic,
                     label: "마법봉",
-                    armed: actionOverlayState?.type === "magic-targeting"
+                    armed: actionOverlayState?.type === "magic-targeting",
+                    tutorialLocked: tutorialActionLockEnabled
                 },
                 {
                     button: bottomActionButton2Element,
                     count: actionCharges.clean,
                     label: "빗자루",
-                    armed: false
+                    armed: false,
+                    tutorialLocked: tutorialActionLockEnabled
                 },
                 {
                     button: specialActionButton,
                     count: Math.max(0, actionCharges.magnet),
                     label: specialActionUnlocked ? "자석" : "특수 아이템",
-                    armed: false
+                    armed: false,
+                    tutorialLocked: false
                 }
             ];
 
-            buttonStates.forEach(({ button, count, label, armed }) => {
+            buttonStates.forEach(({ button, count, label, armed, tutorialLocked }) => {
                 if (!button) {
                     return;
                 }
 
                 button.style.opacity = "1";
-                button.removeAttribute("title");
-                button.setAttribute("aria-disabled", "false");
+                if (tutorialLocked) {
+                    button.setAttribute("title", `${label}은(는) 튜토리얼에서 잠겨 있어요.`);
+                    button.setAttribute("aria-disabled", "true");
+                } else {
+                    button.removeAttribute("title");
+                    button.setAttribute("aria-disabled", "false");
+                }
                 button.setAttribute("aria-pressed", armed ? "true" : "false");
+
+                const pressSurface =
+                    button.firstElementChild instanceof HTMLElement ? button.firstElementChild : null;
+                let tutorialLockOverlay = button.querySelector('[data-tutorial-lock-overlay="true"]');
+                const buttonStableId = button.dataset?.stableId || "";
+                const buttonLayer = colorJewelSceneContract?.layers?.find((entry) => entry?.stableId === buttonStableId);
+                const tutorialLockOffsetY =
+                    referenceLockLayer && buttonLayer
+                        ? Number(referenceLockLayer.y || 0) - Number(buttonLayer.y || 0)
+                        : 0;
+
+                if (tutorialLocked) {
+                    if (!(tutorialLockOverlay instanceof HTMLElement) && referenceLockSurface) {
+                        tutorialLockOverlay = referenceLockSurface.cloneNode(true);
+                        tutorialLockOverlay.dataset.tutorialLockOverlay = "true";
+                        tutorialLockOverlay.setAttribute("aria-hidden", "true");
+                        tutorialLockOverlay.style.position = "absolute";
+                        tutorialLockOverlay.style.left = "50%";
+                        tutorialLockOverlay.style.zIndex = "120";
+                        tutorialLockOverlay.style.pointerEvents = "none";
+                        tutorialLockOverlay.querySelectorAll("[data-group]").forEach((groupElement) => {
+                            groupElement.style.pointerEvents = "none";
+                        });
+                        button.appendChild(tutorialLockOverlay);
+                    }
+
+                    if (tutorialLockOverlay instanceof HTMLElement) {
+                        tutorialLockOverlay.style.top = `calc(50% + ${tutorialLockOffsetY.toFixed(3)}px)`;
+                        tutorialLockOverlay.style.transform = "translate(-50%, -50%)";
+                        tutorialLockOverlay.style.display = "";
+                    }
+                    button.style.pointerEvents = "none";
+                    if (pressSurface) {
+                        pressSurface.style.opacity = "0";
+                    }
+                } else {
+                    if (tutorialLockOverlay instanceof HTMLElement) {
+                        tutorialLockOverlay.style.display = "none";
+                    }
+                    button.style.pointerEvents = "auto";
+                    if (pressSurface) {
+                        pressSurface.style.opacity = "";
+                    }
+                }
             });
 
             setSceneLayerDisplay("shape-ellipse-169", false);
@@ -8439,6 +8503,23 @@
             image.alt = "";
             image.setAttribute("aria-hidden", "true");
 
+            const toast = document.createElement("div");
+            toast.className = "tutorial-gesture-toast";
+
+            const toastCopy = document.createElement("div");
+            toastCopy.className = "tutorial-gesture-toast-copy";
+            const isCoarsePointerDevice = typeof window.matchMedia === "function" && (
+                window.matchMedia("(pointer: coarse)").matches ||
+                window.matchMedia("(any-pointer: coarse)").matches
+            );
+            const isMobileTutorialDevice = isCoarsePointerDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+            toastCopy.textContent = stepMeta.id === "pinch_ani"
+                ? (isMobileTutorialDevice ? "화면을 확대/축소해 보세요." : "마우스 휠로 확대/축소해 보세요.")
+                : "보드를 드래그해서 원하는 위치로 움직여보세요.";
+            toast.append(toastCopy);
+            toast.style.left = "50%";
+            toast.style.top = "calc(53% + 82px)";
+
             const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
             const occupiedCellRects = TARGET_POSITIONS
                 .map((position) => boardElement.querySelector(`[data-row="${position.row}"][data-col="${position.col}"]`))
@@ -8450,12 +8531,14 @@
                 const minLeft = Math.min(...occupiedCellRects.map((rect) => rect.left));
                 const maxRight = Math.max(...occupiedCellRects.map((rect) => rect.right));
                 const maxBottom = Math.max(...occupiedCellRects.map((rect) => rect.bottom));
-                guide.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left)}px`;
-                guide.style.top = `${Math.round(maxBottom - stageRect.top + 18)}px`;
+                guide.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left - 9)}px`;
+                guide.style.top = `${Math.round(maxBottom - stageRect.top + 5)}px`;
+                toast.style.left = `${Math.round(stageRect.width / 2)}px`;
+                toast.style.top = `${Math.round(maxBottom - stageRect.top + 82)}px`;
             }
 
             guide.append(image);
-            tutorialLayerElement.append(guide);
+            tutorialLayerElement.append(guide, toast);
             return true;
         }
 
@@ -9512,6 +9595,11 @@
                 return;
             }
 
+            if (isTutorialMap()) {
+                setStatus("튜토리얼에서는 아직 마법봉을 사용할 수 없어요.");
+                return;
+            }
+
             if (isMagicTargetingMode()) {
                 cancelMagicTargeting();
                 return;
@@ -9541,6 +9629,11 @@
 
         async function useCleanAction() {
             if (solved || isAnimating || isStageTransitioning) {
+                return;
+            }
+
+            if (isTutorialMap()) {
+                setStatus("튜토리얼에서는 아직 빗자루를 사용할 수 없어요.");
                 return;
             }
 
