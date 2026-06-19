@@ -548,14 +548,21 @@
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
         const TUTORIAL_PINCH_GUIDE_ASSET_PATH = "./src/assets/hand_ani.png";
         const TUTORIAL_PINCH_GUIDE_ASSET_URL = `${TUTORIAL_PINCH_GUIDE_ASSET_PATH}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
+        const TUTORIAL_PAN_GUIDE_ASSET_PATH = "./src/assets/hand1.png";
+        const TUTORIAL_PAN_GUIDE_ASSET_URL = `${TUTORIAL_PAN_GUIDE_ASSET_PATH}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
         const TUTORIAL_GESTURE_GUIDE_STEPS = Object.freeze([
             { id: "pinch_ani", assetPath: "hand-ani-png-171" },
-            { id: "tuto_pan", assetPath: "./src/assets/tuto_pan.png" }
+            { id: "tuto_pan", assetPath: TUTORIAL_PAN_GUIDE_ASSET_PATH }
         ]);
         const tutorialPinchGuidePreloadImage = typeof Image === "function" ? new Image() : null;
         if (tutorialPinchGuidePreloadImage) {
             tutorialPinchGuidePreloadImage.decoding = "sync";
             tutorialPinchGuidePreloadImage.src = TUTORIAL_PINCH_GUIDE_ASSET_URL;
+        }
+        const tutorialPanGuidePreloadImage = typeof Image === "function" ? new Image() : null;
+        if (tutorialPanGuidePreloadImage) {
+            tutorialPanGuidePreloadImage.decoding = "sync";
+            tutorialPanGuidePreloadImage.src = TUTORIAL_PAN_GUIDE_ASSET_URL;
         }
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
             "assets/title.png",
@@ -8709,13 +8716,18 @@
             toast.style.top = "calc(53% + 82px)";
 
             const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
+            if (stageRect) {
+                const stageCenterX = Math.round(stageRect.width / 2);
+                const stageCenterY = Math.round(stageRect.height / 2);
+                toast.style.left = `${stageCenterX}px`;
+                toast.style.top = `${Math.round(stageCenterY + 82)}px`;
+            }
+
             if (stageRect && isPinchGuide) {
                 const stageCenterX = Math.round(stageRect.width / 2);
                 const stageCenterY = Math.round(stageRect.height / 2);
                 guide.style.left = `${stageCenterX}px`;
                 guide.style.top = `${Math.round(stageCenterY - 162)}px`;
-                toast.style.left = `${stageCenterX}px`;
-                toast.style.top = `${Math.round(stageCenterY + 82)}px`;
                 if (useSceneGuideElement) {
                     sceneGuideElement.style.left = `${Math.round(stageCenterX - 32)}px`;
                     sceneGuideElement.style.top = `${Math.round(stageCenterY - 162)}px`;
@@ -8740,10 +8752,8 @@
                 const minLeft = Math.min(...occupiedCellRects.map((rect) => rect.left));
                 const maxRight = Math.max(...occupiedCellRects.map((rect) => rect.right));
                 const maxBottom = Math.max(...occupiedCellRects.map((rect) => rect.bottom));
-                guide.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left - 9)}px`;
-                guide.style.top = `${Math.round(maxBottom - stageRect.top + 5)}px`;
-                toast.style.left = `${Math.round(stageRect.width / 2)}px`;
-                toast.style.top = `${Math.round(maxBottom - stageRect.top + 82)}px`;
+                guide.style.left = `${Math.round(stageRect.width / 2)}px`;
+                guide.style.top = `${Math.round(maxBottom - stageRect.top - 35)}px`;
                 if (useSceneGuideElement) {
                     sceneGuideElement.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left - 9)}px`;
                     sceneGuideElement.style.top = `${Math.round(maxBottom - stageRect.top - 45)}px`;
@@ -9152,9 +9162,7 @@
             const toast = document.createElement("div");
             toast.className = "tutorial-gesture-toast";
             toast.style.left = `${Math.round(stageRect.width / 2)}px`;
-            toast.style.top = hintState.type === "tray"
-                ? `${Math.max(16, Math.round(relativeTop - 74))}px`
-                : `${Math.round(relativeTop + targetRect.height + 50)}px`;
+            toast.style.top = `${Math.round((stageRect.height / 2) + 82)}px`;
 
             if (!appSettings.tutorialTapHintShown) {
                 const toastCopy = document.createElement("div");
