@@ -1558,6 +1558,10 @@
             animation: tutorial-gesture-pan-loop 1.1s ease-in-out infinite;
         }
 
+        .tutorial-gesture-guide--pinch-ani {
+            top: calc(53% - 50px);
+        }
+
         .tutorial-gesture-guide--pinch-ani .tutorial-gesture-guide-image {
             animation: none;
         }

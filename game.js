@@ -546,10 +546,17 @@
         const STAGE_PREPARATION_IDLE_TIMEOUT_MS = 1200;
         const pixelAdminWindowRequested = new URLSearchParams(window.location.search).get("adminWindow") === "1";
         const RUNTIME_SCENE_ASSET_BUSTER = `${Date.now()}`;
+        const TUTORIAL_PINCH_GUIDE_ASSET_PATH = "./src/assets/hand_ani.png";
+        const TUTORIAL_PINCH_GUIDE_ASSET_URL = `${TUTORIAL_PINCH_GUIDE_ASSET_PATH}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
         const TUTORIAL_GESTURE_GUIDE_STEPS = Object.freeze([
-            { id: "pinch_ani", assetPath: "./src/assets/pinch_ani.png" },
+            { id: "pinch_ani", assetPath: "hand-ani-png-171" },
             { id: "tuto_pan", assetPath: "./src/assets/tuto_pan.png" }
         ]);
+        const tutorialPinchGuidePreloadImage = typeof Image === "function" ? new Image() : null;
+        if (tutorialPinchGuidePreloadImage) {
+            tutorialPinchGuidePreloadImage.decoding = "sync";
+            tutorialPinchGuidePreloadImage.src = TUTORIAL_PINCH_GUIDE_ASSET_URL;
+        }
         const NONCACHED_SCENE_ASSET_PATHS = new Set([
             "assets/title.png",
             "assets/animation (5).png",
@@ -3368,6 +3375,7 @@
                 });
                 colorJewelSceneRenderer.loadSync(contract);
                 colorJewelSceneRenderer.show();
+                setSceneLayerDisplay("hand-ani-png-171", false);
 
                 const sceneRootElement = surface.firstElementChild;
                 if (sceneRootElement) {
@@ -3670,6 +3678,9 @@
                 revealedCharacterCount: 0,
                 completed: nextStepId === null
             };
+            if (nextStepId !== "pinch_ani") {
+                setSceneLayerDisplay("hand-ani-png-171", false);
+            }
             scheduleTutorialOverlayRender();
         }
 
@@ -8575,6 +8586,7 @@
             };
             tutorialLayerElement.style.pointerEvents = "none";
             tutorialLayerElement.innerHTML = "";
+            setSceneLayerDisplay("hand-ani-png-171", false);
         }
 
         function renderTutorialGestureGuideOverlay() {
@@ -8586,28 +8598,68 @@
                 (entry) => entry.id === tutorialGestureGuideState.stepId
             );
             if (!stepMeta) {
+                setSceneLayerDisplay("hand-ani-png-171", false);
                 return false;
             }
 
-            const guide = document.createElement("div");
+            let guide = tutorialLayerElement.querySelector('[data-tutorial-gesture-guide="true"]');
+            if (!(guide instanceof HTMLElement)) {
+                guide = document.createElement("div");
+                guide.dataset.tutorialGestureGuide = "true";
+            }
             guide.className = `tutorial-gesture-guide tutorial-gesture-guide--${stepMeta.id.replaceAll("_", "-")}`;
 
-            const image = document.createElement("img");
-            image.className = "tutorial-gesture-guide-image";
-            image.src = `${stepMeta.assetPath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`;
-            image.alt = "";
-            image.setAttribute("aria-hidden", "true");
-
-            const toast = document.createElement("div");
-            toast.className = "tutorial-gesture-toast";
-
-            const toastCopy = document.createElement("div");
-            toastCopy.className = "tutorial-gesture-toast-copy";
             const isCoarsePointerDevice = typeof window.matchMedia === "function" && (
                 window.matchMedia("(pointer: coarse)").matches ||
                 window.matchMedia("(any-pointer: coarse)").matches
             );
             const isMobileTutorialDevice = isCoarsePointerDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+            const isPinchGuide = stepMeta.id === "pinch_ani";
+            const sceneGuideElement = colorJewelSceneRenderer?.getElement?.(stepMeta.assetPath) || null;
+            const useSceneGuideElement = isPinchGuide && sceneGuideElement instanceof HTMLElement;
+
+            let image = guide.querySelector(".tutorial-gesture-guide-image");
+            if (!(image instanceof HTMLImageElement)) {
+                guide.replaceChildren();
+                image = document.createElement("img");
+                image.className = "tutorial-gesture-guide-image";
+                image.alt = "";
+                image.setAttribute("aria-hidden", "true");
+                image.decoding = "sync";
+                image.loading = "eager";
+                image.setAttribute("fetchpriority", "high");
+                guide.append(image);
+            }
+            const sceneAssetImage = sceneGuideElement?.querySelector?.("img");
+            const sceneAssetSrc = sceneAssetImage?.currentSrc || sceneAssetImage?.src || "";
+            const contractAssetPath = colorJewelSceneContract?.layers
+                ?.find((entry) => entry?.stableId === stepMeta.assetPath)
+                ?.visual?.exportPath;
+            const guideImagePath = contractAssetPath
+                ? contractAssetPath.replace(/^assets\//, "./src/assets/")
+                : (isPinchGuide ? TUTORIAL_PINCH_GUIDE_ASSET_PATH : stepMeta.assetPath);
+            const nextImageSrc = sceneAssetSrc || (guideImagePath.includes("?")
+                ? guideImagePath
+                : `${guideImagePath}?v=${RUNTIME_SCENE_ASSET_BUSTER}`);
+            if (image.getAttribute("src") !== nextImageSrc) {
+                image.src = nextImageSrc;
+            }
+            setSceneLayerDisplay("hand-ani-png-171", useSceneGuideElement);
+
+            let toast = tutorialLayerElement.querySelector('[data-tutorial-gesture-toast="true"]');
+            if (!(toast instanceof HTMLElement)) {
+                toast = document.createElement("div");
+                toast.dataset.tutorialGestureToast = "true";
+            }
+            toast.className = "tutorial-gesture-toast";
+
+            let toastCopy = toast.querySelector(".tutorial-gesture-toast-copy");
+            if (!(toastCopy instanceof HTMLElement)) {
+                toast.replaceChildren();
+                toastCopy = document.createElement("div");
+                toastCopy.className = "tutorial-gesture-toast-copy";
+                toast.append(toastCopy);
+            }
             const tutorialGuideMessage = stepMeta.id === "pinch_ani"
                 ? (isMobileTutorialDevice ? "화면을 확대/축소해 보세요." : "마우스 휠로 확대/축소해 보세요.")
                 : "보드를 드래그해서 원하는 위치로 움직여보세요.";
@@ -8653,18 +8705,38 @@
                     scheduleTutorialOverlayRender();
                 }
             }
-            toast.append(toastCopy);
             toast.style.left = "50%";
             toast.style.top = "calc(53% + 82px)";
 
             const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
-            const occupiedCellRects = TARGET_POSITIONS
-                .map((position) => boardElement.querySelector(`[data-row="${position.row}"][data-col="${position.col}"]`))
-                .filter(Boolean)
-                .map((cell) => cell.getBoundingClientRect())
-                .filter((rect) => rect.width > 0 && rect.height > 0);
+            if (stageRect && isPinchGuide) {
+                const stageCenterX = Math.round(stageRect.width / 2);
+                const stageCenterY = Math.round(stageRect.height / 2);
+                guide.style.left = `${stageCenterX}px`;
+                guide.style.top = `${Math.round(stageCenterY - 162)}px`;
+                toast.style.left = `${stageCenterX}px`;
+                toast.style.top = `${Math.round(stageCenterY + 82)}px`;
+                if (useSceneGuideElement) {
+                    sceneGuideElement.style.left = `${Math.round(stageCenterX - 32)}px`;
+                    sceneGuideElement.style.top = `${Math.round(stageCenterY - 162)}px`;
+                }
+            } else {
+                const occupiedCellRects = TARGET_POSITIONS
+                    .map((position) => boardElement.querySelector(`[data-row="${position.row}"][data-col="${position.col}"]`))
+                    .filter(Boolean)
+                    .map((cell) => cell.getBoundingClientRect())
+                    .filter((rect) => rect.width > 0 && rect.height > 0);
 
-            if (stageRect && occupiedCellRects.length) {
+                if (!(stageRect && occupiedCellRects.length)) {
+                    if (useSceneGuideElement) {
+                        guide.remove();
+                        tutorialLayerElement.append(toast);
+                    } else {
+                        tutorialLayerElement.append(guide, toast);
+                    }
+                    return true;
+                }
+
                 const minLeft = Math.min(...occupiedCellRects.map((rect) => rect.left));
                 const maxRight = Math.max(...occupiedCellRects.map((rect) => rect.right));
                 const maxBottom = Math.max(...occupiedCellRects.map((rect) => rect.bottom));
@@ -8672,10 +8744,18 @@
                 guide.style.top = `${Math.round(maxBottom - stageRect.top + 5)}px`;
                 toast.style.left = `${Math.round(stageRect.width / 2)}px`;
                 toast.style.top = `${Math.round(maxBottom - stageRect.top + 82)}px`;
+                if (useSceneGuideElement) {
+                    sceneGuideElement.style.left = `${Math.round(((minLeft + maxRight) / 2) - stageRect.left - 9)}px`;
+                    sceneGuideElement.style.top = `${Math.round(maxBottom - stageRect.top - 45)}px`;
+                }
             }
 
-            guide.append(image);
-            tutorialLayerElement.append(guide, toast);
+            if (useSceneGuideElement) {
+                guide.remove();
+                tutorialLayerElement.append(toast);
+            } else {
+                tutorialLayerElement.append(guide, toast);
+            }
             return true;
         }
 
@@ -9010,7 +9090,20 @@
                 return;
             }
 
-            tutorialLayerElement.innerHTML = "";
+            const preserveTutorialGestureGuide = !actionOverlayState && isTutorialGestureGuideActive();
+            if (preserveTutorialGestureGuide) {
+                [...tutorialLayerElement.children].forEach((childElement) => {
+                    if (
+                        childElement instanceof HTMLElement &&
+                        (childElement.dataset.tutorialGestureGuide === "true" || childElement.dataset.tutorialGestureToast === "true")
+                    ) {
+                        return;
+                    }
+                    childElement.remove();
+                });
+            } else {
+                tutorialLayerElement.innerHTML = "";
+            }
 
             if (renderActionOverlay()) {
                 return;

@@ -19,7 +19,11 @@
 
 <!-- SCENE:Stage_Clear BEGIN -->
 #### `Stage_Clear`  ·  contract: `./Stage_Clear.contract.json`
-- 이벤트: 없음
+- **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):
+  - `item.clean`  (click)
+  - `item.magnet`  (click)
+  - `item.wand`  (click)
+- **텍스트 바인딩** — `renderer.update({...})`: `item.clean`, `item.magnet`, `item.wand`
 <!-- SCENE:Stage_Clear END -->
 
 <!-- SCENE:setting BEGIN -->
