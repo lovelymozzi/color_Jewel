@@ -532,7 +532,7 @@
             hapticsOn: true,
             tutorialTapHintShown: false
         });
-        const SCENE_CONTRACT_VERSION = "20260619-12";
+        const SCENE_CONTRACT_VERSION = "20260619-17";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
@@ -804,6 +804,7 @@
             }
 
             const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`, {
+                cache: "no-store",
                 headers: NGROK_BYPASS_HEADERS
             });
             if (!stageResponse.ok) {
@@ -11161,6 +11162,7 @@
                 }
 
                 const stageIndexResponse = await fetch(`./stage-data/index.json?v=${SCENE_CONTRACT_VERSION}`, {
+                    cache: "no-store",
                     headers: NGROK_BYPASS_HEADERS
                 });
                 if (!stageIndexResponse.ok) {

@@ -6,7 +6,7 @@ const SHARED_STAGE_STATE_BRIDGE_URL = "http://127.0.0.1:8765/api/save-shared-sta
 const CAN_WRITE_SHARED_STAGE_STATE =
     window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
-const SCENE_CONTRACT_VERSION = "20260616-6";
+const SCENE_CONTRACT_VERSION = "20260619-17";
 const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
     ? { "ngrok-skip-browser-warning": "true" }
     : {};
@@ -586,6 +586,7 @@ async function loadStagePayload(stageEntry) {
     }
 
     const stageResponse = await fetch(`./stage-data/${stageEntry.file}?v=${SCENE_CONTRACT_VERSION}`, {
+        cache: "no-store",
         headers: NGROK_BYPASS_HEADERS
     });
     if (!stageResponse.ok) {
@@ -1178,6 +1179,7 @@ function triggerSolvedStageSequence() {
 
 async function bootStandalonePixelAdmin() {
     const stageIndexResponse = await fetch(`./stage-data/index.json?v=${SCENE_CONTRACT_VERSION}`, {
+        cache: "no-store",
         headers: NGROK_BYPASS_HEADERS
     });
     if (!stageIndexResponse.ok) {

@@ -589,6 +589,11 @@ def create_stage_from_draft_request(request_payload: dict) -> dict:
                 temp_path.unlink(missing_ok=True)
     write_stage_index({"maps": stage_entries})
     write_bridge_sync(stage_entry=stage_entry, activate=True)
+    write_shared_state(
+        current_map_id=stage_entry["id"],
+        active_override_map_id=None,
+        active_override=None,
+    )
 
     return {
         "stageEntry": stage_entry,
@@ -621,6 +626,11 @@ def create_stage_from_request(request_payload: dict) -> dict:
                 temp_path.unlink(missing_ok=True)
     write_stage_index({"maps": stage_entries})
     write_bridge_sync(stage_entry=stage_entry, activate=True)
+    write_shared_state(
+        current_map_id=stage_entry["id"],
+        active_override_map_id=None,
+        active_override=None,
+    )
 
     return {
         **preview_payload,
