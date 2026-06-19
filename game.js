@@ -532,7 +532,7 @@
             hapticsOn: true,
             tutorialTapHintShown: false
         });
-        const SCENE_CONTRACT_VERSION = "20260619-11";
+        const SCENE_CONTRACT_VERSION = "20260619-12";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
@@ -5442,6 +5442,12 @@
                             return response.json();
                         })
             )
+                .then((contract) => {
+                    if (!contract || contract.sceneName !== "Stage_Clear" || contract.sceneId !== "stage-clear") {
+                        throw new Error("Stage_Clear contract payload is invalid.");
+                    }
+                    return contract;
+                })
                 .then((contract) => {
                     stageClearSceneContract = contract;
                     return contract;
