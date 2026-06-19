@@ -467,6 +467,7 @@ def build_preview_from_image_request(request_payload: dict) -> dict:
                     colors=colors,
                     expected_size=MAX_SIZE,
                     exact=True,
+                    dither=use_dither,
                 )
                 if width > MAX_SIZE or height > MAX_SIZE:
                     raise ValueError(f"격자 감지 결과가 {width}x{height}여서 최대 30x30을 넘어요.")
