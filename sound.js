@@ -26,16 +26,73 @@
         const stageClearDimSoundAssetSrc = "./src/assets/sounds/stage_clear_dim.wav";
         const stageClearParticleSoundAssetSrc = "./src/assets/sounds/stage_clear_particle.wav";
         const buttonSoundVolume = 0.04;
+        const bgmLoopSoundVolume = 0.14;
         const stageClearCompleteSoundVolume = 0.18;
         const stageClearDimSoundVolume = 0.22;
         const stageClearParticleSoundVolume = 0.09;
+        const BGM_PHRASE_MS = 3600;
+        const BGM_OUTPUT_LEVEL = 1.18;
+        const MAX_PENDING_PLAYBACK_REQUESTS = 8;
+        const MAX_PENDING_PLAYBACK_AGE_MS = 1500;
+        const BGM_SEQUENCE = [
+            { root: 220, accent: 329.63 },
+            { root: 246.94, accent: 369.99 },
+            { root: 196, accent: 293.66 },
+            { root: 174.61, accent: 261.63 }
+        ];
+        const BGM_LOOP_EVENTS = [
+            { offsetMs: 0, durationMs: 920, frequencyKey: "root", multiplier: 1, endMultiplier: 1.01, level: 0.34 },
+            { offsetMs: 220, durationMs: 500, frequencyKey: "accent", multiplier: 1, endMultiplier: 1.005, level: 0.2 },
+            { offsetMs: 900, durationMs: 660, frequencyKey: "root", multiplier: 1.5, endMultiplier: 1.52, level: 0.23 },
+            { offsetMs: 1460, durationMs: 420, frequencyKey: "accent", multiplier: 1, endMultiplier: 1.01, level: 0.17 },
+            { offsetMs: 2040, durationMs: 840, frequencyKey: "root", multiplier: 0.75, endMultiplier: 0.752, level: 0.27 }
+        ];
+        const bgmLoopSoundAssetSrc = typeof Audio === "function"
+            ? createFallbackToneSrc({
+                durationMs: BGM_SEQUENCE.length * BGM_PHRASE_MS,
+                volume: 0.9,
+                sampleRate: 22050,
+                renderSample: ({ index, sampleRate }) => {
+                    const timeMs = (index / sampleRate) * 1000;
+                    const phraseIndex = Math.floor(timeMs / BGM_PHRASE_MS) % BGM_SEQUENCE.length;
+                    const phraseTimeMs = timeMs % BGM_PHRASE_MS;
+                    const phrase = BGM_SEQUENCE[phraseIndex];
+                    let mixedSample = 0;
+
+                    BGM_LOOP_EVENTS.forEach(({ offsetMs, durationMs, frequencyKey, multiplier, endMultiplier, level }) => {
+                        if (phraseTimeMs < offsetMs || phraseTimeMs > offsetMs + durationMs) {
+                            return;
+                        }
+
+                        const noteElapsedMs = phraseTimeMs - offsetMs;
+                        const noteProgress = Math.max(0, Math.min(1, noteElapsedMs / durationMs));
+                        const attack = Math.min(1, noteProgress / 0.06);
+                        const release = Math.min(1, (1 - noteProgress) / 0.18);
+                        const envelope = Math.max(0, Math.min(1, attack, release));
+                        const baseFrequency = phrase[frequencyKey] * multiplier;
+                        const targetFrequency = phrase[frequencyKey] * endMultiplier;
+                        const frequency = baseFrequency + (targetFrequency - baseFrequency) * noteProgress;
+                        const phase = (2 * Math.PI * frequency * noteElapsedMs) / 1000;
+                        mixedSample += Math.sin(phase) * level * envelope;
+                    });
+
+                    return Math.max(-1, Math.min(1, mixedSample * 0.85));
+                }
+            })
+            : null;
         const buttonSoundTemplate = typeof Audio === "function" ? new Audio(buttonSoundAssetSrc) : null;
+        const bgmLoopSoundTemplate = typeof Audio === "function" && bgmLoopSoundAssetSrc ? new Audio(bgmLoopSoundAssetSrc) : null;
         const stageClearCompleteSoundTemplate = typeof Audio === "function" ? new Audio(stageClearCompleteSoundAssetSrc) : null;
         const stageClearDimSoundTemplate = typeof Audio === "function" ? new Audio(stageClearDimSoundAssetSrc) : null;
         const stageClearParticleSoundTemplate = typeof Audio === "function" ? new Audio(stageClearParticleSoundAssetSrc) : null;
         if (buttonSoundTemplate) {
             buttonSoundTemplate.preload = "auto";
             buttonSoundTemplate.playsInline = true;
+        }
+        if (bgmLoopSoundTemplate) {
+            bgmLoopSoundTemplate.preload = "auto";
+            bgmLoopSoundTemplate.playsInline = true;
+            bgmLoopSoundTemplate.loop = true;
         }
         if (stageClearCompleteSoundTemplate) {
             stageClearCompleteSoundTemplate.preload = "auto";
@@ -49,17 +106,6 @@
             stageClearParticleSoundTemplate.preload = "auto";
             stageClearParticleSoundTemplate.playsInline = true;
         }
-        const BGM_PHRASE_MS = 3600;
-        const BGM_OUTPUT_LEVEL = 1.18;
-        const MAX_PENDING_PLAYBACK_REQUESTS = 8;
-        const MAX_PENDING_PLAYBACK_AGE_MS = 1500;
-        const BGM_SEQUENCE = [
-            { root: 220, accent: 329.63 },
-            { root: 246.94, accent: 369.99 },
-            { root: 196, accent: 293.66 },
-            { root: 174.61, accent: 261.63 }
-        ];
-
         function getAudioContext() {
             if (!AudioContextClass) return null;
             if (!audioContext || audioContext.state === "closed") {
@@ -135,9 +181,10 @@
             frequency = 440,
             durationMs = 120,
             volume = 0.35,
-            type = "sine"
+            type = "sine",
+            sampleRate = 22050,
+            renderSample = null
         }) {
-            const sampleRate = 22050;
             const frameCount = Math.max(1, Math.floor(sampleRate * (durationMs / 1000)));
             const pcmBytes = new Uint8Array(44 + frameCount * 2);
             const view = new DataView(pcmBytes.buffer);
@@ -165,19 +212,31 @@
 
             for (let index = 0; index < frameCount; index += 1) {
                 const progress = index / frameCount;
-                const attack = Math.min(1, progress / 0.08);
-                const release = Math.min(1, (1 - progress) / 0.22);
-                const envelope = Math.max(0.0001, Math.min(1, attack, release));
-                const phase = (2 * Math.PI * frequency * index) / sampleRate;
-                let sample = Math.sin(phase);
+                let sample = 0;
 
-                if (type === "triangle") {
-                    sample = (2 / Math.PI) * Math.asin(Math.sin(phase));
-                } else if (type === "square") {
-                    sample = Math.sign(Math.sin(phase)) || 1;
+                if (typeof renderSample === "function") {
+                    sample = renderSample({
+                        index,
+                        progress,
+                        frameCount,
+                        sampleRate
+                    });
+                } else {
+                    const attack = Math.min(1, progress / 0.08);
+                    const release = Math.min(1, (1 - progress) / 0.22);
+                    const envelope = Math.max(0.0001, Math.min(1, attack, release));
+                    const phase = (2 * Math.PI * frequency * index) / sampleRate;
+                    sample = Math.sin(phase);
+
+                    if (type === "triangle") {
+                        sample = (2 / Math.PI) * Math.asin(Math.sin(phase));
+                    } else if (type === "square") {
+                        sample = Math.sign(Math.sin(phase)) || 1;
+                    }
+                    sample *= envelope;
                 }
 
-                view.setInt16(44 + index * 2, Math.max(-32767, Math.min(32767, sample * amplitude * envelope)), true);
+                view.setInt16(44 + index * 2, Math.max(-32767, Math.min(32767, sample * amplitude)), true);
             }
 
             let binary = "";
@@ -258,7 +317,7 @@
                 context = recreateAudioContext() || context;
             }
 
-            if (fallback && !audioFallbackUnlocked && context.state !== "running") {
+            if (context.state !== "running" && !audioFallbackUnlocked) {
                 pendingPlaybackRequests.push({
                     playback,
                     queuedAt: Date.now()
@@ -449,6 +508,31 @@
                 bgmSuspended = false;
             }
             const shouldPlayBgm = bgmEnabled && !bgmSuspended;
+            if (bgmLoopSoundTemplate) {
+                bgmLoopSoundTemplate.volume = Math.max(0, Math.min(1, bgmLoopSoundVolume * volumeMultiplier));
+                if (!audioFallbackUnlocked || !AudioContextClass) {
+                    if (shouldPlayBgm) {
+                        if (!bgmLoopSoundTemplate.paused) {
+                            return bgmEnabled;
+                        }
+                        if (!resumePlayback) {
+                            bgmLoopSoundTemplate.currentTime = 0;
+                        }
+                        const playbackResult = bgmLoopSoundTemplate.play();
+                        playbackResult?.catch?.((error) => {
+                            console.warn("Failed to autoplay HTML BGM loop.", error);
+                        });
+                    } else {
+                        bgmLoopSoundTemplate.pause();
+                        if (!forceSuspend && !resumePlayback) {
+                            bgmLoopSoundTemplate.currentTime = 0;
+                        }
+                    }
+                    return bgmEnabled;
+                }
+                bgmLoopSoundTemplate.pause();
+                bgmLoopSoundTemplate.currentTime = 0;
+            }
             if (bgmOutputGain && bgmOutputContext) {
                 const now = bgmOutputContext.currentTime;
                 const currentValue = Math.max(0.0001, Number(bgmOutputGain.gain.value || 0.0001));
@@ -556,6 +640,11 @@
 
         function warmup() {
             audioFallbackUnlocked = true;
+            if (bgmLoopSoundTemplate && AudioContextClass) {
+                bgmLoopSoundTemplate.pause();
+                bgmLoopSoundTemplate.currentTime = 0;
+                bgmLoopSoundTemplate.muted = false;
+            }
             if (buttonSoundTemplate && !buttonSoundPrimed) {
                 buttonSoundTemplate.muted = true;
                 const buttonWarmupResult = buttonSoundTemplate.play();

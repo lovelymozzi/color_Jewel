@@ -6,7 +6,9 @@ const SHARED_STAGE_STATE_BRIDGE_URL = "http://127.0.0.1:8765/api/save-shared-sta
 const CAN_WRITE_SHARED_STAGE_STATE =
     window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
-const SCENE_CONTRACT_VERSION = "20260619-17";
+const FORCE_FIRST_MAP_RESET_STORAGE_KEY = "color_jewel_force_first_map_reset_v1";
+const RESET_TO_FIRST_QUERY_PARAM = "resetToFirstMap";
+const SCENE_CONTRACT_VERSION = "20260621-01";
 const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
     ? { "ngrok-skip-browser-warning": "true" }
     : {};
@@ -669,6 +671,18 @@ function padMapToGrid(sourceMap, rows = MAX_GRID_ROWS, cols = MAX_GRID_COLS) {
 }
 
 function readPersistedCurrentMapId() {
+    if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+        return "tutorial";
+    }
+
+    try {
+        if (window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1") {
+            return "tutorial";
+        }
+    } catch (error) {
+        // Fall through to the normal persisted map lookup.
+    }
+
     try {
         const rawValue = window.localStorage.getItem(CURRENT_MAP_STORAGE_KEY);
         return typeof rawValue === "string" && rawValue.trim() ? rawValue : null;
@@ -683,14 +697,18 @@ function persistCurrentMapId(mapId) {
     }
 
     try {
-        window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, mapId);
+        const resetRequested =
+            new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1" ||
+            window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1";
+        const nextMapId = resetRequested ? "tutorial" : mapId;
+        window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, nextMapId);
         if (CAN_WRITE_SHARED_STAGE_STATE) {
             let activeOverride = null;
             try {
                 const rawOverrideStorage = window.localStorage.getItem(PIXEL_ADMIN_STAGE_STORAGE_KEY);
                 if (rawOverrideStorage) {
                     const parsedOverrideStorage = JSON.parse(rawOverrideStorage);
-                    const candidateOverride = parsedOverrideStorage?.[mapId];
+                    const candidateOverride = parsedOverrideStorage?.[nextMapId];
                     if (
                         candidateOverride &&
                         typeof candidateOverride === "object" &&
@@ -713,8 +731,8 @@ function persistCurrentMapId(mapId) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    currentMapId: mapId,
-                    activeOverrideMapId: activeOverride ? mapId : null,
+                    currentMapId: nextMapId,
+                    activeOverrideMapId: activeOverride ? nextMapId : null,
                     activeOverride
                 })
             }).catch((error) => {
@@ -851,6 +869,16 @@ function getRequestedMapId() {
 }
 
 function getInitialMapIndex() {
+    if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+        return getFirstPlayableMapIndex();
+    }
+    try {
+        if (window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1") {
+            return getFirstPlayableMapIndex();
+        }
+    } catch (error) {
+        // Fall through to the persisted map lookup.
+    }
     const targetMapId = getRequestedMapId() || readPersistedCurrentMapId() || "shiba";
     const restoredIndex = MAP_DEFINITIONS.findIndex((definition) => definition.id === targetMapId);
     return restoredIndex >= 0 ? restoredIndex : 0;
@@ -1085,6 +1113,22 @@ function syncActiveMap(nextMapIndex = 0, options = {}) {
     } = options;
     currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
     const currentDefinition = MAP_DEFINITIONS[currentMapIndex];
+    if (currentDefinition?.id && currentDefinition.id !== "tutorial") {
+        try {
+            window.localStorage.removeItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY);
+        } catch (error) {
+            // Ignore cleanup failures.
+        }
+        if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+            const clearedResetUrl = new URL(window.location.href);
+            clearedResetUrl.searchParams.delete(RESET_TO_FIRST_QUERY_PARAM);
+            window.history.replaceState(
+                null,
+                "",
+                `${clearedResetUrl.pathname}${clearedResetUrl.search}${clearedResetUrl.hash}`
+            );
+        }
+    }
     persistCurrentMapId(currentDefinition.id);
     applyMapTheme(currentDefinition.id);
     ACTIVE_MAP = buildMapConfig(currentDefinition);

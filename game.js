@@ -519,10 +519,13 @@
         const APP_SETTINGS_STORAGE_KEY = "color_jewel_app_settings_v2";
         const ITEM_ECONOMY_STORAGE_KEY = "color_jewel_item_economy_v1";
         const LEVEL_INITIAL_STATE_CACHE_STORAGE_KEY = "color_jewel_level_initial_state_cache_v3";
+        const FORCE_FIRST_MAP_RESET_STORAGE_KEY = "color_jewel_force_first_map_reset_v1";
+        const RESET_TO_FIRST_QUERY_PARAM = "resetToFirstMap";
         const BRIDGE_STAGE_SYNC_PATH = "./stage-data/bridge-sync.json";
         const BRIDGE_STAGE_SYNC_POLL_MS = 4000;
         const BACKGROUND_STAGE_SYNC_POLL_MS = 15000;
         const SHARED_STAGE_STATE_PATH = "./stage-data/shared-state.json";
+        const SHARED_STAGE_STATE_HEALTH_URL = "http://127.0.0.1:8765/health";
         const SHARED_STAGE_STATE_BRIDGE_URL = "http://127.0.0.1:8765/api/save-shared-state";
         const CAN_WRITE_SHARED_STAGE_STATE =
             window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
@@ -532,7 +535,7 @@
             hapticsOn: true,
             tutorialTapHintShown: false
         });
-        const SCENE_CONTRACT_VERSION = "20260619-17";
+        const SCENE_CONTRACT_VERSION = "20260621-01";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
@@ -577,6 +580,7 @@
         let bridgeStageSyncPollTimer = null;
         let sharedStageStateSeenAt = 0;
         let sharedStageStatePollTimer = null;
+        let sharedStageBridgeAvailable = false;
         let sharedCurrentMapId = null;
         let sharedPixelAdminStageStorageCache = null;
         let runtimeSnapshotSaveTimer = null;
@@ -1234,6 +1238,13 @@
         }
 
         function scheduleSharedStageStatePoll(delayMs = BRIDGE_STAGE_SYNC_POLL_MS) {
+            if (!sharedStageBridgeAvailable) {
+                if (sharedStageStatePollTimer) {
+                    window.clearTimeout(sharedStageStatePollTimer);
+                    sharedStageStatePollTimer = null;
+                }
+                return;
+            }
             if (sharedStageStatePollTimer) {
                 window.clearTimeout(sharedStageStatePollTimer);
             }
@@ -1573,6 +1584,18 @@
 
 
         function readPersistedCurrentMapId() {
+            if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+                return "tutorial";
+            }
+
+            try {
+                if (window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1") {
+                    return "tutorial";
+                }
+            } catch (error) {
+                // Fall through to the shared/local persisted map lookup.
+            }
+
             if (sharedCurrentMapId) {
                 return sharedCurrentMapId;
             }
@@ -1591,7 +1614,11 @@
             }
 
             try {
-                window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, mapId);
+                const resetRequested =
+                    new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1" ||
+                    window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1";
+                const nextMapId = resetRequested ? "tutorial" : mapId;
+                window.localStorage.setItem(CURRENT_MAP_STORAGE_KEY, nextMapId);
                 return true;
             } catch (error) {
                 return false;
@@ -2023,6 +2050,16 @@
         }
 
         function getInitialMapIndex() {
+            if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+                return getFirstPlayableMapIndex();
+            }
+            try {
+                if (window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1") {
+                    return getFirstPlayableMapIndex();
+                }
+            } catch (error) {
+                // Fall through to the normal persisted map lookup.
+            }
             if (IS_NGROK_HOST) {
                 return getFirstPlayableMapIndex();
             }
@@ -2082,6 +2119,17 @@
                 definition.__cachedLevelInitialStateSignature = null;
             });
             sharedCurrentMapId = firstMapId;
+            try {
+                window.localStorage.setItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY, "1");
+            } catch (error) {
+                // Ignore storage write failures and continue with the in-memory reset.
+            }
+            if (firstMapId) {
+                persistCurrentMapId(firstMapId);
+            }
+            const resetUrl = new URL(window.location.href);
+            resetUrl.searchParams.set(RESET_TO_FIRST_QUERY_PARAM, "1");
+            window.history.replaceState(null, "", `${resetUrl.pathname}${resetUrl.search}${resetUrl.hash}`);
             sharedPixelAdminStageStorageCache =
                 firstMapId && sharedOverridePayload
                     ? {
@@ -2096,9 +2144,10 @@
             selected = null;
             currentLevelInitialState = null;
 
-            const sharedStateSyncPromise = CAN_WRITE_SHARED_STAGE_STATE && firstMapId
+            const sharedStateSyncPromise = sharedStageBridgeAvailable && firstMapId
                 ? fetch(SHARED_STAGE_STATE_BRIDGE_URL, {
                     method: "POST",
+                    keepalive: true,
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -2109,20 +2158,8 @@
                     })
                 })
                 : null;
-
-            await activateMapIndex(firstMapIndex, {
-                syncPixelAdmin: false,
-                renderPixelAdmin: false,
-                prepareUpcomingMap: !window.__pixelAdminWindowMode
-            });
-            resetGame({
-                regenerateLevelStart: true,
-                fastLevelStart: true,
-                persistLevelStart: false
-            });
-            if (sharedStateSyncPromise) {
-                await sharedStateSyncPromise;
-            }
+            sharedStateSyncPromise?.catch?.(() => {});
+            window.location.replace(resetUrl.toString());
             return true;
         };
 
@@ -2734,6 +2771,18 @@
         }
 
         async function restoreRuntimeSnapshot() {
+            if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+                clearRuntimeSnapshot();
+                return false;
+            }
+            try {
+                if (window.localStorage.getItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY) === "1") {
+                    clearRuntimeSnapshot();
+                    return false;
+                }
+            } catch (error) {
+                // Keep the usual restore flow when the reset flag cannot be read.
+            }
             const snapshot = readRuntimeSnapshot();
             if (!snapshot || snapshot.version !== 1 || !snapshot.mapId) {
                 return false;
@@ -3825,6 +3874,18 @@
             currentMapIndex = ((nextMapIndex % MAP_DEFINITIONS.length) + MAP_DEFINITIONS.length) % MAP_DEFINITIONS.length;
             const currentDefinition = MAP_DEFINITIONS[currentMapIndex];
             const currentOverrideVersion = getStageOverrideVersion(currentDefinition);
+            if (currentDefinition?.id && currentDefinition.id !== "tutorial") {
+                try {
+                    window.localStorage.removeItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY);
+                } catch (error) {
+                    // Ignore cleanup failures.
+                }
+                if (new URLSearchParams(window.location.search).get(RESET_TO_FIRST_QUERY_PARAM) === "1") {
+                    const clearedResetUrl = new URL(window.location.href);
+                    clearedResetUrl.searchParams.delete(RESET_TO_FIRST_QUERY_PARAM);
+                    window.history.replaceState(null, "", `${clearedResetUrl.pathname}${clearedResetUrl.search}${clearedResetUrl.hash}`);
+                }
+            }
             persistCurrentMapId(currentDefinition.id);
             applyMapTheme(currentDefinition.id);
             ACTIVE_MAP =
@@ -5003,6 +5064,7 @@
             bgmEnabled: appSettings.bgmOn
         }) || null;
         let shouldResumeBgmOnForeground = false;
+        let lastAudioWarmupQueuedAt = -Infinity;
 
         function syncAudioPreferenceState() {
             soundController?.setSfxEnabled?.(appSettings.soundEffectsOn);
@@ -5187,6 +5249,13 @@
         }
 
         function queueAudioContextWarmup() {
+            const now = typeof performance !== "undefined" && typeof performance.now === "function"
+                ? performance.now()
+                : Date.now();
+            if (now - lastAudioWarmupQueuedAt < 120) {
+                return;
+            }
+            lastAudioWarmupQueuedAt = now;
             soundController?.warmup?.();
         }
 
@@ -11197,9 +11266,37 @@
                 if (!window.__pixelAdminWindowMode) {
                     void getStageClearContract();
                 }
+                if (CAN_WRITE_SHARED_STAGE_STATE) {
+                    try {
+                        const sharedStageBridgeProbeController = typeof AbortController === "function"
+                            ? new AbortController()
+                            : null;
+                        const sharedStageBridgeProbeTimeout = sharedStageBridgeProbeController
+                            ? window.setTimeout(() => {
+                                sharedStageBridgeProbeController.abort();
+                            }, 800)
+                            : null;
+                        const sharedStageBridgeProbeResponse = await fetch(SHARED_STAGE_STATE_HEALTH_URL, {
+                            cache: "no-store",
+                            signal: sharedStageBridgeProbeController?.signal
+                        });
+                        if (sharedStageBridgeProbeTimeout) {
+                            window.clearTimeout(sharedStageBridgeProbeTimeout);
+                        }
+                        sharedStageBridgeAvailable = sharedStageBridgeProbeResponse.ok;
+                    } catch (error) {
+                        sharedStageBridgeAvailable = false;
+                        sharedCurrentMapId = null;
+                        sharedPixelAdminStageStorageCache = null;
+                    }
+                } else {
+                    sharedStageBridgeAvailable = false;
+                }
                 bridgeStageSyncSeenAt = Date.now();
                 scheduleBridgeStageSyncPoll(BRIDGE_STAGE_SYNC_POLL_MS);
-                scheduleSharedStageStatePoll(600);
+                if (sharedStageBridgeAvailable) {
+                    scheduleSharedStageStatePoll(600);
+                }
 
                 if (window.__pixelAdminWindowMode) {
                     if (appElement) {

@@ -34,7 +34,7 @@ try {
 if (-not $serverReachable) {
     $serverProcess = Start-Process `
         -FilePath $pythonPath `
-        -ArgumentList @("-m", "http.server", "8000", "--bind", "127.0.0.1") `
+        -ArgumentList @("autoplay_http_server.py") `
         -WorkingDirectory $PSScriptRoot `
         -RedirectStandardOutput $serverStdoutPath `
         -RedirectStandardError $serverStderrPath `
