@@ -1,0 +1,4 @@
+interface:
+  display_name: "Color Jewel Tutorial Reuse"
+  short_description: "Extract and reuse the Color Jewel pinch and pan tutorial."
+  default_prompt: "Use $color-jewel-tutorial-reuse to adapt the Color Jewel pinch and pan tutorial to this game."

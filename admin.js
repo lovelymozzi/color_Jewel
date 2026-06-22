@@ -1,7 +1,7 @@
 const pixelAdminWindowMode = new URLSearchParams(window.location.search).get("adminWindow") === "1";
 window.__pixelAdminWindowMode = pixelAdminWindowMode;
-const FORCE_FIRST_MAP_RESET_STORAGE_KEY = "color_jewel_force_first_map_reset_v1";
-const RESET_TO_FIRST_QUERY_PARAM = "resetToFirstMap";
+const PIXEL_ADMIN_FORCE_FIRST_MAP_RESET_STORAGE_KEY = "color_jewel_force_first_map_reset_v1";
+const PIXEL_ADMIN_RESET_TO_FIRST_QUERY_PARAM = "resetToFirstMap";
 
 const pixelAdminMarkup = `
 <div class="pixel-admin-launcher">
@@ -2509,7 +2509,7 @@ function syncPixelAdminDraftFromExportInput() {
             isStageTransitioning = false;
             selected = null;
             try {
-                window.localStorage.setItem(FORCE_FIRST_MAP_RESET_STORAGE_KEY, "1");
+                window.localStorage.setItem(PIXEL_ADMIN_FORCE_FIRST_MAP_RESET_STORAGE_KEY, "1");
             } catch (error) {
                 // Ignore storage write failures and continue with the local reset.
             }
@@ -2517,7 +2517,7 @@ function syncPixelAdminDraftFromExportInput() {
                 persistCurrentMapId(targetDefinition.id);
             }
             const resetUrl = new URL(window.location.href);
-            resetUrl.searchParams.set(RESET_TO_FIRST_QUERY_PARAM, "1");
+            resetUrl.searchParams.set(PIXEL_ADMIN_RESET_TO_FIRST_QUERY_PARAM, "1");
             window.location.replace(resetUrl.toString());
         }
 
