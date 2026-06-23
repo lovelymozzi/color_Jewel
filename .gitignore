@@ -2,5 +2,15 @@
 .tmp/
 __pycache__/
 *.pyc
+.autoplay-browser-profile/
+.autoplay-http-server.pid
+.autoplay-http-server.out.log
+.autoplay-http-server.err.log
+.mobile-http-server.pid
+.mobile-http-server.out.log
+.mobile-http-server.err.log
+.ngrok-http-8000.pid
+.ngrok-http-8000.out.log
+.ngrok-http-8000.err.log
 stage-data/shared-state.json
 stage-data/bridge-sync.json
