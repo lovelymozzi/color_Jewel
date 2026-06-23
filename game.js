@@ -4764,9 +4764,9 @@
             );
             colorJewelSceneRenderer?.update({
                 item: {
-                    wand: displayedMagicCharge,
+                    wand: Math.max(0, actionCharges.magnet),
                     clean: displayedCleanCharge,
-                    magnet: Math.max(0, actionCharges.magnet)
+                    magnet: displayedMagicCharge
                 }
             });
             setSceneLayerDisplay("level-node-18", !specialActionUnlocked);
@@ -6130,13 +6130,38 @@
                 return false;
             }
 
-            const carriedActionCharges = clampActionChargesSnapshot(actionCharges);
             const currentSpecialActionUnlocked = isSpecialActionUnlocked(ACTIVE_MAP);
             const nextMapIndex = (currentMapIndex + 1) % MAP_DEFINITIONS.length;
             const nextDefinition = MAP_DEFINITIONS[nextMapIndex];
             const nextOverrideVersion = getStageOverrideVersion(nextDefinition);
+            const shouldGrantTutorialIntroItems =
+                ACTIVE_MAP?.id === "tutorial" && nextDefinition?.id === "bear";
+
+            if (shouldGrantTutorialIntroItems) {
+                const tutorialIntroCharges = getDefaultActionCharges(nextDefinition);
+                itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+                itemEconomyState.charges.magic = Math.max(
+                    Number(itemEconomyState.charges.magic || 0),
+                    Number(tutorialIntroCharges.magic || 0)
+                );
+                itemEconomyState.charges.clean = Math.max(
+                    Number(itemEconomyState.charges.clean || 0),
+                    Number(tutorialIntroCharges.clean || 0)
+                );
+                itemEconomyState.adUses.magic = 0;
+                itemEconomyState.adUses.clean = 0;
+                itemEconomyState.refill.magic.active = false;
+                itemEconomyState.refill.magic.clearCount = 0;
+                itemEconomyState.refill.clean.active = false;
+                itemEconomyState.refill.clean.clearCount = 0;
+                persistItemEconomyState(itemEconomyState);
+            }
+
+            const carriedActionCharges = clampActionChargesSnapshot(
+                shouldGrantTutorialIntroItems ? getItemEconomyChargesForMap(nextDefinition) : actionCharges
+            );
             tutorialItemIntroState =
-                ACTIVE_MAP?.id === "tutorial" && nextDefinition?.id === "bear"
+                shouldGrantTutorialIntroItems
                     ? {
                         mapId: "bear",
                         active: false,
@@ -10875,6 +10900,24 @@
             const introSessionVersion = shouldStartTutorialItemIntro ? gameSessionVersion : 0;
             const introState = shouldStartTutorialItemIntro ? tutorialItemIntroState : null;
             if (introState) {
+                const tutorialIntroCharges = getDefaultActionCharges(ACTIVE_MAP);
+                itemEconomyState = normalizeItemEconomyState(itemEconomyState);
+                itemEconomyState.charges.magic = Math.max(
+                    Number(itemEconomyState.charges.magic || 0),
+                    Number(tutorialIntroCharges.magic || 0)
+                );
+                itemEconomyState.charges.clean = Math.max(
+                    Number(itemEconomyState.charges.clean || 0),
+                    Number(tutorialIntroCharges.clean || 0)
+                );
+                itemEconomyState.adUses.magic = 0;
+                itemEconomyState.adUses.clean = 0;
+                itemEconomyState.refill.magic.active = false;
+                itemEconomyState.refill.magic.clearCount = 0;
+                itemEconomyState.refill.clean.active = false;
+                itemEconomyState.refill.clean.clearCount = 0;
+                persistItemEconomyState(itemEconomyState);
+                syncActionChargesFromItemEconomy(ACTIVE_MAP);
                 introState.active = true;
                 introState.displayCharges = {
                     magic: 0,
@@ -10944,6 +10987,7 @@
 
                     void playColorCompleteSound(0);
                     tutorialItemIntroState = null;
+                    syncActionChargesFromItemEconomy(ACTIVE_MAP);
                     render();
                 })();
             }
@@ -11381,4 +11425,3 @@
         syncLifecycleDebugGlobals();
         bootLifecycleDebug();
         void bootGame();
-
