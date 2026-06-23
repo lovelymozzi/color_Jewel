@@ -230,6 +230,20 @@
       "displayName": "Corn",
       "displayNameNumbered": "34. Corn",
       "file": "34_corn.json"
+    },
+    {
+      "sequence": 35,
+      "id": "tropical_fish",
+      "displayName": "Seukeurinsyat 2026 06 23",
+      "displayNameNumbered": "35. Seukeurinsyat 2026 06 23",
+      "file": "35_tropical_fish.json"
+    },
+    {
+      "sequence": 36,
+      "id": "jam",
+      "displayName": "Jam",
+      "displayNameNumbered": "36. Jam",
+      "file": "36_jam.json"
     }
   ]
 }

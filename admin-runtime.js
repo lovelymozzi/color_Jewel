@@ -8,7 +8,7 @@ const CAN_WRITE_SHARED_STAGE_STATE =
 const RUNTIME_SNAPSHOT_STORAGE_KEY = "color_jewel_runtime_snapshot_v2";
 const FORCE_FIRST_MAP_RESET_STORAGE_KEY = "color_jewel_force_first_map_reset_v1";
 const RESET_TO_FIRST_QUERY_PARAM = "resetToFirstMap";
-const SCENE_CONTRACT_VERSION = "20260621-01";
+const SCENE_CONTRACT_VERSION = "20260623-07";
 const NGROK_BYPASS_HEADERS = window.location.hostname.includes("ngrok")
     ? { "ngrok-skip-browser-warning": "true" }
     : {};

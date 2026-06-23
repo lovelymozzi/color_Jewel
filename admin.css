@@ -363,7 +363,7 @@
         .pixel-admin-palette-tools,
         .pixel-admin-color-editor {
             display: grid;
-            grid-template-columns: repeat(2, 40px);
+            grid-template-columns: repeat(3, 40px);
             justify-content: flex-start;
             gap: 6px;
         }
@@ -525,6 +525,18 @@
         .pixel-admin-action.selected {
             border-color: rgba(255, 142, 48, 0.96);
             box-shadow: 0 0 0 2px rgba(255, 207, 129, 0.72);
+        }
+
+        .pixel-admin-swatch.merge-source {
+            border-color: rgba(59, 130, 246, 0.92);
+            box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.72);
+        }
+
+        .pixel-admin-swatch-card.merge-target .pixel-admin-swatch:hover,
+        .pixel-admin-swatch-card.merge-target .pixel-admin-swatch:focus-visible {
+            border-color: rgba(34, 197, 94, 0.88);
+            box-shadow: 0 0 0 2px rgba(187, 247, 208, 0.74);
+            outline: none;
         }
 
         .pixel-admin-swatch-chip {

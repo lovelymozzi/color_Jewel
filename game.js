@@ -535,7 +535,7 @@
             hapticsOn: true,
             tutorialTapHintShown: false
         });
-        const SCENE_CONTRACT_VERSION = "20260623-06";
+        const SCENE_CONTRACT_VERSION = "20260623-07";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }

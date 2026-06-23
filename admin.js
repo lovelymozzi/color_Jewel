@@ -129,6 +129,7 @@ const pixelAdminMarkup = `
     <div class="pixel-admin-palette-tools">
         <button class="pixel-admin-action" id="pixelAdminAddColor" type="button" aria-label="색상 추가">+</button>
         <button class="pixel-admin-action" id="pixelAdminErase" type="button" aria-label="지우개">E</button>
+        <button class="pixel-admin-action" id="pixelAdminMerge" type="button" aria-label="선택 색상을 다른 색상에 합치기">M</button>
     </div>
     <div class="pixel-admin-color-editor">
         <label class="pixel-admin-field" for="pixelAdminColorHexText">
@@ -977,6 +978,7 @@ const pixelAdminElement = document.getElementById("pixelAdmin");
         const pixelAdminSelectionElement = document.getElementById("pixelAdminSelection");
         const pixelAdminAddColorElement = document.getElementById("pixelAdminAddColor");
         const pixelAdminEraseElement = document.getElementById("pixelAdminErase");
+        const pixelAdminMergeElement = document.getElementById("pixelAdminMerge");
         const pixelAdminColorHexTextElement = document.getElementById("pixelAdminColorHexText");
         const pixelAdminColorHexPickerElement = document.getElementById("pixelAdminColorHexPicker");
         const pixelAdminPaletteElement = document.getElementById("pixelAdminPalette");
@@ -1015,6 +1017,7 @@ const pixelAdminState = {
             draftPalette: {},
             draftDisplayName: "",
             selectedColorId: 0,
+            mergeSourceColorId: 0,
             canvasZoom: 1,
             canvasMetrics: null,
             gridShellMinHeight: 220,
@@ -1354,6 +1357,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.draftPalette = clonePaletteMeta(parsed.draftPalette);
             pixelAdminState.undoStack = [];
             pixelAdminInteraction.strokeSnapshot = null;
+            pixelAdminState.mergeSourceColorId = 0;
             if (parsed.draftDisplayName) {
                 pixelAdminState.draftDisplayName = parsed.draftDisplayName;
             }
@@ -1423,6 +1427,7 @@ function syncPixelAdminDraftFromExportInput() {
                 color: getSuggestedPixelAdminHex(nextColorId)
             };
             pixelAdminState.selectedColorId = nextColorId;
+            pixelAdminState.mergeSourceColorId = 0;
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
             pixelAdminState.message = `C${nextColorId} ?됱긽???붾젅?몄뿉 異붽??덉뼱??`;
@@ -1430,37 +1435,62 @@ function syncPixelAdminDraftFromExportInput() {
             renderPixelAdmin();
         }
 
-        function removePixelAdminColor(colorId) {
+        function removePixelAdminColor(colorId, mergeTargetColorId = 0) {
             const mapId = pixelAdminState.currentMapId;
             if (!pixelAdminState.draftMap || !canRemovePixelAdminColor(mapId, colorId)) {
                 return;
             }
 
-            let erasedCellCount = 0;
+            const normalizedMergeTargetColorId = Number(mergeTargetColorId) || 0;
+            if (normalizedMergeTargetColorId === colorId) {
+                pixelAdminState.mergeSourceColorId = 0;
+                pixelAdminState.message = `C${colorId} 색상은 자기 자신에게 합칠 수 없어요.`;
+                renderPixelAdmin();
+                return;
+            }
+
+            if (
+                normalizedMergeTargetColorId &&
+                !getPixelAdminPaletteIds(mapId, pixelAdminState.draftMap, pixelAdminState.draftPalette).includes(
+                    normalizedMergeTargetColorId
+                )
+            ) {
+                pixelAdminState.mergeSourceColorId = 0;
+                pixelAdminState.message = `C${normalizedMergeTargetColorId} 색상을 찾지 못했어요.`;
+                renderPixelAdmin();
+                return;
+            }
+
+            let affectedCellCount = 0;
             pixelAdminState.draftMap = pixelAdminState.draftMap.map((row) =>
                 row.map((cellColorId) => {
                     if (cellColorId !== colorId) {
                         return cellColorId;
                     }
 
-                    erasedCellCount += 1;
-                    return 0;
+                    affectedCellCount += 1;
+                    return normalizedMergeTargetColorId || 0;
                 })
             );
             delete pixelAdminState.draftPalette[colorId];
             pixelAdminState.undoStack = [];
             pixelAdminInteraction.strokeSnapshot = null;
+            pixelAdminState.mergeSourceColorId = 0;
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 mapId,
-                pixelAdminState.selectedColorId === colorId ? 0 : pixelAdminState.selectedColorId,
+                normalizedMergeTargetColorId || (pixelAdminState.selectedColorId === colorId ? 0 : pixelAdminState.selectedColorId),
                 pixelAdminState.draftMap,
                 pixelAdminState.draftPalette
             );
             pixelAdminState.isDirty = true;
             pixelAdminState.exportNeedsRefresh = true;
-            pixelAdminState.message = erasedCellCount
-                ? `C${colorId} ?됱긽????젣?섍퀬 ${erasedCellCount}媛????鍮꾩썱?댁슂.`
-                : `C${colorId} ?됱긽???붾젅?몄뿉????젣?덉뼱??`;
+            pixelAdminState.message = normalizedMergeTargetColorId
+                ? affectedCellCount
+                    ? `C${colorId} 색상을 C${normalizedMergeTargetColorId}로 합쳐서 ${affectedCellCount}칸을 바꿨어요.`
+                    : `C${colorId} 색상을 C${normalizedMergeTargetColorId}에 합치고 팔레트를 정리했어요.`
+                : affectedCellCount
+                    ? `C${colorId} ?됱긽????젣?섍퀬 ${affectedCellCount}媛????鍮꾩썱?댁슂.`
+                    : `C${colorId} ?됱긽???붾젅?몄뿉????젣?덉뼱??`;
             schedulePixelAdminAutoSave();
             renderPixelAdmin();
         }
@@ -1491,6 +1521,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminState.canvasZoom = 1;
             pixelAdminState.canvasMetrics = null;
             pixelAdminState.undoStack = [];
+            pixelAdminState.mergeSourceColorId = 0;
             pixelAdminState.selectedColorId = getResolvedPixelAdminSelection(
                 definition.id,
                 pixelAdminState.selectedColorId,
@@ -1945,6 +1976,7 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminInteraction.lastPaintedCellKey = null;
             pixelAdminInteraction.pendingMessage = "";
             pixelAdminInteraction.didPaint = false;
+            pixelAdminState.mergeSourceColorId = 0;
         }
 
         function stopPixelAdminDrawing() {
@@ -2739,10 +2771,19 @@ function syncPixelAdminDraftFromExportInput() {
             const selectedColorHex = getPixelAdminColorHex(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const selectedColorLabel = getPixelAdminColorLabel(mapId, pixelAdminState.selectedColorId, paletteMeta);
             const paletteIds = getPixelAdminPaletteIds(mapId, sourceMap, paletteMeta);
+            const mergeSourceColorId = paletteIds.includes(pixelAdminState.mergeSourceColorId)
+                ? pixelAdminState.mergeSourceColorId
+                : 0;
+            if (mergeSourceColorId !== pixelAdminState.mergeSourceColorId) {
+                pixelAdminState.mergeSourceColorId = mergeSourceColorId;
+            }
+            const mergeSourceLabel = mergeSourceColorId
+                ? getPixelAdminColorLabel(mapId, mergeSourceColorId, paletteMeta)
+                : "";
             const paletteColorKey = paletteIds
                 .map((colorId) => `${colorId}:${getPixelAdminColorHex(mapId, colorId, paletteMeta)}`)
                 .join("|");
-            const paletteRenderKey = `${mapId}|${pixelAdminState.selectedColorId}|${paletteColorKey}`;
+            const paletteRenderKey = `${mapId}|${pixelAdminState.selectedColorId}|${mergeSourceColorId}|${paletteColorKey}`;
             const selectedColorMeta = pixelAdminState.selectedColorId === 0 ? null : paletteMeta[pixelAdminState.selectedColorId];
             const gridSizeKey = `${rows}x${cols}`;
             const shouldRefreshExport = !pixelAdminState.exportIsDirty && pixelAdminState.exportNeedsRefresh;
@@ -2761,8 +2802,10 @@ function syncPixelAdminDraftFromExportInput() {
             pixelAdminStageElement.textContent = `${draftDisplayName} - ${rows} x ${cols}`;
             pixelAdminHelpElement.textContent = shouldDeferHeavyRender
                 ? "스테이지를 불러오는 중이에요. 코드와 팔레트, 그리드는 잠시 후 다시 그려집니다."
-                : "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 마우스 휠로 확대/축소하고 HEX는 # 없이 6자리만 넣어도 됩니다.";
-            pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
+                : mergeSourceColorId
+                    ? `${mergeSourceLabel}을(를) 합칠 대상 색상을 팔레트에서 선택해 주세요. 같은 색을 다시 누르면 병합 대기가 취소됩니다.`
+                    : "제목, 캔버스, 팔레트를 직접 수정할 수 있어요. 마우스 휠로 확대/축소하고 HEX는 # 없이 6자리만 넣어도 됩니다.";
+            pixelAdminSelectionElement.textContent = `선택: ${selectedColorLabel}${selectedColorMeta ? ` - ${selectedColorHex}` : ""}${mergeSourceColorId ? ` | 병합 대기: ${mergeSourceLabel}` : ""}${pixelAdminState.isDirty ? " - 저장되지 않은 변경사항" : ""}`;
             pixelAdminMessageElement.textContent = pixelAdminState.message;
             pixelAdminGridElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
             pixelAdminPaletteElement.setAttribute("aria-busy", String(shouldDeferHeavyRender));
@@ -2858,6 +2901,18 @@ function syncPixelAdminDraftFromExportInput() {
             if (pixelAdminEraseElement) {
                 pixelAdminEraseElement.classList.toggle("selected", pixelAdminState.selectedColorId === 0);
             }
+            if (pixelAdminMergeElement) {
+                const canUseMerge = paletteIds.length >= 2;
+                pixelAdminMergeElement.classList.toggle("selected", !!mergeSourceColorId);
+                pixelAdminMergeElement.disabled = !mergeSourceColorId && !canUseMerge;
+                pixelAdminMergeElement.title = mergeSourceColorId
+                    ? `${mergeSourceLabel} 색상 병합 대기 취소`
+                    : pixelAdminState.selectedColorId === 0
+                        ? "색상을 먼저 선택해야 병합할 수 있습니다."
+                        : paletteIds.length < 2
+                            ? "병합하려면 최소 두 개의 색상이 필요합니다."
+                            : "선택한 색상을 다른 색상에 합칩니다.";
+            }
 
             if (shouldRefreshPalette) {
                 pixelAdminPaletteElement.innerHTML = "";
@@ -2874,6 +2929,8 @@ function syncPixelAdminDraftFromExportInput() {
                     swatch.type = "button";
                     swatch.className = "pixel-admin-swatch";
                     if (colorId === pixelAdminState.selectedColorId) swatch.classList.add("selected");
+                    if (colorId === mergeSourceColorId) swatch.classList.add("merge-source");
+                    if (mergeSourceColorId && colorId !== mergeSourceColorId) swatchCard.classList.add("merge-target");
 
                     swatchChip.className = "pixel-admin-swatch-chip";
                     swatchChip.style.setProperty("--swatch-color", colorHex);
@@ -2886,8 +2943,22 @@ function syncPixelAdminDraftFromExportInput() {
 
                     swatch.append(swatchChip, swatchLabel, swatchHex);
                     swatch.addEventListener("click", () => {
+                        if (mergeSourceColorId && colorId === mergeSourceColorId) {
+                            pixelAdminState.mergeSourceColorId = 0;
+                            pixelAdminState.selectedColorId = colorId;
+                            pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)} 색상 병합을 취소했어요.`;
+                            renderPixelAdmin();
+                            return;
+                        }
+
+                        if (mergeSourceColorId) {
+                            removePixelAdminColor(mergeSourceColorId, colorId);
+                            return;
+                        }
+
+                        pixelAdminState.mergeSourceColorId = 0;
                         pixelAdminState.selectedColorId = colorId;
-                        pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}??瑜? ?좏깮?덉뼱??`;
+                        pixelAdminState.message = `${getPixelAdminColorLabel(mapId, colorId, paletteMeta)}을(를) 선택했어요.`;
                         renderPixelAdmin();
                     });
 
@@ -3072,8 +3143,43 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
         });
 
         pixelAdminEraseElement?.addEventListener("click", () => {
+            pixelAdminState.mergeSourceColorId = 0;
             pixelAdminState.selectedColorId = 0;
             pixelAdminState.message = "지우개를 선택했어요.";
+            renderPixelAdmin();
+        });
+
+        pixelAdminMergeElement?.addEventListener("click", () => {
+            if (pixelAdminState.selectedColorId === 0) {
+                pixelAdminState.message = "먼저 병합할 색상을 선택해 주세요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            const paletteIds = getPixelAdminPaletteIds(
+                pixelAdminState.currentMapId,
+                pixelAdminState.draftMap || [],
+                pixelAdminState.draftPalette
+            );
+            if (paletteIds.length < 2) {
+                pixelAdminState.message = "병합하려면 최소 두 개의 색상이 필요해요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            if (pixelAdminState.mergeSourceColorId === pixelAdminState.selectedColorId) {
+                pixelAdminState.mergeSourceColorId = 0;
+                pixelAdminState.message = "색상 병합 대기를 취소했어요.";
+                renderPixelAdmin();
+                return;
+            }
+
+            pixelAdminState.mergeSourceColorId = pixelAdminState.selectedColorId;
+            pixelAdminState.message = `${getPixelAdminColorLabel(
+                pixelAdminState.currentMapId,
+                pixelAdminState.selectedColorId,
+                pixelAdminState.draftPalette
+            )}을(를) 어떤 색상에 합칠지 선택해 주세요.`;
             renderPixelAdmin();
         });
 
