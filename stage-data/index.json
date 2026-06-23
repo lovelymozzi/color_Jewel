@@ -209,6 +209,27 @@
       "displayName": "Chair",
       "displayNameNumbered": "30. Chair",
       "file": "30_chair.json"
+    },
+    {
+      "sequence": 31,
+      "id": "bell",
+      "displayName": "Bell",
+      "displayNameNumbered": "31. Bell",
+      "file": "31_bell.json"
+    },
+    {
+      "sequence": 32,
+      "id": "penguin",
+      "displayName": "Penguin",
+      "displayNameNumbered": "32. Penguin",
+      "file": "32_penguin.json"
+    },
+    {
+      "sequence": 34,
+      "id": "corn",
+      "displayName": "Corn",
+      "displayNameNumbered": "34. Corn",
+      "file": "34_corn.json"
     }
   ]
 }

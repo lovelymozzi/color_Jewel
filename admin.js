@@ -935,7 +935,12 @@ function getMapDisplayName(mapId) {
         }
 
 const PIXEL_ADMIN_CHEAT_HOLD_MS = 650;
-const PIXEL_ADMIN_STAGE_BRIDGE_URL = "http://127.0.0.1:8765";
+const PIXEL_ADMIN_STAGE_BRIDGE_URL_CANDIDATES = window.location.protocol === "file:"
+    ? ["http://127.0.0.1:8765"]
+    : Array.from(new Set([window.location.origin, "http://127.0.0.1:8765"]));
+const PIXEL_ADMIN_STAGE_BRIDGE_HEADERS = window.location.hostname.includes("ngrok")
+    ? { "ngrok-skip-browser-warning": "true" }
+    : {};
 const PIXEL_ADMIN_STAGE_CATALOG_REFRESH_KEY = "color_jewel_stage_catalog_refresh_v1";
 
 const pixelAdminElement = document.getElementById("pixelAdmin");
@@ -2231,6 +2236,62 @@ function syncPixelAdminDraftFromExportInput() {
 
             try {
                 const imageBase64 = createSource === "llm" ? "" : await readPixelAdminFileAsBase64(imageFile);
+                const requestBody = JSON.stringify({
+                    sourceType: createSource,
+                    imageName: imageFile?.name || "",
+                    imageBase64,
+                    displayName,
+                    stageId,
+                    sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                    colors: pixelAdminCreateStageColorsElement?.value || 10,
+                    grid: createSource === "llm" ? false : pixelAdminCreateStageGridElement?.checked === true,
+                    dither: pixelAdminCreateStageDitherElement?.checked !== false,
+                    bgMode: backgroundMode,
+                    bgColor: backgroundHex,
+                    llmEndpoint: pixelAdminCreateStageLlmEndpointElement?.value || "",
+                    llmPrompt: pixelAdminCreateStageLlmPromptElement?.value || "",
+                    llmNegativePrompt: pixelAdminCreateStageLlmNegativePromptElement?.value || "",
+                    llmSteps: pixelAdminCreateStageLlmStepsElement?.value || 20
+                });
+                let responsePayload = null;
+                let lastBridgeError = null;
+                for (const bridgeUrl of PIXEL_ADMIN_STAGE_BRIDGE_URL_CANDIDATES) {
+                    try {
+                        const response = await fetch(`${bridgeUrl}/api/create-stage-from-image`, {
+                            method: "POST",
+                            headers: {
+                                ...PIXEL_ADMIN_STAGE_BRIDGE_HEADERS,
+                                "Content-Type": "application/json"
+                            },
+                            body: requestBody
+                        });
+                        const responseContentType = String(response.headers.get("Content-Type") || "");
+                        if (!responseContentType.includes("application/json")) {
+                            throw new Error(`Bridge request returned ${response.status} without JSON.`);
+                        }
+                        responsePayload = await response.json();
+                        if (!response.ok || !responsePayload?.ok) {
+                            throw new Error(responsePayload?.error || `釉뚮━吏 ?붿껌???ㅽ뙣?덉뼱?? (${response.status})`);
+                        }
+                        lastBridgeError = null;
+                        break;
+                    } catch (error) {
+                        lastBridgeError = error;
+                    }
+                }
+                if (lastBridgeError?.message === "Failed to fetch") {
+                    lastBridgeError = new Error(
+                        "이미지 업로드용 로컬 변환 서버에 연결하지 못했어요. 127.0.0.1:7860과는 무관하고, `autoplay_http_server.py`로 페이지를 열었는지 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                    );
+                }
+                if (lastBridgeError) {
+                    throw new Error(
+                        lastBridgeError?.message === "Failed to fetch"
+                            ? "이미지 업로드 API에 연결하지 못했어요. `autoplay_http_server.py`로 페이지를 열었는지, 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                            : lastBridgeError?.message || "이미지 업로드 API 요청에 실패했어요."
+                    );
+                }
+                if (false) {
                 const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/create-stage-from-image`, {
                     method: "POST",
                     headers: {
@@ -2257,6 +2318,7 @@ function syncPixelAdminDraftFromExportInput() {
                 const responsePayload = await response.json();
                 if (!response.ok || !responsePayload?.ok) {
                     throw new Error(responsePayload?.error || `브리지 요청이 실패했어요. (${response.status})`);
+                }
                 }
 
                 const createdStageEntry = responsePayload.stageEntry;
@@ -2345,6 +2407,65 @@ function syncPixelAdminDraftFromExportInput() {
                     createStageRequest.createSource === "llm"
                         ? ""
                         : await readPixelAdminFileAsBase64(createStageRequest.imageFile);
+                const requestBody = JSON.stringify({
+                    sourceType: createStageRequest.createSource,
+                    imageName: createStageRequest.imageFile?.name || "",
+                    imageBase64,
+                    displayName: createStageRequest.displayName,
+                    stageId: createStageRequest.stageId,
+                    sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                    colors: pixelAdminCreateStageColorsElement?.value || 10,
+                    grid:
+                        createStageRequest.createSource === "llm"
+                            ? false
+                            : pixelAdminCreateStageGridElement?.checked === true,
+                    dither: pixelAdminCreateStageDitherElement?.checked !== false,
+                    bgMode: createStageRequest.backgroundMode,
+                    bgColor: createStageRequest.backgroundHex,
+                    llmEndpoint: pixelAdminCreateStageLlmEndpointElement?.value || "",
+                    llmPrompt: pixelAdminCreateStageLlmPromptElement?.value || "",
+                    llmNegativePrompt: pixelAdminCreateStageLlmNegativePromptElement?.value || "",
+                    llmSteps: pixelAdminCreateStageLlmStepsElement?.value || 20
+                });
+                let responsePayload = null;
+                let lastBridgeError = null;
+                for (const bridgeUrl of PIXEL_ADMIN_STAGE_BRIDGE_URL_CANDIDATES) {
+                    try {
+                        const response = await fetch(`${bridgeUrl}/api/preview-stage-from-image`, {
+                            method: "POST",
+                            headers: {
+                                ...PIXEL_ADMIN_STAGE_BRIDGE_HEADERS,
+                                "Content-Type": "application/json"
+                            },
+                            body: requestBody
+                        });
+                        const responseContentType = String(response.headers.get("Content-Type") || "");
+                        if (!responseContentType.includes("application/json")) {
+                            throw new Error(`Bridge request returned ${response.status} without JSON.`);
+                        }
+                        responsePayload = await response.json();
+                        if (!response.ok || !responsePayload?.ok) {
+                            throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
+                        }
+                        lastBridgeError = null;
+                        break;
+                    } catch (error) {
+                        lastBridgeError = error;
+                    }
+                }
+                if (lastBridgeError?.message === "Failed to fetch") {
+                    lastBridgeError = new Error(
+                        "이미지 업로드용 로컬 변환 서버에 연결하지 못했어요. 127.0.0.1:7860과는 무관하고, `autoplay_http_server.py`로 페이지를 열었는지 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                    );
+                }
+                if (lastBridgeError) {
+                    throw new Error(
+                        lastBridgeError?.message === "Failed to fetch"
+                            ? "이미지 업로드 API에 연결하지 못했어요. `autoplay_http_server.py`로 페이지를 열었는지, 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                            : lastBridgeError?.message || "이미지 미리보기 API 요청에 실패했어요."
+                    );
+                }
+                if (false) {
                 const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/preview-stage-from-image`, {
                     method: "POST",
                     headers: {
@@ -2374,6 +2495,7 @@ function syncPixelAdminDraftFromExportInput() {
                 const responsePayload = await response.json();
                 if (!response.ok || !responsePayload?.ok) {
                     throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
+                }
                 }
 
                 loadPixelAdminCreateStagePreview(
@@ -2424,6 +2546,52 @@ function syncPixelAdminDraftFromExportInput() {
             renderPixelAdmin();
 
             try {
+                const requestBody = JSON.stringify({
+                    displayName: createStageRequest.displayName,
+                    stageId: createStageRequest.stageId,
+                    sequence: pixelAdminCreateStageSequenceElement?.value || "",
+                    imageMap: pixelAdminState.draftMap,
+                    palette: draftPalettePayload
+                });
+                let responsePayload = null;
+                let lastBridgeError = null;
+                for (const bridgeUrl of PIXEL_ADMIN_STAGE_BRIDGE_URL_CANDIDATES) {
+                    try {
+                        const response = await fetch(`${bridgeUrl}/api/create-stage-from-draft`, {
+                            method: "POST",
+                            headers: {
+                                ...PIXEL_ADMIN_STAGE_BRIDGE_HEADERS,
+                                "Content-Type": "application/json"
+                            },
+                            body: requestBody
+                        });
+                        const responseContentType = String(response.headers.get("Content-Type") || "");
+                        if (!responseContentType.includes("application/json")) {
+                            throw new Error(`Bridge request returned ${response.status} without JSON.`);
+                        }
+                        responsePayload = await response.json();
+                        if (!response.ok || !responsePayload?.ok) {
+                            throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
+                        }
+                        lastBridgeError = null;
+                        break;
+                    } catch (error) {
+                        lastBridgeError = error;
+                    }
+                }
+                if (lastBridgeError?.message === "Failed to fetch") {
+                    lastBridgeError = new Error(
+                        "스테이지 저장용 로컬 변환 서버에 연결하지 못했어요. 127.0.0.1:7860과는 무관하고, `autoplay_http_server.py`로 페이지를 열었는지 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                    );
+                }
+                if (lastBridgeError) {
+                    throw new Error(
+                        lastBridgeError?.message === "Failed to fetch"
+                            ? "이미지 업로드 API에 연결하지 못했어요. `autoplay_http_server.py`로 페이지를 열었는지, 또는 `run_stage_image_bridge.ps1` 브리지가 켜져 있는지 확인해 주세요."
+                            : lastBridgeError?.message || "스테이지 저장 API 요청에 실패했어요."
+                    );
+                }
+                if (false) {
                 const response = await fetch(`${PIXEL_ADMIN_STAGE_BRIDGE_URL}/api/create-stage-from-draft`, {
                     method: "POST",
                     headers: {
@@ -2440,6 +2608,7 @@ function syncPixelAdminDraftFromExportInput() {
                 const responsePayload = await response.json();
                 if (!response.ok || !responsePayload?.ok) {
                     throw new Error(responsePayload?.error || `Bridge request failed (${response.status})`);
+                }
                 }
 
                 const createdStageEntry = responsePayload.stageEntry;
@@ -2629,6 +2798,18 @@ function syncPixelAdminDraftFromExportInput() {
             }
             if (pixelAdminCreateStageLlmPanelElement) {
                 pixelAdminCreateStageLlmPanelElement.hidden = createStageSource !== "llm";
+            }
+            if (pixelAdminCreateStageLlmEndpointElement) {
+                pixelAdminCreateStageLlmEndpointElement.disabled = createStageSource !== "llm";
+            }
+            if (pixelAdminCreateStageLlmStepsElement) {
+                pixelAdminCreateStageLlmStepsElement.disabled = createStageSource !== "llm";
+            }
+            if (pixelAdminCreateStageLlmPromptElement) {
+                pixelAdminCreateStageLlmPromptElement.disabled = createStageSource !== "llm";
+            }
+            if (pixelAdminCreateStageLlmNegativePromptElement) {
+                pixelAdminCreateStageLlmNegativePromptElement.disabled = createStageSource !== "llm";
             }
             if (pixelAdminCreateStageNoteElement) {
                 pixelAdminCreateStageNoteElement.textContent = pixelAdminState.createStageStatus;
@@ -2955,6 +3136,9 @@ pixelAdminToggleElement?.addEventListener("click", (event) => {
                 if (pixelAdminCreateStageSourceLlmElement?.checked && pixelAdminCreateStageGridElement) {
                     pixelAdminCreateStageGridElement.checked = false;
                 }
+                pixelAdminState.createStageStatus = pixelAdminCreateStageSourceLlmElement?.checked
+                    ? "로컬 LLM 모드예요. 이때만 A1111 endpoint와 프롬프트를 사용해요."
+                    : "이미지 업로드 모드예요. 127.0.0.1:7860 LLM endpoint와는 연결하지 않아요.";
                 renderPixelAdmin();
             });
         });

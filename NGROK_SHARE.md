@@ -21,7 +21,7 @@ cd D:\Strategy\color_jewel
 한 터미널에서 아래 명령을 실행한 뒤 그대로 켜 둡니다.
 
 ```powershell
-python -m http.server 8000 --bind 127.0.0.1
+python autoplay_http_server.py
 ```
 
 정상이면 이런 식으로 보입니다.
@@ -30,7 +30,7 @@ python -m http.server 8000 --bind 127.0.0.1
 Serving HTTP on 127.0.0.1 port 8000 (http://127.0.0.1:8000/) ...
 ```
 
-브라우저에서 먼저 이 주소가 열리는지 확인합니다.
+브라우저에서 먼저 이 주소가 열리는지 확인합니다. 이 서버는 정적 파일뿐 아니라 관리자 이미지 업로드에 필요한 `/api/...` 경로도 함께 제공합니다.
 
 ```text
 http://127.0.0.1:8000
@@ -89,7 +89,7 @@ ngrok http http://127.0.0.1:8000
 2. 안 열리면 서버 터미널에서 다시 실행합니다.
 
 ```powershell
-python -m http.server 8000 --bind 127.0.0.1
+python autoplay_http_server.py
 ```
 
 3. 그다음 ngrok를 다시 실행합니다.
@@ -100,7 +100,7 @@ ngrok http http://127.0.0.1:8000
 
 ## 5. 틀리기 쉬운 부분
 
-- `python -m http.server 8000` 를 실행한 터미널은 끄면 안 됩니다.
+- `python autoplay_http_server.py` 를 실행한 터미널은 끄면 안 됩니다.
 - `ngrok`는 반드시 **다른 터미널**에서 실행해야 합니다.
 - `https://...ngrok-free.dev` 예시 주소를 그대로 다시 쓰면 안 됩니다.
 - 공유할 주소는 항상 **내가 방금 실행한 ngrok 터미널의 `Forwarding` 줄**에서 복사합니다.
