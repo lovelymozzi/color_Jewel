@@ -4,23 +4,34 @@
     function createColorJewelSoundController(options = {}) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const volumeMultiplier = Number(options.volumeMultiplier || 1);
+        const sfxVolumeMultiplier = Math.max(0, Number(options.sfxVolumeMultiplier ?? 1));
+        const bgmVolumeMultiplier = Math.max(0, Number(options.bgmVolumeMultiplier ?? 1));
         let sfxEnabled = options.sfxEnabled !== false;
         let bgmEnabled = options.bgmEnabled !== false;
         let audioContext = null;
         let audioNoiseBuffer = null;
         let audioFallbackUnlocked = false;
         const audioFallbackCache = new Map();
-        const pendingPlaybackRequests = [];
         let bgmLoopTimer = null;
         let bgmLoopSequenceIndex = 0;
         let bgmOutputContext = null;
         let bgmOutputGain = null;
         let bgmSuspended = false;
+        let bgmPlaybackActivated = false;
         let buttonSoundPrimed = false;
         let stageClearCompleteSoundPrimed = false;
         let stageClearDimSoundPrimed = false;
         let stageClearParticleSoundPrimed = false;
         let activeStageClearCompleteAudio = null;
+        let lastQuietButtonPlaybackAt = -Infinity;
+        const hasCoarsePointer = typeof window.matchMedia === "function" && (
+            window.matchMedia("(pointer: coarse)").matches ||
+            window.matchMedia("(any-pointer: coarse)").matches
+        );
+        const isMobileUserAgent =
+            typeof navigator !== "undefined" &&
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+        const suppressWarmupBgmAutoplay = hasCoarsePointer || isMobileUserAgent;
         const buttonSoundAssetSrc = "./src/assets/sounds/click1.wav";
         const stageClearCompleteSoundAssetSrc = "./src/assets/sounds/stage_clear1.wav";
         const stageClearDimSoundAssetSrc = "./src/assets/sounds/stage_clear_dim.wav";
@@ -32,8 +43,6 @@
         const stageClearParticleSoundVolume = 0.09;
         const BGM_PHRASE_MS = 3600;
         const BGM_OUTPUT_LEVEL = 1.18;
-        const MAX_PENDING_PLAYBACK_REQUESTS = 8;
-        const MAX_PENDING_PLAYBACK_AGE_MS = 1500;
         const BGM_SEQUENCE = [
             { root: 220, accent: 329.63 },
             { root: 246.94, accent: 369.99 },
@@ -148,7 +157,10 @@
             bgmOutputGain?.disconnect?.();
             bgmOutputContext = context;
             bgmOutputGain = context.createGain();
-            bgmOutputGain.gain.setValueAtTime(bgmEnabled && !bgmSuspended ? BGM_OUTPUT_LEVEL : 0.0001, context.currentTime);
+            bgmOutputGain.gain.setValueAtTime(
+                bgmEnabled && !bgmSuspended ? BGM_OUTPUT_LEVEL * bgmVolumeMultiplier : 0.0001,
+                context.currentTime
+            );
             bgmOutputGain.connect(context.destination);
             return bgmOutputGain;
         }
@@ -246,7 +258,7 @@
             return `data:audio/wav;base64,${btoa(binary)}`;
         }
 
-        function playFallbackTone(spec, delayMs = 0) {
+        function playFallbackTone(spec, delayMs = 0, volumeScale = 1) {
             if (typeof Audio === "undefined" || !audioFallbackUnlocked) {
                 return;
             }
@@ -258,7 +270,7 @@
 
                 try {
                     const audio = new Audio(src);
-                    audio.volume = 1;
+                    audio.volume = Math.max(0, Math.min(1, sfxVolumeMultiplier * volumeScale));
                     audio.play().catch(() => {});
                 } catch (error) {}
             };
@@ -272,11 +284,11 @@
         }
 
         function playFallbackEffect(effectName, options = {}) {
-            const { clusterSize = 1, startDelayMs = 0, accent = 0 } = options;
+            const { clusterSize = 1, startDelayMs = 0, accent = 0, volumeScale = 1 } = options;
             const intensity = Math.min(clusterSize, 4);
 
             if (effectName === "button") {
-                playFallbackTone({ frequency: 760, durationMs: 80, volume: 0.34, type: "sine" });
+                playFallbackTone({ frequency: 760, durationMs: 80, volume: 0.34, type: "sine" }, 0, volumeScale);
                 return;
             }
 
@@ -318,13 +330,6 @@
             }
 
             if (context.state !== "running" && !audioFallbackUnlocked) {
-                pendingPlaybackRequests.push({
-                    playback,
-                    queuedAt: Date.now()
-                });
-                if (pendingPlaybackRequests.length > MAX_PENDING_PLAYBACK_REQUESTS) {
-                    pendingPlaybackRequests.splice(0, pendingPlaybackRequests.length - MAX_PENDING_PLAYBACK_REQUESTS);
-                }
                 return;
             }
 
@@ -467,7 +472,8 @@
                     filterType: "lowpass",
                     filterFrequency: 920,
                     filterQ: 0.24,
-                    destination: bgmDestination
+                    destination: bgmDestination,
+                    outputMultiplier: bgmVolumeMultiplier
                 });
             });
         }
@@ -508,9 +514,17 @@
                 bgmSuspended = false;
             }
             const shouldPlayBgm = bgmEnabled && !bgmSuspended;
+            if (shouldPlayBgm && (!resumePlayback || !suppressWarmupBgmAutoplay)) {
+                bgmPlaybackActivated = true;
+            }
             if (bgmLoopSoundTemplate) {
-                bgmLoopSoundTemplate.volume = Math.max(0, Math.min(1, bgmLoopSoundVolume * volumeMultiplier));
+                bgmLoopSoundTemplate.volume = Math.max(0, Math.min(1, bgmLoopSoundVolume * volumeMultiplier * bgmVolumeMultiplier));
                 if (!audioFallbackUnlocked || !AudioContextClass) {
+                    if (shouldPlayBgm && resumePlayback && !bgmPlaybackActivated) {
+                        bgmLoopSoundTemplate.pause();
+                        bgmLoopSoundTemplate.currentTime = 0;
+                        return bgmEnabled;
+                    }
                     if (shouldPlayBgm) {
                         if (!bgmLoopSoundTemplate.paused) {
                             return bgmEnabled;
@@ -538,7 +552,14 @@
                 const currentValue = Math.max(0.0001, Number(bgmOutputGain.gain.value || 0.0001));
                 bgmOutputGain.gain.cancelScheduledValues(now);
                 bgmOutputGain.gain.setValueAtTime(currentValue, now);
-                bgmOutputGain.gain.linearRampToValueAtTime(shouldPlayBgm ? BGM_OUTPUT_LEVEL : 0.0001, now + 0.08);
+                bgmOutputGain.gain.linearRampToValueAtTime(
+                    shouldPlayBgm ? BGM_OUTPUT_LEVEL * bgmVolumeMultiplier : 0.0001,
+                    now + 0.08
+                );
+            }
+            if (shouldPlayBgm && resumePlayback && !bgmPlaybackActivated) {
+                clearBgmLoopTimer();
+                return bgmEnabled;
             }
             if (shouldPlayBgm) {
                 scheduleNextBgmPhrase(0);
@@ -568,7 +589,8 @@
                 filterType = "lowpass",
                 filterFrequency = 1800,
                 filterQ = 0.9,
-                destination = context.destination
+                destination = context.destination,
+                outputMultiplier = sfxVolumeMultiplier
             } = options;
             const oscillator = context.createOscillator();
             const filter = context.createBiquadFilter();
@@ -584,7 +606,7 @@
             filter.Q.setValueAtTime(filterQ, startTime);
 
             gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume * volumeMultiplier, startTime + attack);
+            gain.gain.exponentialRampToValueAtTime(volume * volumeMultiplier * outputMultiplier, startTime + attack);
             gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
             oscillator.connect(filter);
@@ -608,7 +630,8 @@
                 filterType = "bandpass",
                 filterFrequency = 1800,
                 filterQ = 1.2,
-                destination = context.destination
+                destination = context.destination,
+                outputMultiplier = sfxVolumeMultiplier
             } = options;
             const source = context.createBufferSource();
             const filter = context.createBiquadFilter();
@@ -622,7 +645,7 @@
             filter.Q.setValueAtTime(filterQ, startTime);
 
             gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(volume * volumeMultiplier, startTime + 0.004);
+            gain.gain.exponentialRampToValueAtTime(volume * volumeMultiplier * outputMultiplier, startTime + 0.004);
             gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
             source.connect(filter);
@@ -705,21 +728,8 @@
                     console.warn("Failed to warm stage clear particle audio.", error);
                 });
             }
-            requestAudioPlayback((context) => {
-                if (pendingPlaybackRequests.length <= 0) {
-                    return;
-                }
-
-                const queuedRequests = pendingPlaybackRequests.splice(0, pendingPlaybackRequests.length);
-                const now = Date.now();
-                queuedRequests.forEach(({ playback, queuedAt }) => {
-                    if (now - queuedAt > MAX_PENDING_PLAYBACK_AGE_MS) {
-                        return;
-                    }
-                    playback(context);
-                });
-            });
-            if (bgmEnabled && !bgmSuspended && !bgmLoopTimer) {
+            if (bgmEnabled && !bgmSuspended && !bgmLoopTimer && (!suppressWarmupBgmAutoplay || bgmPlaybackActivated)) {
+                bgmPlaybackActivated = true;
                 scheduleNextBgmPhrase(0);
             }
         }
@@ -797,7 +807,7 @@
             });
         }
 
-        function playButtonPressNow(context) {
+        function playButtonPressNow(context, volumeScale = 1) {
             const now = context.currentTime;
 
             playNoiseBurst(context, {
@@ -806,7 +816,8 @@
                 volume: 0.0022,
                 filterType: "bandpass",
                 filterFrequency: 1450,
-                filterQ: 0.55
+                filterQ: 0.55,
+                outputMultiplier: sfxVolumeMultiplier * volumeScale
             });
             playTone(context, {
                 startTime: now,
@@ -816,7 +827,8 @@
                 duration: 0.07,
                 volume: 0.017,
                 filterFrequency: 2400,
-                filterQ: 0.42
+                filterQ: 0.42,
+                outputMultiplier: sfxVolumeMultiplier * volumeScale
             });
             playTone(context, {
                 startTime: now + 0.018,
@@ -826,7 +838,8 @@
                 duration: 0.06,
                 volume: 0.011,
                 filterFrequency: 3200,
-                filterQ: 0.38
+                filterQ: 0.38,
+                outputMultiplier: sfxVolumeMultiplier * volumeScale
             });
             playTone(context, {
                 startTime: now + 0.01,
@@ -836,32 +849,47 @@
                 duration: 0.12,
                 volume: 0.0045,
                 filterFrequency: 1800,
-                filterQ: 0.48
+                filterQ: 0.48,
+                outputMultiplier: sfxVolumeMultiplier * volumeScale
             });
         }
 
-        function playButton() {
+        function playButton(volumeScale = 1) {
             if (!sfxEnabled) {
                 return;
             }
+            const isQuietButton = volumeScale <= 0.1;
+            const now = typeof performance !== "undefined" && typeof performance.now === "function"
+                ? performance.now()
+                : Date.now();
+            if (isQuietButton && now - lastQuietButtonPlaybackAt < 140) {
+                return;
+            }
+            if (isQuietButton) {
+                lastQuietButtonPlaybackAt = now;
+            }
             if (buttonSoundTemplate) {
-                const audio = buttonSoundTemplate.cloneNode();
-                audio.volume = Math.max(0, Math.min(1, buttonSoundVolume * volumeMultiplier));
+                const audio = isQuietButton ? buttonSoundTemplate : buttonSoundTemplate.cloneNode();
+                if (isQuietButton) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+                audio.volume = Math.max(0, Math.min(1, buttonSoundVolume * volumeMultiplier * sfxVolumeMultiplier * volumeScale));
                 const playbackResult = audio.play();
                 playbackResult?.catch?.((error) => {
                     console.error("Failed to play click1.wav.", error);
                     requestAudioPlayback((context) => {
-                        playButtonPressNow(context);
+                        playButtonPressNow(context, volumeScale);
                     }, () => {
-                        playFallbackEffect("button");
+                        playFallbackEffect("button", { volumeScale });
                     });
                 });
                 return;
             }
             requestAudioPlayback((context) => {
-                playButtonPressNow(context);
+                playButtonPressNow(context, volumeScale);
             }, () => {
-                playFallbackEffect("button");
+                playFallbackEffect("button", { volumeScale });
             });
         }
 
@@ -883,8 +911,8 @@
                         : "";
             const completionSoundVolume =
                 variant === "stage_clear"
-                        ? Math.max(0, Math.min(1, stageClearCompleteSoundVolume * volumeMultiplier))
-                        : Math.max(0, Math.min(1, stageClearDimSoundVolume * volumeMultiplier));
+                        ? Math.max(0, Math.min(1, stageClearCompleteSoundVolume * volumeMultiplier * sfxVolumeMultiplier))
+                        : Math.max(0, Math.min(1, stageClearDimSoundVolume * volumeMultiplier * sfxVolumeMultiplier));
             if (completionSoundTemplate) {
                 if (startDelayMs > 0) {
                     window.setTimeout(() => {
@@ -896,7 +924,7 @@
                         if (variant === "stage_clear_dim" && activeStageClearCompleteAudio) {
                             activeStageClearCompleteAudio.volume = Math.min(
                                 activeStageClearCompleteAudio.volume,
-                                Math.max(0, Math.min(1, 0.05 * volumeMultiplier))
+                                Math.max(0, Math.min(1, 0.05 * volumeMultiplier * sfxVolumeMultiplier))
                             );
                         }
                         audio.volume = completionSoundVolume;
@@ -956,7 +984,7 @@
                     if (variant === "stage_clear_dim" && activeStageClearCompleteAudio) {
                         activeStageClearCompleteAudio.volume = Math.min(
                             activeStageClearCompleteAudio.volume,
-                            Math.max(0, Math.min(1, 0.05 * volumeMultiplier))
+                            Math.max(0, Math.min(1, 0.05 * volumeMultiplier * sfxVolumeMultiplier))
                         );
                     }
                     audio.volume = completionSoundVolume;
@@ -1064,7 +1092,7 @@
                     }
 
                     const audio = stageClearParticleSoundTemplate.cloneNode();
-                    audio.volume = Math.max(0, Math.min(1, stageClearParticleSoundVolume * volumeMultiplier));
+                    audio.volume = Math.max(0, Math.min(1, stageClearParticleSoundVolume * volumeMultiplier * sfxVolumeMultiplier));
                     const playbackResult = audio.play();
                     playbackResult?.catch?.((error) => {
                         console.error("Failed to play stage_clear_particle.wav.", error);

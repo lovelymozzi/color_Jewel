@@ -535,7 +535,7 @@
             hapticsOn: true,
             tutorialTapHintShown: false
         });
-        const SCENE_CONTRACT_VERSION = "20260621-01";
+        const SCENE_CONTRACT_VERSION = "20260623-06";
         const IS_NGROK_HOST = window.location.hostname.includes("ngrok");
         const NGROK_BYPASS_HEADERS = IS_NGROK_HOST
             ? { "ngrok-skip-browser-warning": "true" }
@@ -3546,6 +3546,8 @@
         const BOARD_COMPACT_LOW_ZOOM_PAN_MAX_SCALE = 1.2;
         const BOARD_COMPACT_LOW_ZOOM_PAN_SOFT_MAX_SCALE = 1.5;
         const SOUND_VOLUME_MULTIPLIER = 5.4;
+        const SOUND_SFX_VOLUME_MULTIPLIER = 0.5;
+        const SOUND_BGM_VOLUME_MULTIPLIER = 1.4;
         const TUTORIAL_ITEM_INTRO_START_DELAY_MS = 260;
         const TUTORIAL_ITEM_INTRO_STEP_DELAY_MS = 240;
         const TUTORIAL_ITEM_INTRO_END_DELAY_MS = 320;
@@ -5060,6 +5062,8 @@
 
         const soundController = window.ColorJewelSound?.createController?.({
             volumeMultiplier: SOUND_VOLUME_MULTIPLIER,
+            sfxVolumeMultiplier: SOUND_SFX_VOLUME_MULTIPLIER,
+            bgmVolumeMultiplier: SOUND_BGM_VOLUME_MULTIPLIER,
             sfxEnabled: appSettings.soundEffectsOn,
             bgmEnabled: appSettings.bgmOn
         }) || null;
@@ -5267,8 +5271,8 @@
             soundController?.playPlace?.(clusterSize);
         }
 
-        function triggerButtonPressSound() {
-            soundController?.playButton?.();
+        function triggerButtonPressSound(volumeScale = 1) {
+            soundController?.playButton?.(volumeScale);
         }
 
         function playColorCompleteSound(startDelayMs = 0) {
@@ -8796,12 +8800,6 @@
                     Math.max(1, Math.ceil((elapsedMs / tutorialTypingDurationMs) * tutorialGuideCharacters.length))
                 );
                 if (revealedCharacterCount > tutorialGestureTypingState.revealedCharacterCount) {
-                    const newlyRevealedCharacterCount = revealedCharacterCount - tutorialGestureTypingState.revealedCharacterCount;
-                    for (let soundIndex = 0; soundIndex < newlyRevealedCharacterCount; soundIndex += 1) {
-                        window.setTimeout(() => {
-                            triggerButtonPressSound();
-                        }, Math.min(48, soundIndex * 18));
-                    }
                     tutorialGestureTypingState.revealedCharacterCount = revealedCharacterCount;
                 }
                 toastCopy.textContent = tutorialGuideCharacters.slice(0, revealedCharacterCount).join("");
@@ -8815,13 +8813,24 @@
             }
             toast.style.left = "50%";
             toast.style.top = "calc(53% + 82px)";
+            toast.style.transform = "translateX(-50%)";
 
             const stageRect = boardStageElement?.getBoundingClientRect?.() || null;
             if (stageRect) {
                 const stageCenterX = Math.round(stageRect.width / 2);
                 const stageCenterY = Math.round(stageRect.height / 2);
                 toast.style.left = `${stageCenterX}px`;
-                toast.style.top = `${Math.round(stageCenterY + 82)}px`;
+                if (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 540px)").matches) {
+                    const pocketRect = topTrayElement?.getBoundingClientRect?.() || bottomTrayElement?.getBoundingClientRect?.() || null;
+                    const pocketTop = pocketRect
+                        ? Math.round(pocketRect.top - stageRect.top)
+                        : Math.round(stageCenterY + 32);
+                    toast.style.top = `${Math.max(16, pocketTop - 18)}px`;
+                    toast.style.transform = "translate(-50%, -100%)";
+                } else {
+                    toast.style.top = `${Math.round(stageCenterY + 82)}px`;
+                    toast.style.transform = "translateX(-50%)";
+                }
             }
 
             if (stageRect && isPinchGuide) {
@@ -9263,7 +9272,17 @@
             const toast = document.createElement("div");
             toast.className = "tutorial-gesture-toast";
             toast.style.left = `${Math.round(stageRect.width / 2)}px`;
-            toast.style.top = `${Math.round((stageRect.height / 2) + 82)}px`;
+            if (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 540px)").matches) {
+                const pocketRect = topTrayElement?.getBoundingClientRect?.() || bottomTrayElement?.getBoundingClientRect?.() || null;
+                const pocketTop = pocketRect
+                    ? Math.round(pocketRect.top - stageRect.top)
+                    : Math.round((stageRect.height / 2) + 32);
+                toast.style.top = `${Math.max(16, pocketTop - 18)}px`;
+                toast.style.transform = "translate(-50%, -100%)";
+            } else {
+                toast.style.top = `${Math.round((stageRect.height / 2) + 82)}px`;
+                toast.style.transform = "translateX(-50%)";
+            }
 
             if (!appSettings.tutorialTapHintShown) {
                 const toastCopy = document.createElement("div");
@@ -9293,12 +9312,6 @@
                         Math.max(1, Math.ceil((elapsedMs / tutorialTapHintTypingDurationMs) * tutorialTapHintCharacters.length))
                     );
                     if (revealedCharacterCount > tutorialGestureTypingState.revealedCharacterCount) {
-                        const newlyRevealedCharacterCount = revealedCharacterCount - tutorialGestureTypingState.revealedCharacterCount;
-                        for (let soundIndex = 0; soundIndex < newlyRevealedCharacterCount; soundIndex += 1) {
-                            window.setTimeout(() => {
-                                triggerButtonPressSound();
-                            }, Math.min(48, soundIndex * 18));
-                        }
                         tutorialGestureTypingState.revealedCharacterCount = revealedCharacterCount;
                     }
                     toastCopy.textContent = tutorialTapHintCharacters.slice(0, revealedCharacterCount).join("");
