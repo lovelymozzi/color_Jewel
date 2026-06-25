@@ -29,6 +29,13 @@
   - `re play`  (click)
 <!-- SCENE:setting END -->
 
+<!-- SCENE:setting 2 BEGIN -->
+#### `setting 2`  ·  contract: `./setting 2.contract.json`
+- **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):
+  - `re-start-351:click`  (click)
+  - `re play`  (click)
+<!-- SCENE:setting 2 END -->
+
 <!-- SCENE:setting 3 BEGIN -->
 #### `setting 3`  ·  contract: `./setting 3.contract.json`
 - **이벤트** — `renderer.on(name, fn)` (이름 임의 생성 금지):

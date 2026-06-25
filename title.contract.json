@@ -51,19 +51,6 @@
         "width": 64,
         "height": 64
       }
-    },
-    {
-      "stableId": "circle1-png-316",
-      "layerType": "image",
-      "displayName": "circle1.png",
-      "x": 165,
-      "y": 394,
-      "zIndex": 3,
-      "visual": {
-        "exportPath": "assets/circle1.png",
-        "width": 64,
-        "height": 64
-      }
     }
   ]
 }

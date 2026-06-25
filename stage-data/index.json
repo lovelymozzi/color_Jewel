@@ -244,6 +244,34 @@
       "displayName": "Jam",
       "displayNameNumbered": "36. Jam",
       "file": "36_jam.json"
+    },
+    {
+      "sequence": 37,
+      "id": "water_melon",
+      "displayName": "Water Melon",
+      "displayNameNumbered": "37. Water Melon",
+      "file": "37_water_melon.json"
+    },
+    {
+      "sequence": 38,
+      "id": "acorn",
+      "displayName": "Acorn",
+      "displayNameNumbered": "38. Acorn",
+      "file": "38_acorn.json"
+    },
+    {
+      "sequence": 39,
+      "id": "ufo",
+      "displayName": "UFO",
+      "displayNameNumbered": "39. UFO",
+      "file": "39_ufo.json"
+    },
+    {
+      "sequence": 40,
+      "id": "knife",
+      "displayName": "Knife",
+      "displayNameNumbered": "40. Knife",
+      "file": "40_knife.json"
     }
   ]
 }
